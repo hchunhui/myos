@@ -1,0 +1,45 @@
+INC=-I\/usr\/include -I$(ROOT)\/arch_linux\/include -I$(ROOT)\/include
+AS=as -m32
+CC=gcc -m32
+CPP=gcc -E -nostdinc -fno-leading-underscore $(INC)
+LD=gcc -m32
+CFLAGS=-march=i386 -g -fno-delete-null-pointer-checks -fomit-frame-pointer -finline-functions -fno-strict-aliasing -fno-stack-protector -Wall $(INC) -c
+OBJCOPY=objcopy
+AR=ar
+
+.PHONY: dep clean mk1 dep1 clean1
+
+.c.o:
+	$(CC) $(CFLAGS) \
+	-o $*.o $<
+.S.o:
+	$(CC) $(CFLAGS) \
+	-o $*.o $<
+clean:
+	rm -f *.bin
+	rm -f *.o
+	rm -f *.a
+	rm -f *~
+dep:
+	sed '/\#\#auto/d;/\#\#dep/q' Makefile>tmp_make
+	for i in *.c *.S;do `echo $$i|sed '/^/s//$(CPP) -M /;/*/d'`>>tmp_make;done
+	echo AUTOOBJS=|tr "\n" " ">tmp_make2
+	ls -m *.c *.S|sed 's/\.[cS]/.o/g;s/,//g'|tr "\n" " "| \
+	sed '/$$/a\#\#auto'|tr "\n" " "|sed '/$$/a\'>>tmp_make2
+	cat tmp_make2 tmp_make>Makefile
+	rm -f tmp_make tmp_make2
+mk1:
+	make -C umdrv
+	make -C kernel
+	make -C arch
+dep1:
+	make -C umdrv dep
+	make -C kernel dep
+	make -C arch dep
+clean1:
+	make -C umdrv clean
+	make -C kernel clean
+	make -C arch clean
+mykern.bin:arch_linux/init/build.a umdrv/build.a arch_linux/kernel/build.a kernel/build.a
+	$(LD) -o mykern -Wl,--start-group $^ -Wl,--end-group
+

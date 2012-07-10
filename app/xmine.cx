@@ -1,0 +1,262 @@
+#include <type.h>
+#include <unistd.h>
+#include <libc/libc.h>
+#include <string.h>
+#include <libc/kstru.h>
+#include "w/draw.h"
+
+int w_pid;
+
+int get_utime()
+{
+	return usr_sys_call0(__NR_get_utime);
+}
+
+void pause()
+{
+	usr_sys_call0(__NR_pause);
+}
+
+double sin(double x)
+{
+	double ret;
+	asm (
+	"fldl %1\n\t"
+	"fsin\n\t"
+	"fstpl %0"
+	:"=m"(ret)
+	:"m"(x)
+	);
+	return ret;
+}
+
+double cos(double x)
+{
+	double ret;
+	asm (
+	"fldl %1\n\t"
+	"fcos\n\t"
+	"fstpl %0"
+	:"=m"(ret)
+	:"m"(x)
+	);
+	return ret;
+}
+
+u16 buff[801*600];
+
+HANDLE w_create(int attr, int x, int y, int w, int h, char *name)
+{
+	MSG msg;
+	msg.type = WM_WINDOW_CREATE;
+	msg.arg1 = attr;
+	msg.arg2 = (x << 16) | y;
+	msg.arg3 = (w << 16) | h;
+	msg.arg4 = (HANDLE) name;
+	msg.arg5 = strlen(name) + 1;
+	send( w_pid, &msg);
+	do {
+		recv( -1, &msg, 1);
+	} while(msg.type != UM_REPLY);
+	return msg.arg1;
+}
+
+void w_refresh(HANDLE hwnd, u16 *buf_ptr,int x, int y ,int w, int h)
+{
+	MSG msg;
+	msg.type = WM_WINDOW_REFRESH;
+	msg.arg1 = hwnd;
+	msg.arg2 = (HANDLE) buf_ptr;
+	msg.arg3 = (x << 16) | y;
+	msg.arg4 = (w << 16) | h;
+	send( w_pid, &msg);
+}
+
+int w_destroy(HANDLE hwnd)
+{
+	MSG msg;
+	msg.type = WM_WINDOW_DESTROY;
+	msg.arg1 = hwnd;
+	send( w_pid, &msg);
+	do {
+		recv( -1, &msg, 1);
+		printf("msg.type = %d\n",msg.type);
+	} while(msg.type != UM_REPLY);
+	return msg.arg1;
+}
+
+void w_timer(HANDLE hwnd,int val)
+{
+	MSG msg;
+	msg.type = WM_WINDOW_TIMER;
+	msg.arg1 = hwnd;
+	msg.arg2 = val;
+	send( w_pid, &msg);
+}
+
+int x = 0;
+int y = 0;
+int btn = 0;
+int time = 0;
+int left = 0;
+#define N 20
+#define M 20
+#define BEGY 100
+int data[N][M];
+int over = 0;
+
+void do_paint_single(HANDLE hwnd,int i,int j)
+{
+	if(data[i][j] == 0)
+		draw_fill_rect(15 * i , BEGY + 15 * j, 15 * i + 15, BEGY + 15 + 15 * j, RGB(31, 63, 31));
+	else
+		draw_fill_rect(15 * i , BEGY + 15 * j, 15 * i + 15, BEGY + 15 + 15 * j, RGB(0, 0, 31));
+	w_refresh(hwnd, buff,0,0,300,315);
+}
+
+void do_paint(HANDLE hwnd)
+{
+	int i,j;
+	for(i = 0; i < N; i++)
+	{
+		for(j = 0; j < M; j++)
+		{
+			do_paint_single(hwnd,i,j);
+		}
+	}
+	//draw_fill_rect(0, 15, 15, 15, RGB(31,63,31));
+	//w_refresh(hwnd, buff,0 ,0 , 300, 315);
+}
+
+void game_over(HANDLE hwnd)
+{
+	over = 1;
+	char buf[100];
+	sprintf(buf, "Mine time:%d left:%d Game Over     ", time, left);
+	draw_string(0, 0, buf, 0);
+	w_refresh(hwnd, buff, 0, 0, 300, 15);
+}
+
+void show_title(HANDLE hwnd)
+{
+	char buf[100];
+	if(over)
+	{
+		game_over(hwnd);
+		return;
+	}
+	sprintf(buf, "Mine time:%d left:%d (%4d,%4d) %s %s %s", time, left, x, y, 
+	btn&1?"L":" ", btn&2?"R":" ", btn&4?"M":" ");
+	draw_string(0, 0, buf, 0);
+	w_refresh(hwnd, buff, 0, 0, 300, 15);
+}
+
+void do_kepress(HANDLE hwnd, int key)
+{
+	if(over)return;
+	switch(key)
+	{
+		default:
+			return;
+	}
+}
+
+
+void do_timer(HANDLE hwnd)
+{
+	show_title(hwnd);
+}
+
+void do_mouse(HANDLE hwnd)
+{
+	int cx,cy;
+	char buf[100];
+	if(y<BEGY)
+	{
+		sprintf(buf, "not in area");
+	}
+	else
+	{
+		cy=(y-BEGY)/15;
+		cx=x/15;
+		sprintf(buf,"(%d,%d)     ",cx,cy);
+		if(btn&1)
+		{
+			data[cx][cy]^=1;
+			do_paint_single(hwnd,cx,cy);
+		}
+	}
+	draw_string(0, 15, buf, 0);
+	w_refresh(hwnd, buff, 0, 0, 300, 30);
+}
+
+void main_loop()
+{
+	MSG msg;
+	HANDLE hwnd;
+	int first=1;
+	for(;recv( -1, &msg, 1);)
+	{
+		hwnd = msg.arg1;
+		if(first)
+		{
+			do_paint(hwnd);
+			first = 0;
+		}
+		switch( msg.type&(~MSG_TYPE_BLOCK) )
+		{
+			case UM_KEYPRESS:
+				if(msg.arg2 == 'q')
+					if(w_destroy(hwnd))
+						return;
+				do_kepress(hwnd, msg.arg2);
+				break;
+			case UM_MOUSEACT:
+				x = msg.arg2;
+				y = msg.arg3;
+				btn = msg.arg4;
+				do_mouse(hwnd);
+				show_title(hwnd);
+				break;
+			case UM_EXIT:
+				if(w_destroy(hwnd))
+					return;
+				break;
+			case UM_TIMER:
+				time++;
+				if(/*time%10 == 0  &&*/ (!over))
+					do_timer(hwnd);
+			default:
+				break;
+		}
+	}
+}
+
+void game_init()
+{
+	memset(data, 0, sizeof(data));
+}
+
+int main()
+{
+	HANDLE hwnd;
+	
+	printf("enter window manager 's pid:\n");
+	scanf("%d", &w_pid);
+	srand(get_utime());
+	hwnd = w_create(0, 250, 150, 300, 315, "Mine");
+	
+	printf("hwnd: %x\n",hwnd);
+	
+	draw_init(buff);
+	
+	game_init();
+	w_refresh(hwnd, buff,0 ,0 , 300, 315);
+	w_timer(hwnd, 1);
+	
+	main_loop();
+	
+	printf("exit with exit code 0\n");
+	return 0;
+}
+

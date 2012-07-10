@@ -1,0 +1,50 @@
+#include <os/arch_config.h>
+#include <os/type.h>
+#include <lib/klib.h>
+#include <os/multiboot.h>
+
+void isr_init();
+void mm_init(unsigned int size);
+void shm_init();
+void task_init();
+void drv_init();
+void idle_task_func();
+void module_init();
+void time_init();
+void fpu_fault_init();
+void devfs_init();
+void timer_init();
+void drv_pre_init();
+void drv_post_init();
+
+void kmain()
+{
+	unsigned long memsize;
+	multiboot_info_t *pmbi=pmultiboot_info;
+	memsize=pmbi->mem_upper<<10;
+	
+	printk("mem size:%lu\n",memsize);
+
+	/* init begin */
+	kmalloc_init();
+	devfs_init();
+	drv_pre_init();
+	pic_init();
+	isr_init();
+	mm_init(memsize);
+	shm_init();
+	fpu_fault_init();
+	time_init();
+	timer_init();
+	drv_post_init();
+	module_init();
+	task_init();
+	/* init end */
+	
+	/* move to user mode */
+	idle_task_func();
+
+	/* 不可能到达这里 */
+	panic("kernel!\n");
+}
+

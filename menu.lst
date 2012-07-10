@@ -1,0 +1,37 @@
+# default - boot the first entry
+default 0
+
+# if have problem boot the second entry
+fallback 1
+
+# after 30 secs boot default
+timeout 2
+
+title OS
+	root (hd0,0)
+	kernel /mykern.bin
+	module /tty.bin
+	module /login.bin
+	module /init.bin
+	module /task2.bin
+	module /sh.bin
+	module /gauss.bin
+	module /pai.bin
+	module /addr.bin
+	module /lc-emu.bin
+	module /snake.bin
+	module /test.bin
+	module /w.bin
+	module /mario.bin
+	module /img.bmp
+	module /logo.bmp
+	module /cursor.bmp
+	module /asc16
+# Halt the machine
+title Turn off power!
+halt
+
+# Reboot the computer
+title Reboot
+reboot
+

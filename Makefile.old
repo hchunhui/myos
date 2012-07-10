@@ -1,0 +1,63 @@
+AS=as
+CC=gcc
+CPP=gcc -E -nostdinc
+LD=ld
+CFLAGS=-fno-strict-aliasing -fno-builtin -fno-stack-protector -nostdinc -Wall -c
+.PHONY: all emu everything clean bx dep user
+
+everything:
+	make -C boot
+	make -C kernel
+#	./wf new.img -src menu.lst -dest boot/grub/menu.lst
+#	./wf new.img -src kernel/kernel.bin -dest kernel.bin
+#cat boot/boot.bin boot/setup.bin kernel/kernel.bin>outspot/a.img
+all:clean everything
+clean:
+	make -C boot clean
+	make -C kernel clean
+	make -C lib clean
+	make -C drv clean
+	rm -f outspot/*
+emu: everything
+	qemu -soundhw pcspk -s -hda new.img -boot c -m 128 -localtime
+bx: everything
+	bochs -f new.bxrc
+user:
+#make -C app clean
+#make -C libc clean
+	make -C libc
+	make -C app
+#	./wf new.img -src app/normal_task.bin -dest app1.bin
+#	./wf new.img -src app/task2.bin -dest task2.bin
+#	./wf new.img -src app/sh.bin -dest sh.bin
+#	./wf new.img -src app/gauss.bin -dest gauss.bin
+#	./wf new.img -src app/pai.bin -dest pai.bin
+#	./wf new.img -src app/addr.bin -dest addr.bin
+#	./wf new.img -src app/w/w.bin -dest w.bin
+#	./wf new.img -src app/lc-emu.bin -dest lc-emu.bin
+#	./wf new.img -src app/snake.bin -dest snake.bin
+#	./wf new.img -src app/mine.bin -dest mine.bin
+#cat app/normal_task.bin d.img>c.img
+mkimg: mount_img domkimg umount_img
+
+domkimg:
+	sudo rm -f mnt/*.bin
+	sudo rm -f mnt/boot/grub/menu.lst
+	sudo cp kernel/kernel.bin mnt/
+	sudo cp app/*.bin mnt/
+	sudo cp app/w/*.bin mnt/
+	sudo cp app/mario/src/mario.bin mnt/
+	sudo cp menu.lst mnt/boot/grub/menu.lst
+mount_img:
+	sudo losetup -o 32256 /dev/loop0 new.img
+	sudo mount /dev/loop0 mnt
+umount_img:
+	sudo umount mnt
+	sudo losetup -d /dev/loop0
+dep:
+#make -C boot dep
+	make -C lib dep
+	make -C kernel dep
+	make -C drv dep
+##dep
+

@@ -1,0 +1,1 @@
+extern int MapData[1];
