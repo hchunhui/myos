@@ -7,33 +7,18 @@
 #include <drv/video.h>
 
 //some device for kernel use
-struct d_devfs den_video = {
-	.major = DEV_MAJOR_VIDEO,
-	.minor = 0,
-	.data = NULL,
-};
-
-struct d_devfs den_input = {
-	.major = DEV_MAJOR_INPUT,
-	.minor = 0,
-	.data = NULL,
-};
-
-struct d_devfs den_kb = {
-	.major = DEV_MAJOR_KB,
-	.minor = 0,
-	.data = NULL,
-};
+void *kb_data;
+void *video_data;
 
 void drv_pre_init()
 {
 	dev_register(DEV_MAJOR_VIDEO, &video_dev_desc);
-	fsys_devfs.open(&den_video, 0);
+	dev_simp_open(DEV_MAJOR_VIDEO, 0, 0, &video_data);
 }
 
 void drv_post_init()
 {
 	dev_register(DEV_MAJOR_INPUT, &inputsys_dev_desc);
 	dev_register(DEV_MAJOR_KB, &i8042_dev_desc);
-	fsys_devfs.open(&den_kb, 0);
+	dev_simp_open(DEV_MAJOR_KB, 0, 0, &kb_data);
 }

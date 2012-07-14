@@ -2,8 +2,7 @@
 #define _KDEV_H_
 #include <os/devfs.h>
 //some device for kernel use
-extern struct d_devfs den_video;
-extern struct d_devfs den_input;
-extern struct d_devfs den_kb;
+extern void *video_data;
+extern void *kb_data;
 
 #endif /* _KDEV_H_ */

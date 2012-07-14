@@ -2,23 +2,34 @@
 #define _VFS_H_
 #include <lib/list.h>
 #include <os/sem.h>
-#define PATH_MAX 64
-typedef void DEntry;
+#define PATH_MAX 256
+
 struct s_task;
 
-struct s_dentry
+struct s_super
 {
-	struct s_fsys *fsys;
-	DEntry *prev_d;
+	struct s_fsys *opr;
+	struct list_head list;
+};
+
+struct s_handle
+{
+	struct s_super *super;
+	char path[PATH_MAX];
+	char name[PATH_MAX];
+	int open;
+	void *priv_ptr;
+	unsigned long priv_long1;
+	unsigned long priv_long2;
+	unsigned long priv_long3;
 };
 
 struct s_fd
 {
-	char path[PATH_MAX];
-	DEntry *entry;
+	struct s_handle *handle;
 	int mode;
 	long offset;
-	int count;
+	int ref_count;
 };
 
 struct stat
@@ -31,24 +42,21 @@ struct stat
 struct s_fsys
 {
 	char name[16];
-	int (*open)(DEntry *entry, int mode);
-	int (*close)(DEntry *entry);
-	long (*read)(DEntry *entry, long off, void *buf, long len);
-	long (*write)(DEntry *entry, long off, void *buf, long len);
-	int (*ioctl)(DEntry *entry, int cmd, void *arg);
-	int (*get_stat)(DEntry *entry, struct stat **st);
-	int (*set_stat)(DEntry *entry, struct stat *st);
-	int (*next_dentry)(DEntry **prev_new, char **name);
-	int (*go_dir)(DEntry **prev_new);
-	int (*back_dir)(DEntry **prev_new);
-	int (*new_dentry)(DEntry *entry, char *name, int isdir, DEntry **result);
-	int (*link)(DEntry *from, DEntry *to);
-	int (*unlink)(DEntry *entry);
-	int (*post_mount)(DEntry *from, DEntry **to);
-	int (*pre_mount)(int major, int minor, DEntry *to, DEntry **new);
-	int (*post_umount)(DEntry *entry);
-	int (*pre_umount)(DEntry *entry);
-	int (*poll)(DEntry *entry, int func, struct list_head *lesm);
+	int (*open)(struct s_handle *h, int mode);
+	int (*close)(struct s_handle *h);
+	/* 这些操作需要打开文件 */
+	long (*read)(struct s_handle *h, long off, void *buf, long len);
+	long (*write)(struct s_handle *h, long off, void *buf, long len);
+	int (*readdir)(struct s_handle *h, struct s_handle *next);
+	int (*ioctl)(struct s_handle *h, int cmd, void *arg);
+	int (*poll)(struct s_handle *entry, int func, struct list_head *lesm);
+	/* 这些操作不需要打开文件 */
+	int (*mount)(struct s_super *super, int major, int minor, int option);
+	int (*umount)(struct s_super *super);
+	int (*stat)(struct s_handle *h, struct stat *st, int set);
+	int (*mknod)(struct s_handle *h, char *name, int type);
+	int (*link)(struct s_handle *from, struct s_handle *to);
+	int (*unlink)(struct s_handle *h);
 };
 
 struct poll_sem {
@@ -66,8 +74,8 @@ struct poll_sem {
 struct s_vfs
 {
 	struct s_fd *fdtab[FD_MAX];
-	DEntry *pwd;
-	DEntry *root;
+	struct s_handle *pwd;
+	struct s_handle *root;
 };
 
 void vfs_init(struct s_task *ptask);

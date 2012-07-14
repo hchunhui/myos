@@ -52,51 +52,48 @@ int dev_find_major(char *name)
 	return -1;
 }
 
-static int dev_open(DEntry *entry, int mode)
+/* raw interface */
+int dev_simp_open(int major, int minor, int mode, void **data)
 {
-	struct d_devfs *d = entry;
-	if(d->major < 0 || d->major > 255)
+	if(major < 0 || major > 255)
 		panic("dev_open: major");
-	if(dev_desc[d->major])
+	if(dev_desc[major])
 	{
-		if(dev_desc[d->major]->open)
-			return dev_desc[d->major]
-				->open(d->minor,
+		if(dev_desc[major]->open)
+			return dev_desc[major]
+				->open(minor,
 				       mode,
-				       &(d->data));
+				       data);
 		return 0;
 	}
-	d->data = NULL;
 	return -1;
 }
 
-static int dev_close(DEntry *entry)
+int dev_simp_close(int major, int minor, void *data)
 {
-	struct d_devfs *d = entry;
-	if(d->major < 0 || d->major > 255)
+	if(major < 0 || major > 255)
 		panic("dev_close: major");
-	if(dev_desc[d->major])
+	if(dev_desc[major])
 	{
-		if(dev_desc[d->major]->close)
-			return dev_desc[d->major]
-				->close(d->minor,
-					d->data);
+		if(dev_desc[major]->close)
+			return dev_desc[major]
+				->close(minor,
+					data);
 		return 0;
 	}
 	return -1;
 }
 
-static int dev_ctl(DEntry *entry, int cmd, void *arg)
+int dev_simp_ioctl(int major, int minor, void *data, int cmd, void *arg)
 {
-	struct d_devfs *d = entry;
-	if(d->major < 0 || d->major > 255)
+	if(major < 0 || major > 255)
 		panic("dev_ctl: major");
-	if(dev_desc[d->major])
+	if(dev_desc[major])
 	{
-		if(dev_desc[d->major]->ctl)
-			return dev_desc[d->major]
-				->ctl(d->minor,
-				      d->data,
+		if(dev_desc[major]->ctl)
+			return dev_desc[major]
+				->ctl(minor,
+				      data,
 				      cmd,
 				      arg);
 		return 0;
@@ -104,17 +101,16 @@ static int dev_ctl(DEntry *entry, int cmd, void *arg)
 	return -1;
 }
 
-static long dev_read(DEntry *entry, long off, void *buf, long n)
+long dev_simp_read(int major, int minor, void *data, long off, void *buf, long n)
 {
-	struct d_devfs *d = entry;
-	if(d->major < 0 || d->major > 255)
+	if(major < 0 || major > 255)
 		panic("dev_read: major");
-	if(dev_desc[d->major])
+	if(dev_desc[major])
 	{
-		if(dev_desc[d->major]->read)
-			return dev_desc[d->major]
-				->read(d->minor,
-				       d->data,
+		if(dev_desc[major]->read)
+			return dev_desc[major]
+				->read(minor,
+				       data,
 				       buf,
 				       n,
 				       off);
@@ -123,17 +119,16 @@ static long dev_read(DEntry *entry, long off, void *buf, long n)
 	return -1;
 }
 
-static long dev_write(DEntry *entry, long off, void *buf, long n)
+long dev_simp_write(int major, int minor, void *data, long off, void *buf, long n)
 {
-	struct d_devfs *d = entry;
-	if(d->major < 0 || d->major > 255)
+	if(major < 0 || major > 255)
 		panic("dev_write: major");
-	if(dev_desc[d->major])
+	if(dev_desc[major])
 	{
-		if(dev_desc[d->major]->write)
-			return dev_desc[d->major]
-				->write(d->minor,
-				       d->data,
+		if(dev_desc[major]->write)
+			return dev_desc[major]
+				->write(minor,
+				       data,
 				       buf,
 				       n,
 				       off);
@@ -142,17 +137,16 @@ static long dev_write(DEntry *entry, long off, void *buf, long n)
 	return -1;
 }
 
-static int dev_poll(DEntry *entry, int func, struct list_head *lsem)
+int dev_simp_poll(int major, int minor, void *data, int func, struct list_head *lsem)
 {
-	struct d_devfs *d = entry;
-	if(d->major < 0 || d->major > 255)
+	if(major < 0 || major > 255)
 		panic("dev_write: major");
-	if(dev_desc[d->major])
+	if(dev_desc[major])
 	{
-		if(dev_desc[d->major]->poll)
-			return dev_desc[d->major]
-				->poll(d->minor,
-				       d->data,
+		if(dev_desc[major]->poll)
+			return dev_desc[major]
+				->poll(minor,
+				       data,
 				       func,
 				       lsem);
 		/* default poll */
@@ -169,6 +163,86 @@ static int dev_poll(DEntry *entry, int func, struct list_head *lsem)
 		}
 	}
 	return -1;
+}
+
+
+/* file system interface */
+int dev_open(struct s_handle *h, int mode)
+{
+	int len, i;
+	int major, minor;
+	int lev;
+	char tmp[32];
+	/* get minor */
+	lev = 1;
+	len = strlen(h->name);
+	minor = 0;
+	for(i = len - 1; i >= 0; i--)
+	{
+		if(h->name[i] >= '0' && h->name[i] <= '9')
+			minor += lev * (h->name[i] - '0');
+		else
+			return -1;
+		lev *= 10;	
+	}
+	/* get device name */
+	len = strlen(h->path);
+	for(i = len -1; i >= 0; i--)
+		if(h->path[i] == '/')
+			break;
+	if(i < 0)
+		return -1;
+	memcpy(tmp, h->path + i + 1, len - i - 1);
+	tmp[len - i - 1] = 0;
+	/* find dev */
+	if((major = dev_find_major(tmp)) == -1)
+		return -1;
+	/* record */
+	h->priv_long1 = major;
+	h->priv_long2 = minor;
+	h->priv_ptr = NULL;
+	/* exec open */
+	return dev_simp_open(major, minor, mode, &(h->priv_ptr));
+}
+
+static int dev_close(struct s_handle *h)
+{
+	int major = h->priv_long1;
+	int minor = h->priv_long2;
+	void *data = h->priv_ptr;
+	return dev_simp_close(major, minor, data);
+}
+
+static int dev_ctl(struct s_handle *h, int cmd, void *arg)
+{
+	int major = h->priv_long1;
+	int minor = h->priv_long2;
+	void *data = h->priv_ptr;
+	return dev_simp_ioctl(major, minor, data, cmd, arg);
+}
+
+static long dev_read(struct s_handle *h, long off, void *buf, long n)
+{
+	int major = h->priv_long1;
+	int minor = h->priv_long2;
+	void *data = h->priv_ptr;
+	return dev_simp_read(major, minor, data, off, buf, n);
+}
+
+static long dev_write(struct s_handle *h, long off, void *buf, long n)
+{
+	int major = h->priv_long1;
+	int minor = h->priv_long2;
+	void *data = h->priv_ptr;
+	return dev_simp_write(major, minor, data, off, buf, n);
+}
+
+static int dev_poll(struct s_handle *h, int func, struct list_head *lsem)
+{
+	int major = h->priv_long1;
+	int minor = h->priv_long2;
+	void *data = h->priv_ptr;
+	return dev_simp_poll(major, minor, data, func, lsem);
 }
 
 extern struct dev_desc null_dev_desc;

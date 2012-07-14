@@ -33,9 +33,9 @@ long sys_get_stime()
 
 long sys_get_graph_info(struct myos_graph_info *info)
 {
-	return fsys_devfs.ioctl(&den_video,
-		       VIDEO_CMD_GET_INFO,
-		       info);
+	return dev_simp_ioctl(DEV_MAJOR_VIDEO, 0, video_data,
+			      VIDEO_CMD_GET_INFO,
+			      info);
 }
 
 long sys_pause()

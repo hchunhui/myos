@@ -3,21 +3,13 @@
 #include <lib/list.h>
 #include <os/vfs.h>
 
-struct d_devfs
-{
-	struct s_dentry common;
-	int major;
-	int minor;
-	void *data;
-};
-
 struct dev_desc
 {
 	char name[32];
 	int (*init)();
 	int (*exit)();
 	int (*open)(int minor, int mode, void **data);
-	int (*close)(int minor, void *data);
+	int (*close)(int minor, void *data );
 	int (*ctl)(int minor, void *data, int cmd, void *arg);
 	long (*read)(int minor, void *data, void *buf, long n, long off);
 	long (*write)(int minor, void *data, void *buf, long n, long off);
@@ -27,6 +19,13 @@ struct dev_desc
 int dev_register(int major, struct dev_desc *desc);
 int dev_unregister(int major);
 int dev_find_major(char *name);
+
+int dev_simp_open(int major, int minor, int mode, void **data);
+int dev_simp_close(int major, int minor, void *data);
+int dev_simp_ioctl(int major, int minor, void *data, int cmd, void *arg);
+long dev_simp_read(int major, int minor, void *data, long off, void *buf, long n);
+long dev_simp_write(int major, int minor, void *data, long off, void *buf, long n);
+int dev_simp_poll(int major, int minor, void *data, int func, struct list_head *lsem);
 
 extern struct s_fsys fsys_devfs;
 #define DEV_MAJOR_NULL 0

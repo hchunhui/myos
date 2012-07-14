@@ -7,9 +7,7 @@
 #include <drv/klog.h>
 
 static int flag;
-struct s_klog {
-	struct d_devfs d_pipe;
-} g_klog;
+void *klog_data;
 
 void print_early(char *obj);
 void (*print)(char *obj) = print_early;
@@ -17,7 +15,7 @@ void (*print)(char *obj) = print_early;
 static void print_normal(char *obj)
 {
 	int n = strlen(obj);
-	fsys_devfs.write(&g_klog.d_pipe, 0, obj, n);
+	dev_simp_write(DEV_MAJOR_PIPE, 0, klog_data, 0, obj, n);
 }
 
 static int klog_init()
@@ -33,31 +31,26 @@ static int klog_exit()
 
 static int klog_open(int minor, int mode, void **data)
 {
-	struct s_klog *klog;
+	void *klog;
 	if(flag)
 		return -1;
 	flag = 1;
-	klog = &g_klog;
-	klog->d_pipe.common.fsys = &fsys_devfs;
-	klog->d_pipe.major = DEV_MAJOR_PIPE;
-	klog->d_pipe.minor = 0;
-	fsys_devfs.open(&klog->d_pipe, 0);
+	dev_simp_open(DEV_MAJOR_PIPE, 0, 0, &klog);
 	*data = klog;
+	klog_data = klog;
 	return 0;
 }
 
 static int klog_close(int minor, void *data)
 {
-	struct s_klog *klog = data;
 	print = print_early;
-	fsys_devfs.close(&klog->d_pipe);
+	dev_simp_close(DEV_MAJOR_PIPE, 0, klog_data);
 	flag = 0;
 	return 0;
 }
 
 static int klog_ctl(int minor, void *data, int cmd, void *arg)
 {
-	struct s_klog *klog = data;
 	switch(cmd)
 	{
 	case KLOG_CMD_BEGIN:
@@ -72,8 +65,7 @@ static int klog_ctl(int minor, void *data, int cmd, void *arg)
 
 static long klog_read(int minor, void *data, void *buf, long n, long off)
 {
-	struct s_klog *klog = data;
-	return fsys_devfs.read(&klog->d_pipe, off, buf, n);
+	return dev_simp_read(DEV_MAJOR_PIPE, 0, klog_data, off, buf, n);
 }
 
 static long klog_write(int minor, void *data, void *buf, long n, long off)
@@ -83,8 +75,7 @@ static long klog_write(int minor, void *data, void *buf, long n, long off)
 
 static int klog_poll(int minor, void *data, int func, struct list_head *lsem)
 {
-	struct s_klog *klog = data;
-	return fsys_devfs.poll(&klog->d_pipe, func, lsem);
+	return dev_simp_poll(DEV_MAJOR_PIPE, 0, klog_data, func, lsem);
 }
 
 struct dev_desc klog_dev_desc = {

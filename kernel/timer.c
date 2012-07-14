@@ -12,11 +12,6 @@
 extern int timer;	//in HZ
 extern int timer_long;	//in USR_HZ
 
-static struct d_devfs den_pit = {
-	.major = DEV_MAJOR_PIT,
-	.minor = 0,
-};
-
 int do_timer_int()
 {
 	if(--timer < 0)
@@ -33,9 +28,11 @@ int do_timer_int()
 
 void timer_init()
 {
+	void *data;
 	dev_register(DEV_MAJOR_PIT, &timer_dev_desc);
-	fsys_devfs.open(&den_pit, 0);
-	fsys_devfs.ioctl(&den_pit, TIMER_CMD_SETFREQ, (void *)HZ);
+	dev_simp_open(DEV_MAJOR_PIT, 0, 0, &data);
+	dev_simp_ioctl(DEV_MAJOR_PIT, 0, data,
+		       TIMER_CMD_SETFREQ, (void *)HZ);
 	irq_register(IRQ_TIMER, do_timer_int);
 	pic_enable_irq(IRQ_TIMER);
 }

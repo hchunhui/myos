@@ -1,4 +1,4 @@
-AUTOOBJS= devfs.o exec.o fork.o isr.o kmain.o message.o module.o rootfs.o sem.o shm.o syscall.o task.o time.o timer.o vfs.o waitexit.o  ##auto 
+AUTOOBJS= devfs.o exec.o fork.o isr.o kmain.o message.o module.o sem.o shm.o syscall.o task.o time.o timer.o vfs.o waitexit.o  ##auto 
 OBJS=$(AUTOOBJS)
 ROOT=..
 everything: build.a
@@ -48,11 +48,6 @@ message.o: message.c ../include/os/task.h \
  ../arch_x86/include/os/pic_i8259.h
 module.o: module.c ../include/lib/klib.h ../include/os/multiboot.h \
  ../include/lib/string.h
-rootfs.o: rootfs.c ../include/os/type.h ../include/lib/klib.h \
- ../include/os/task.h ../arch_x86/include/os/arch_task.h \
- ../arch_x86/include/os/regs.h ../include/libc/kstru.h \
- ../include/os/sem.h ../include/lib/list.h ../include/lib/string.h \
- ../include/os/vfs.h
 sem.o: sem.c ../include/os/task.h ../arch_x86/include/os/arch_task.h \
  ../arch_x86/include/os/regs.h ../include/os/type.h \
  ../include/libc/kstru.h ../include/os/sem.h ../include/lib/list.h \

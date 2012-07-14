@@ -5,11 +5,6 @@
 
 static long startup_time;
 
-static struct d_devfs den_rtc = {
-	.major = DEV_MAJOR_RTC,
-	.minor = 0,
-};
-
 long time_get_startup_time()
 {
 	return startup_time;
@@ -17,10 +12,11 @@ long time_get_startup_time()
 
 void time_init()
 {
+	void *data;
 	dev_register(DEV_MAJOR_RTC, &rtc_dev_desc);
-	fsys_devfs.open(&den_rtc, 0);
-	fsys_devfs.ioctl(&den_rtc, RTC_CMD_READ, &startup_time);
-	fsys_devfs.close(&den_rtc);
+	dev_simp_open(DEV_MAJOR_RTC, 0, 0, &data);
+	dev_simp_ioctl(DEV_MAJOR_RTC, 0, data, RTC_CMD_READ, &startup_time);
+	dev_simp_close(DEV_MAJOR_RTC, 0, data);
 	printk("  startup_time: %ld\n",startup_time);
 }
 

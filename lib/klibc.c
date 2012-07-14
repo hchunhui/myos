@@ -14,5 +14,5 @@ void panic(char* text)
 
 void print_early(char *obj)
 {
-	fsys_devfs.write(&den_video, 0, obj, strlen(obj));
+	dev_simp_write(DEV_MAJOR_VIDEO, 0, video_data, 0, obj, strlen(obj));
 }
