@@ -5,7 +5,6 @@
 #include <os/vfs.h>
 #include <os/devfs.h>
 #include <os/asm.h>
-
 #include <os/multiboot.h>
 
 extern struct s_fsys fsys_ramfs;
@@ -445,9 +444,13 @@ static void vfs_import_tar(char *tardata)
 
 void vfs_start()
 {
-	void module_init();
-	void ramfs_import_tar(char *tardata);
 	struct s_super *ram_super;
+	module_t *mod;
+	multiboot_info_t *pmbi = pmultiboot_info;
+	int i, l;
+	char *s;
+
+	/* mount root file system */
 	INIT_LIST_HEAD(&supers);
 
 	printk("vfs: mount root\n");
@@ -457,19 +460,17 @@ void vfs_start()
 	list_add(&ram_super->list, &supers);
 	sysroot = ram_super;
 
+	/* import tar */
 	printk("vfs: import modules to file system\n");
-	module_init();
-
-	module_t *mod;
-	multiboot_info_t *pmbi=pmultiboot_info;
-	int i;
-	for (i = 0, mod = (module_t *) pmbi->mods_addr; i < pmbi->mods_count; i++, mod ++)
+	
+	for (i = 0, mod = (module_t *) pmbi->mods_addr;
+	     i < pmbi->mods_count; i++, mod ++)
 	{
-		//printk("--%s\n", mod->string);
-		if(strcmp("/initrd.tar",(char*)(mod->string))==0)
-		{
+		s = (char *)(mod->string);
+		l = strlen(s);
+		if(l > 3 && s[l-4] == '.' &&
+		   s[l-3] == 't' && s[l-2] == 'a' && s[l-1] == 'r')
 			vfs_import_tar((char *)mod->mod_start);
-		}
 	}
 }
 
