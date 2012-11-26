@@ -69,7 +69,7 @@ int execle(char *path, char *arg, ...)
 {
 	char **ptr;
 	for(ptr = &arg; *ptr; ptr++);
-	ptr = (char **)(*++ptr);
+	ptr = (char **)*(ptr+1);
 	return execve(path, &arg, ptr);
 }
 
