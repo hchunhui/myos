@@ -85,7 +85,7 @@ no_echo:;
 
 void clear_video()
 {
-	const char *retchar =
+	char *retchar =
 		"\n\n\n\n\n\n\n\n\n\n"
 		"\n\n\n\n\n\n\n\n\n\n"
 		"\n\n\n\n\n";
