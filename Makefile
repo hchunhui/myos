@@ -1,4 +1,5 @@
-AUTOOBJS= AUTOOBJS= AUTOOBJS= AUTOOBJS= AUTOOBJS= INC=include
+AUTOOBJS= AUTOOBJS= AUTOOBJS= AUTOOBJS= AUTOOBJS= AUTOOBJS= INC=include
+QEMU=qemu-system-i386
 everything: mk1 mykern.bin
 include Makefile.arch
 .PHONY: all cemu emu kvm everything clean bx dep user x86 linux
@@ -15,13 +16,14 @@ linux:
 	rm -f arch
 	ln -s arch_linux arch
 kvm: everything
-	qemu -enable-kvm -s -hda new.img -boot c -m 128 -localtime
+	$(QEMU) -enable-kvm -s -hda new.img -boot c -m 128 -localtime
 emu: everything
-	qemu -s -hda new.img -boot c -m 128 -localtime
+	$(QEMU) -no-kvm -s -hda new.img -boot c -m 128 -localtime
 cemu: everything
-	qemu -s -hda new.img -boot c -m 128 -localtime -display curses
+	$(QEMU) -no-kvm -s -hda new.img -boot c -m 128 -localtime -display curses
 demu: everything
-	qemu -S -s -hda new.img -boot c -m 128 -localtime
+	$(QEMU) -no-kvm -S -s -hda new.img -boot c -m 128 -localtime &
+	xterm gdb
 bx: everything
 	bochs -f new.bxrc
 user:

@@ -8,7 +8,7 @@ define hook-stop
     if $lastcs != 8 && $lastcs != 27
       set architecture i386
     end
-    x/i $pc
+    #x/i $pc
   else
     if $lastcs == -1 || $lastcs == 8 || $lastcs == 27
       set architecture i8086

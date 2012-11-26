@@ -1,6 +1,6 @@
 AUTOOBJS= desc.o init.o multiboot.o  ##auto 
 OBJS=$(AUTOOBJS)
-ROOT=..\/..
+ROOT=../..
 everything: build.a
 include $(ROOT)/Makefile.arch
 .PHONY: all every everything clean dep

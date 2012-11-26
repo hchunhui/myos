@@ -5,7 +5,7 @@ default 0
 fallback 1
 
 # after 30 secs boot default
-timeout 2
+timeout 0
 
 title OS
 	root (hd0,0)

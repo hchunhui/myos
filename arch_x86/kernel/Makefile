@@ -1,6 +1,6 @@
 AUTOOBJS= entry.o fpu.o mm.o pic_i8259.o realmode.o task_x86.o  ##auto 
 OBJS=$(AUTOOBJS)
-ROOT=..\/..
+ROOT=../..
 everything: build.a
 include $(ROOT)/Makefile.arch
 .PHONY: all every everything clean dep
