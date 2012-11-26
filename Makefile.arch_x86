@@ -1,4 +1,4 @@
-INC=-I$(ROOT)\/arch_x86\/include -I$(ROOT)\/include
+INC=-I$(ROOT)/arch_x86/include -I$(ROOT)/include
 AS=as -m32
 CC=gcc -m32
 CPP=gcc -E -nostdinc -fno-leading-underscore $(INC)
@@ -22,8 +22,8 @@ clean:
 	rm -f *~
 dep:
 	sed '/\#\#auto/d;/\#\#dep/q' Makefile>tmp_make
-	for i in *.c;do `echo $$i|sed '/^/s//$(CPP) -M /;/*/d'`>>tmp_make;done
-	for i in *.S;do `echo $$i|sed '/^/s//$(CPP) -M -D__ASSEMBLY__ /;/*/d'`>>tmp_make;done
+	for i in `ls *.c`;do `echo '$(CPP) -M' $$i`>>tmp_make;done
+	for i in `ls *.S`;do `echo '$(CPP) -M -D__ASSEMBLY__' $$i`>>tmp_make;done 
 	echo AUTOOBJS=|tr "\n" " ">tmp_make2
 	ls -m *.c *.S|sed 's/\.[cS]/.o/g;s/,//g'|tr "\n" " "| \
 	sed '/$$/a\#\#auto'|tr "\n" " "|sed '/$$/a\'>>tmp_make2
