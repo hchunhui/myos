@@ -29,8 +29,6 @@
 #define __NR_get_stime		12
 #define __NR_waitpid		13
 #define __NR_execve		14
-#define __NR_get_module		15
-#define __NR_get_module_size 	16
 #define __NR_gettime		17
 #define __NR_get_graph_info	18
 #define __NR_pause		19

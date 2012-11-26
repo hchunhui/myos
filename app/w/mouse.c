@@ -28,12 +28,20 @@ void mouse_do_km_mouseact(WInfo *pwinfo, MSG *pmsg)
 char mbmp[10*1024];
 static void cursor_init()
 {
+	int fd;
 	cursor->video = curmem;
 	cursor->x = 12;
 	cursor->y = 20;
 	cursor->depth = 16;
 	
-	get_module("/cursor.bmp", mbmp);
+	fd = open("/share/cursor.bmp", 0);
+	if(fd < 0)
+	{
+		printf("can't find cursor.bmp!\n");
+		exit(1);
+	}
+	read(fd, mbmp, 10*1024);
+	close(fd);
 	
 	draw_bmp(cursor, 0, 0, mbmp, 0, 0);
 }

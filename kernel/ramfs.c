@@ -11,6 +11,7 @@ struct s_iramfs
 {
 	int ref_count;
 	int isdir;
+	int fixed;
 	union {
 		char *data;
 		struct s_dramfs *ds;
@@ -53,6 +54,7 @@ static struct s_iramfs *my_mkdir(struct s_iramfs *p_inode)
 	inode = kmalloc(sizeof(struct s_iramfs));
 	inode->ref_count = 0;
 	inode->isdir = 1;
+	inode->fixed = 0;
 	inode->ds = kmalloc(sizeof(struct s_dramfs)*2);
 	inode->len = 2;
 	inode->alloc_len = 2;
@@ -68,9 +70,10 @@ static struct s_iramfs *my_mkfile()
 	inode = kmalloc(sizeof(struct s_iramfs));
 	inode->ref_count = 0;
 	inode->isdir = 0;
-	inode->data = kmalloc(16);
+	inode->fixed = 0;
+	inode->data = NULL;
 	inode->len = 0;
-	inode->alloc_len = 16;
+	inode->alloc_len = 0;
 	return inode;
 }
 
@@ -198,11 +201,17 @@ static long ramfs_readdir(struct s_handle *h, long off, struct dirent *buf, long
 static long ramfs_read(struct s_handle *h, long off, void *buf, long len)
 {
 	struct s_iramfs *inode;
+	long i;
 	inode = h->inode;
 	if(inode->isdir)
 		return -1;
-
-	return 0;
+	for(i = 0; i < len; i++)
+	{
+		if(i + off >= inode->len)
+			break;
+		((char *)buf)[i] = inode->data[i+off];
+	}
+	return i;
 }
 
 static long ramfs_write(struct s_handle *h, long off, void *buf, long len)
@@ -229,3 +238,15 @@ struct s_fsys fsys_ramfs = {
 	.link = ramfs_link,
 	.unlink = ramfs_unlink,
 };
+
+void ramfs_set_file(void *i, char *data, long len)
+{
+	struct s_iramfs *inode = i;
+	if(!inode->fixed && inode->data)
+		kfree(inode->data);
+	inode->fixed = 1;
+	inode->len = len;
+	inode->alloc_len = len;
+	inode->data = data;
+}
+

@@ -9,6 +9,7 @@ static char asctab[16 * 256];
 int
 draw_init()
 {
+	int fd;
 	get_graph_info(&info);
 	
 	if(info.depth != 16)
@@ -16,8 +17,14 @@ draw_init()
 		printf("depth!=16\n");
 		return 1;
 	}
-	
-	get_module("/asc16", asctab);
+	fd = open("/share/asc16", 0);
+	if(fd < 0)
+	{
+		printf("can't find asc16!\n");
+		return 1;
+	}
+	read(fd, asctab, 16*256);
+	close(fd);
 	tty_switch(4);
 	return 0;
 }

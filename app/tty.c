@@ -276,7 +276,7 @@ void fork_shell(struct s_tty *ptty)
 		dup2(ptty->pipe_in, 0);
 		dup2(ptty->pipe_out, 1);
 		dup2(ptty->pipe_out, 2);
-		exit(execl("/login.bin", "login", 0));
+		exit(execl("/bin/login.bin", "login", 0));
 	} else if(ret < 0) {
 		t_print("error!\n");
 		exit(1);

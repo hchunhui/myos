@@ -9,7 +9,7 @@ int main(int argc,char **argv)
 	{
 		printf("spawning shell...\n");
 		if((ret = vfork()) == 0)
-			exit(execl("/sh.bin", "*sh*", 0));
+			exit(execl("/bin/sh.bin", "*sh*", 0));
 		else if(ret < 0)
 			break;
 		pid = waitpid(-1,&status,0);

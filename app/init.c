@@ -25,7 +25,7 @@ int main(int argc, char **argv)
 		if((ret = vfork()) == 0)
 		{
 			close(video_fd);
-			exit(execve("/tty.bin", tty_argv, environ));
+			exit(execve("/bin/tty.bin", tty_argv, environ));
 		}
 		else if(ret < 0)
 			break;

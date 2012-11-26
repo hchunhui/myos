@@ -56,9 +56,6 @@ int waitpid(int pid,int* status,int options);
 void getline(char* buf);
 long gettime();
 
-int get_module_size(char* filename);
-int get_module(char* filename,char* buf);
-
 int get_graph_info(struct myos_graph_info *info);
 int tty_switch(int nr);
 

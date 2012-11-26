@@ -5,9 +5,9 @@
 #include <os/mm.h>
 #include <lib/klib.h>
 #include <lib/string.h>
-#include <os/module.h>
 #include <os/i386-elf.h>
 #include <os/sem.h>
+#include <os/vfs.h>
 #define ARGS_MAX 512
 int do_execve(char *path, char *argv[], char *envp[])
 {
@@ -22,8 +22,10 @@ int do_execve(char *path, char *argv[], char *envp[])
 	int len;
 	int i;
 	unsigned long stack_top, prev_stack_top;
-	ssize_t size;
+	long chunk, cc;
 	struct s_task *ptask = current;
+
+	int fd;
 	
 	ppath = kmalloc(strlen(path)+1);
 	pargs = kmalloc(4096);
@@ -31,13 +33,12 @@ int do_execve(char *path, char *argv[], char *envp[])
 	penvp = kmalloc(ARGS_MAX*sizeof(int));
 	strcpy(ppath, path);
 
-	size = module_get_size(ppath);
-	if(!size)
+	fd = vfs_open(path, 0);
+	if(fd < 0)
 	{
 		retval = -1;
 		goto out;
 	}
-	retval = 0;
 
 	argsc = 0;
 	if(argv) {
@@ -85,10 +86,10 @@ int do_execve(char *path, char *argv[], char *envp[])
 	sem_up(&ptask->vfork_sem);
 	ptask->brk = kernel_brk + 256*1024*1024;
 
-	if(!module_get(ppath,(char*)kernel_brk))
-	{
-		panic("do_execve: file not found.");
-	}
+	cc = 0;
+	while((chunk = vfs_read(fd, (char *)(kernel_brk + cc), 4096)) > 0)
+		cc += chunk;
+	vfs_close(fd);
 	
 	stack_top = usr_stack_top - 4096;
 	memcpy((void *)stack_top,

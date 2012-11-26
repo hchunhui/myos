@@ -21,12 +21,20 @@ u16 deskmem[800*600];
 
 void desktop_init()
 {
+	int fd;
 	draw_set_canvas(desk, deskmem);
 	
 	draw_clear_screen(desk, RGB(31,63,31));
 	draw_rect(desk, 100,100,699,499,RGB(0,50,0),1);
 	
-	get_module("/logo.bmp", bmp);
+	fd = open("/share/logo.bmp", 0);
+	if(fd < 0)
+	{
+		printf("can't find logo.bmp!\n");
+		exit(1);
+	}
+	read(fd, bmp, 1024*1024);
+	close(fd);
 	draw_bmp(desk, 120,20,bmp,0xffff,1);
 	draw_string(desk, 0, 0, "Hello World! Version 2", 0);
 }

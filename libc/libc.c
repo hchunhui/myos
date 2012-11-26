@@ -33,16 +33,6 @@ long gettime()
 	return usr_sys_call0(__NR_gettime);
 }
 
-int tty_read(void* buf,long count)
-{
-	return usr_sys_call3(__NR_read, 0, buf, count);
-}
-
-int tty_write(void* buf,long count)
-{
-	return usr_sys_call3(__NR_write, 1, buf, count);
-}
-
 int fork()
 {
 	return usr_sys_call0(__NR_fork);
@@ -86,29 +76,25 @@ int execle(char *path, char *arg, ...)
 void getline(char* buf)
 {
 	int n;
-	n = tty_read(buf, 256);
+	n = read(0, buf, 256);
 	buf[n] = 0;
 }
 
 void uprint(char* obj)
 {
-	int len=strlen(obj);
-	tty_write(obj,len);
+	int len, n;
+	len = strlen(obj);
+	while(len)
+	{
+		n = write(1, obj, len);
+		obj += n;
+		len -= n;
+	}
 }
 
 int get_graph_info(struct myos_graph_info *info)
 {
 	return usr_sys_call1(__NR_get_graph_info,info);
-}
-
-int get_module_size(char* filename)
-{
-	return usr_sys_call1(__NR_get_module_size,filename);
-}
-
-int get_module(char* filename,char* buf)
-{
-	return usr_sys_call2(__NR_get_module,filename,buf);
 }
 
 int send(int pid_to, MSG *m)

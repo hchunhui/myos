@@ -257,8 +257,8 @@ sys_call_table:
 	.long sys_get_stime
 	.long sys_waitpid
 	.long sys_execve
-	.long sys_get_module	/* 15 */
-	.long sys_get_module_size
+	.long 0			/* 15 */
+	.long 0
 	.long sys_gettime
 	.long sys_get_graph_info
 	.long sys_pause

@@ -6,6 +6,8 @@
 #include <os/devfs.h>
 #include <os/asm.h>
 
+#include <os/multiboot.h>
+
 extern struct s_fsys fsys_ramfs;
 static struct list_head supers; /* list of struct s_super */
 static struct s_super *sysroot;
@@ -377,9 +379,74 @@ void vfs_exit(struct s_task *ptask)
 	kfree(ptask->vfs);
 }
 
+struct posix_tar_header
+{				/* byte offset */
+	char name[100];		/*   0 */
+	char mode[8];		/* 100 */
+	char uid[8];		/* 108 */
+	char gid[8];		/* 116 */
+	char size[12];		/* 124 */
+	char mtime[12];		/* 136 */
+	char chksum[8];		/* 148 */
+	char typeflag;		/* 156 */
+	char linkname[100];	/* 157 */
+	char magic[6];		/* 257 */
+	char version[2];	/* 263 */
+	char uname[32];		/* 265 */
+	char gname[32];		/* 297 */
+	char devmajor[8];	/* 329 */
+	char devminor[8];	/* 337 */
+	char prefix[155];	/* 345 */
+	/* 500 */
+};
+
+static void vfs_import_tar(char *tardata)
+{
+	void ramfs_set_file(void *i, char *data, long len);
+	int tarp;
+	struct posix_tar_header * phdr;
+	struct s_handle *h;
+	char *p;
+	int f_len;
+	printk("import_tar!!!!\n");
+	tarp = 0;
+	while(1)
+	{
+		phdr = (struct posix_tar_header *)(tardata + tarp);
+		if (tardata[tarp] == 0)
+			break;
+		tarp += 512;
+		/* calculate the file size */
+		p = phdr->size;
+		f_len = 0;
+		while (*p)
+			f_len = (f_len * 8) + (*p++ - '0'); /* octal */
+
+		printk("%s len %d\n", phdr->name, f_len);
+		/* parse name */
+		for(p = phdr->name; *p; p++)
+		{
+			if(*p == '/')
+			{
+				*p = 0;
+				vfs_mknod(phdr->name, 1);
+				*p = '/';
+			}
+		}
+		if(*(p-1) != '/')
+		{
+			vfs_mknod(phdr->name, 0);
+			h = path_open(phdr->name);
+			ramfs_set_file(h->inode, tardata + tarp, f_len);
+			tarp += ((f_len-1)/512 + 1)*512;
+		}
+	}
+}
+
 void vfs_start()
 {
 	void module_init();
+	void ramfs_import_tar(char *tardata);
 	struct s_super *ram_super;
 	INIT_LIST_HEAD(&supers);
 
@@ -392,6 +459,18 @@ void vfs_start()
 
 	printk("vfs: import modules to file system\n");
 	module_init();
+
+	module_t *mod;
+	multiboot_info_t *pmbi=pmultiboot_info;
+	int i;
+	for (i = 0, mod = (module_t *) pmbi->mods_addr; i < pmbi->mods_count; i++, mod ++)
+	{
+		//printk("--%s\n", mod->string);
+		if(strcmp("/initrd.tar",(char*)(mod->string))==0)
+		{
+			vfs_import_tar((char *)mod->mod_start);
+		}
+	}
 }
 
 asmlinkage long sys_open(char *name, int flags)

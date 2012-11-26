@@ -45,15 +45,33 @@ void mkdir(char *name)
 	mknod(name, 1);
 }
 
+void cat(char *name)
+{
+	int fd;
+	int n, m, cnt;
+	char buf[256];
+	char *p;
+	fd = open(name, 0);
+	cnt = 0;
+	while((n = read(fd, buf, 256)) > 0)
+	{
+		p = buf;
+		cnt += n;
+		while(n)
+		{
+			m = write(1, p, n);
+			n -= m;
+			p += m;
+		}
+	}
+	close(fd);
+	printf("\ncat: %d bytes!\n", cnt);
+}
+
 extern char **environ;
 int main(int argc, char **argv)
 {
 	char *p;
-
-	mknod("/a", 0);
-	mknod("/dir", 1);
-	mknod("/dir/a", 0);
-	mknod("/dir/b", 0);
 	printf(
 		"Alt+(1,2,3,4) : change console.\n"
 		"Alt+5         : graphic mode.\n"
@@ -85,6 +103,11 @@ int main(int argc, char **argv)
 			buf[3] == 'i' && buf[4] == 'r' && buf[5] == ' ')
 		{
 			mkdir(buf+6);
+		}
+		else if(buf[0] == 'c' && buf[1] == 'a' && buf[2] == 't' &&
+			buf[3] == ' ')
+		{
+			cat(buf+4);
 		}
 		else if(buf[0]=='\0')
 		{
