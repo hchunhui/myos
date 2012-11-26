@@ -6,27 +6,41 @@
 #include <os/devfs.h>
 #include <os/asm.h>
 
+extern struct s_fsys fsys_ramfs;
 static struct list_head supers; /* list of struct s_super */
 static struct s_super *sysroot;
 
 static struct s_handle *new_handle(
 	struct s_super *super,
+	void *inode,
 	char *path,
 	char *name)
 {
 	struct s_handle *h;
 	h = kmalloc(sizeof(struct s_handle));
 	h->super = super;
+	h->inode = inode;
+	h->priv_ptr = NULL;
 	strcpy(h->path, path);
 	strcpy(h->name, name);
 	return h;
 }
 
-static void dup_handle(
-	struct s_handle *src,
-	struct s_handle *dest)
+static struct s_handle *new_handle0()
 {
-	memcpy(dest, src, sizeof(struct s_handle));
+	struct s_handle *h;
+	h = kmalloc(sizeof(struct s_handle));
+	memset(h, 0, sizeof(struct s_handle));
+	return h;
+}
+
+static struct s_handle *dup_handle(
+	struct s_handle *s)
+{
+	struct s_handle *h;
+	h = kmalloc(sizeof(struct s_handle));
+	memcpy(h, s, sizeof(struct s_handle));
+	return h;
 }
 
 static void free_handle(
@@ -82,6 +96,60 @@ static int release_fd(
 	return 0;
 }
 
+static int get_name(char **pps, char *buf)
+{
+	int n;
+	char *ps = *pps;
+	while(*ps == '/')
+		ps++;
+	n = 0;
+	while(*ps && *ps != '/')
+	{
+		*buf++ = *ps++;
+		n++;
+	}
+	*buf = 0;
+	*pps = ps;
+	return n;
+}
+
+static struct s_handle *path_open(char *ps)
+{
+	int n;
+	int i;
+	char buf[32];
+	struct s_handle *h;
+        struct s_fsys *opr;
+	struct dirent dbuf;
+	h = new_handle(sysroot, sysroot->root_inode, "", "");
+	opr = h->super->opr;
+	while(1)
+	{
+		if((n = get_name(&ps, buf))== 0)
+			goto final;
+		if(opr->open(h, 0))
+			return NULL;
+		for(i = 0;;i++)
+		{
+			if(opr->readdir(h, i, &dbuf, 1) == 0)
+				goto not_found;
+			if(strcmp(dbuf.d_name, buf) == 0)
+				goto found;
+		}
+	found:
+		opr->close(h);
+		h->inode = dbuf.inode;
+		if(h->inode == NULL)
+			return NULL;
+		continue;
+	not_found:
+		printk("path_open: error!\n");
+		return NULL;
+	}
+final:
+	return h;
+}
+
 static struct s_super dev_super;
 static struct s_handle
 *path_resolve(char *name)
@@ -101,11 +169,11 @@ static struct s_handle
 			if(name[i] == '/')
 				break;
 		name[i] = 0;
-		h = new_handle(&dev_super, name, name + i + 1);
+		h = new_handle(&dev_super, NULL, name, name + i + 1);
 		name[i] = '/';
 		return h;
 	}
-	return NULL;
+	return path_open(name);
 }
 
 int vfs_open(char *name, int flags)
@@ -138,7 +206,6 @@ int vfs_open(char *name, int flags)
 			free_handle(h);
 			return ret;
 		}
-		h->open = 1;
 		sfd->handle = h;
 		sfd->mode = flags;
 		return fd;
@@ -156,32 +223,96 @@ long vfs_read(int fd, void *buf, long count)
 {
 	struct s_fd *sfd;
 	struct s_handle *h;
+	long read;
 	sfd = current->vfs->fdtab[fd];
 	if(sfd == NULL)
 		return -1;
 	h = sfd->handle;
 	if(h->super->opr->read == NULL)
 		return count;
-	return h->super->opr->read(h,
+	read = h->super->opr->read(h,
 				   sfd->offset,
 				   buf,
 				   count);
+	sfd->offset += read;
+	return read;
+}
+
+long vfs_readdir(int fd, struct dirent *dirp, long count)
+{
+	struct s_fd *sfd;
+	struct s_handle *h;
+	long read;
+	sfd = current->vfs->fdtab[fd];
+	if(sfd == NULL)
+		return -1;
+	h = sfd->handle;
+	if(h->super->opr->readdir == NULL)
+		return count;
+	read = h->super->opr->readdir(h,
+				      sfd->offset,
+				      dirp,
+				      count);
+	sfd->offset += read;
+	return read;
+}
+
+int vfs_mknod(char *name, int type)
+{
+	struct s_handle *h;
+	int i, j, len;
+	char *kname;
+	int ret;
+	ret = 0;
+
+	/* 检查存在性 */
+	h = path_resolve(name);
+	if(h)
+	{
+		ret = -1;
+		goto clean1;
+	}
+	/* 创建 */
+	kname = kmalloc(PATH_MAX);
+	len = strlen(name);
+	for(i = len - 1; i >= 0; i--)
+		if(name[i] == '/')
+			break;
+	j = i < 0 ? 0 : i;
+	memcpy(kname, name, j);
+	kname[j] = 0;
+	h = path_open(kname);
+	if(h == NULL)
+	{
+		ret = -1;
+		goto clean;
+	}
+	strcpy(h->name, name+i+1);
+	strcpy(h->path, kname);
+	h->super->opr->mknod(h, type);
+clean:	kfree(kname);
+clean1:	free_handle(h);
+	printk("vfs_mknod: %d\n", ret);
+	return ret;
 }
 
 long vfs_write(int fd, void *buf, long count)
 {
 	struct s_fd *sfd;
 	struct s_handle *h;
+	long write;
 	sfd = current->vfs->fdtab[fd];
 	if(sfd == NULL)
 		return -1;
 	h = sfd->handle;
 	if(h->super->opr->write == NULL)
 		return count;
-	return h->super->opr->write(h,
-				    sfd->offset,
-				    buf,
-				    count);
+	write = h->super->opr->write(h,
+				     sfd->offset,
+				     buf,
+				     count);
+	sfd->offset += write;
+	return write;
 }
 
 int vfs_ioctl(int fd, int cmd, void *arg)
@@ -197,6 +328,22 @@ int vfs_ioctl(int fd, int cmd, void *arg)
 	return h->super->opr->ioctl(h,
 				    cmd,
 				    arg);
+}
+
+
+int vfs_fstat(int fd, struct stat *stat)
+{
+	struct s_fd *sfd;
+	struct s_handle *h;
+	sfd = current->vfs->fdtab[fd];
+	if(sfd == NULL)
+		return -1;
+	h = sfd->handle;
+	if(h->super->opr->stat == NULL)
+		return -1;
+	return h->super->opr->stat(h,
+				   stat,
+				   0);
 }
 
 void vfs_init(struct s_task *ptask)
@@ -230,6 +377,23 @@ void vfs_exit(struct s_task *ptask)
 	kfree(ptask->vfs);
 }
 
+void vfs_start()
+{
+	void module_init();
+	struct s_super *ram_super;
+	INIT_LIST_HEAD(&supers);
+
+	printk("vfs: mount root\n");
+	ram_super = kmalloc(sizeof(struct s_super));
+	if(fsys_ramfs.mount(ram_super, 0, 0, 0))
+		panic("unable to mount root!\n");
+	list_add(&ram_super->list, &supers);
+	sysroot = ram_super;
+
+	printk("vfs: import modules to file system\n");
+	module_init();
+}
+
 asmlinkage long sys_open(char *name, int flags)
 {
 	return vfs_open(name, flags);
@@ -243,6 +407,11 @@ asmlinkage long sys_close(int fd)
 asmlinkage long sys_read(int fd, void *buf, long count)
 {
 	return vfs_read(fd, buf, count);
+}
+
+asmlinkage long sys_readdir(int fd, struct dirent *dirp, long count)
+{
+	return vfs_readdir(fd, dirp, count);
 }
 
 asmlinkage long sys_write(int fd, void *buf, long count)
@@ -267,4 +436,14 @@ asmlinkage long sys_dup2(int oldfd, int newfd)
 	current->vfs->fdtab[oldfd]->ref_count++;
 	current->vfs->fdtab[newfd] = current->vfs->fdtab[oldfd];
 	return 0;
+}
+
+asmlinkage long sys_mknod(char *name, int type)
+{
+	return vfs_mknod(name, type);
+}
+
+asmlinkage long sys_fstat(int fd, struct stat *stat)
+{
+	return vfs_fstat(fd, stat);
 }

@@ -50,4 +50,7 @@
 #define __NR_vfork              33
 #define __NR_ioctl              34
 #define __NR_dup2               35
+#define __NR_mknod              36
+#define __NR_readdir		37
+#define __NR_fstat		38
 #endif

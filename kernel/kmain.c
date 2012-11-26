@@ -9,13 +9,13 @@ void shm_init();
 void task_init();
 void drv_init();
 void idle_task_func();
-void module_init();
 void time_init();
 void fpu_fault_init();
 void devfs_init();
 void timer_init();
 void drv_pre_init();
 void drv_post_init();
+void vfs_start();
 
 void kmain()
 {
@@ -36,8 +36,8 @@ void kmain()
 	fpu_fault_init();
 	time_init();
 	timer_init();
+	vfs_start();
 	drv_post_init();
-	module_init();
 	task_init();
 	/* init end */
 	

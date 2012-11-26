@@ -80,8 +80,8 @@ void idle_task_func()
 	
 	/* fork init */
 	do_fork((unsigned long)init_task_exec, FORK_SHARE_MM);
-	do_fork((unsigned long)kbd_thread, FORK_SHARE_MM);
-	do_fork((unsigned long)mouse_thread, FORK_SHARE_MM);
+//	do_fork((unsigned long)kbd_thread, FORK_SHARE_MM);
+//	do_fork((unsigned long)mouse_thread, FORK_SHARE_MM);
 
 	/* idle loop */
 	current->level = 0;

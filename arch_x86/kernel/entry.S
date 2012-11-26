@@ -217,7 +217,7 @@ hwint14:
 hwint15:
 	hwintS 47
 
-#define NR_SYSCALLS 36
+#define NR_SYSCALLS 39
 bad_info:
 	.string "bad sys call"
 sys_call:
@@ -278,3 +278,6 @@ sys_call_table:
 	.long sys_vfork
 	.long sys_ioctl
 	.long sys_dup2		/* 35 */
+	.long sys_mknod
+	.long sys_readdir
+	.long sys_fstat

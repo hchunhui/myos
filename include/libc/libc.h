@@ -94,13 +94,29 @@ int toupper(int x);
 void *malloc(int size);
 void free(void* ptr);
 
+struct dirent {
+	char d_name[256];
+	void *inode;
+};
+
+struct stat
+{
+	unsigned int st_mode;
+	long st_size;
+};
+
 int read(int fd, void *buf, s32 count);
 int write(int fd, void *buf, s32 count);
 int open(char *name, int flags);
 int close(int fd);
-	int nice(int nice);
-	int ioctl(int fd, int cmd, void *arg);
-	int dup2(int oldfd, int newfd);
+int nice(int nice);
+int ioctl(int fd, int cmd, void *arg);
+int dup2(int oldfd, int newfd);
+int mknod(char *name, int type);
+int readdir(int fd, struct dirent *dirp, int count);
+int fstat(int fd, struct stat *stat);
+
+
 #ifdef __cplusplus
 }
 #endif

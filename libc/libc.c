@@ -189,3 +189,18 @@ int dup2(int oldfd, int newfd)
 int tty_switch(int dummy)
 {
 }
+
+int mknod(char *name, int type)
+{
+	return usr_sys_call2(__NR_mknod, name, type);
+}
+
+int readdir(int fd, struct dirent *dirp, int count)
+{
+	return usr_sys_call3(__NR_readdir, fd, dirp, count);
+}
+
+int fstat(int fd, struct stat *stat)
+{
+	return usr_sys_call2(__NR_fstat, fd, stat);
+}

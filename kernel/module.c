@@ -21,8 +21,8 @@ void module_init()
 				break;
 			}
 		}
-		printk("    start addr: %x  end addr: %x  file name: %s\n",
-			mod->mod_start,mod->mod_end,(char*)(mod->string));
+		/*printk("    start addr: %x  end addr: %x  file name: %s\n",
+		  mod->mod_start,mod->mod_end,(char*)(mod->string));*/
 	}
 }
 

@@ -10,6 +10,9 @@ struct s_super
 {
 	struct s_fsys *opr;
 	struct list_head list;
+	void *root_inode;
+	/* private data */
+	void *priv_ptr;
 };
 
 struct s_handle
@@ -17,7 +20,8 @@ struct s_handle
 	struct s_super *super;
 	char path[PATH_MAX];
 	char name[PATH_MAX];
-	int open;
+	void *inode;
+	/* private data */
 	void *priv_ptr;
 	unsigned long priv_long1;
 	unsigned long priv_long2;
@@ -38,6 +42,11 @@ struct stat
 	long st_size;
 };
 
+struct dirent {
+	char d_name[256];
+	void *inode;
+};
+
 #define S_IFDIR 1
 struct s_fsys
 {
@@ -47,14 +56,14 @@ struct s_fsys
 	/* 这些操作需要打开文件 */
 	long (*read)(struct s_handle *h, long off, void *buf, long len);
 	long (*write)(struct s_handle *h, long off, void *buf, long len);
-	int (*readdir)(struct s_handle *h, struct s_handle *next);
+	long (*readdir)(struct s_handle *h, long off, struct dirent *buf, long len);
 	int (*ioctl)(struct s_handle *h, int cmd, void *arg);
 	int (*poll)(struct s_handle *entry, int func, struct list_head *lesm);
 	/* 这些操作不需要打开文件 */
 	int (*mount)(struct s_super *super, int major, int minor, int option);
 	int (*umount)(struct s_super *super);
 	int (*stat)(struct s_handle *h, struct stat *st, int set);
-	int (*mknod)(struct s_handle *h, char *name, int type);
+	int (*mknod)(struct s_handle *h, int type);
 	int (*link)(struct s_handle *from, struct s_handle *to);
 	int (*unlink)(struct s_handle *h);
 };
