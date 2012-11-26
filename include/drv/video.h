@@ -9,5 +9,11 @@ extern struct dev_desc video_dev_desc;
 #define VIDEO_CMD_GET_POS 5
 #define VIDEO_CMD_DOWN_SCREEN 6
 #define VIDEO_CMD_GET_INFO 7
-
+struct myos_graph_info
+{
+	int x;
+	int y;
+	int depth;
+	void *base_addr;
+};
 #endif /* _VIDEO_H_ */

@@ -4,6 +4,7 @@
 #include <libc/kstru.h>
 #include <os/unistd.h>
 #include <lib/string.h>
+#include <drv/video.h>
 
 typedef char *va_list;
 

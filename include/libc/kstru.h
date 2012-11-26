@@ -1,13 +1,6 @@
 #ifndef _KSTRU_H
 #define _KSTRU_H
 #include <os/type.h>
-struct myos_graph_info
-{
-	int x;
-	int y;
-	int depth;
-	void *base_addr;
-};
 
 typedef struct s_msg
 {

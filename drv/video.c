@@ -5,7 +5,6 @@
 #include <lib/string.h>
 #include <libc/kstru.h>
 #include <os/io.h>
-#include <libc/kstru.h>
 #include <drv/video.h>
 
 struct vbe_mode_info         /* VESA information for a specific mode */

@@ -30,7 +30,6 @@
 #define __NR_waitpid		13
 #define __NR_execve		14
 #define __NR_gettime		17
-#define __NR_get_graph_info	18
 #define __NR_pause		19
 #define __NR_send		20
 #define __NR_recv		21

@@ -260,7 +260,7 @@ sys_call_table:
 	.long 0			/* 15 */
 	.long 0
 	.long sys_gettime
-	.long sys_get_graph_info
+	.long 0
 	.long sys_pause
 	.long sys_send		/* 20 */
 	.long sys_recv

@@ -7,9 +7,6 @@
 #include <lib/string.h>
 #include <os/unistd.h>
 #include <os/asm.h>
-#include <drv/speaker.h>
-#include <drv/video.h>
-#include <drv/kdev.h>
 
 long sys_sbrk(int delta)
 {
@@ -29,13 +26,6 @@ long sys_get_utime()
 long sys_get_stime()
 {
 	return task_get_stime() / (HZ/USR_HZ);
-}
-
-long sys_get_graph_info(struct myos_graph_info *info)
-{
-	return dev_simp_ioctl(DEV_MAJOR_VIDEO, 0, video_data,
-			      VIDEO_CMD_GET_INFO,
-			      info);
 }
 
 long sys_pause()

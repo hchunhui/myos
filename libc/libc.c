@@ -94,7 +94,12 @@ void uprint(char* obj)
 
 int get_graph_info(struct myos_graph_info *info)
 {
-	return usr_sys_call1(__NR_get_graph_info,info);
+	int ret;
+	int fd;
+	fd = open("/dev/video/0", 0);
+	ret = ioctl(fd, VIDEO_CMD_GET_INFO, info);
+	close(fd);
+	return ret;
 }
 
 int send(int pid_to, MSG *m)
