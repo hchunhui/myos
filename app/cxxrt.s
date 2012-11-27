@@ -6,6 +6,9 @@
 .extern __cxa_finalize
 
 start:
+	jmp 1f
+	.byte 'X','B','I','N'
+1:
 	/* init bss */
 	movl $__bss_start,%edi
 	movl $_end,%ecx

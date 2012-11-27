@@ -3,6 +3,9 @@
 .global _start, errno, environ
 .extern main,libc_init
 _start:
+	jmp 1f
+	.byte 'X','B','I','N'
+1:
 	/* init bss */
 	movl $__bss_start,%edi
 	movl $_end,%ecx

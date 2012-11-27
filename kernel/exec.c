@@ -9,9 +9,12 @@
 #include <os/sem.h>
 #include <os/vfs.h>
 #define ARGS_MAX 512
+
+const char sign_bin[] = {0xeb, 0x4, 'X', 'B', 'I', 'N'};
+
 int do_execve(char *path, char *argv[], char *envp[])
 {
-	int retval;
+	int retval = 0;
 	char *pargs;
 	int *pargv;
 	int *penvp;
@@ -26,6 +29,7 @@ int do_execve(char *path, char *argv[], char *envp[])
 	struct s_task *ptask = current;
 
 	int fd;
+	char sign[sizeof(sign_bin)];
 	
 	ppath = kmalloc(strlen(path)+1);
 	pargs = kmalloc(4096);
@@ -37,6 +41,18 @@ int do_execve(char *path, char *argv[], char *envp[])
 	if(fd < 0)
 	{
 		retval = -1;
+		goto out;
+	}
+
+	if(vfs_read(fd, sign, sizeof(sign)) != sizeof(sign))
+	{
+		retval = -2;
+		goto out;
+	}
+
+	if(memcmp(sign, sign_bin, sizeof(sign)))
+	{
+		retval = -2;
 		goto out;
 	}
 
@@ -86,7 +102,10 @@ int do_execve(char *path, char *argv[], char *envp[])
 	sem_up(&ptask->vfork_sem);
 	ptask->brk = kernel_brk + 256*1024*1024;
 
-	cc = 0;
+	memcpy((char *)kernel_brk, sign, sizeof(sign));
+	cc = sizeof(sign);
+	chunk = vfs_read(fd, (char *)(kernel_brk + cc), 4096 - cc);
+	cc += chunk;
 	while((chunk = vfs_read(fd, (char *)(kernel_brk + cc), 4096)) > 0)
 		cc += chunk;
 	vfs_close(fd);
