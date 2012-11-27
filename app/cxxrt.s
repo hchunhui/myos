@@ -1,11 +1,11 @@
 .text
 .code32
-.global start, errno
+.global _start, errno
 .extern main, libc_init
 .extern __start_ctors, __end_ctors
 .extern __cxa_finalize
 
-start:
+_start:
 	jmp 1f
 	.byte 'X','B','I','N'
 1:
