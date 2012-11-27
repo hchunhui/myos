@@ -87,6 +87,7 @@ extern struct input_dev_desc mouse_desc;
 static int i8042_init()
 {
 	u8 ret;
+	unsigned long lret;
 	printk("i8042: init\n");
 	
 	/* disable keyboard */
@@ -97,7 +98,8 @@ static int i8042_init()
 	ret &= ~(1<<6);
 	/* enable mouse&keyboard int */
 	ret |= (1<<1) | 1;
-	i8042_ctl(0, 0, I8042_CMD_SETCNTL, (void *)ret);
+	lret = ret;
+	i8042_ctl(0, 0, I8042_CMD_SETCNTL, (void *)lret);
 	printk("i8042: set command byte ok\n");
 
 	/* enable keyboard */

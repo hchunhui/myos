@@ -146,7 +146,7 @@ out:	kfree(ppath);
 	return retval;
 }
 
-long sys_execve(char *path, char *argv[], char *envp[])
+asmlinkage long sys_execve(char *path, char *argv[], char *envp[])
 {
 	return do_execve(path, argv, envp);
 }

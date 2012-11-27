@@ -6,6 +6,7 @@
 #include <os/asm.h>
 #include <os/message.h>
 #include <os/arch_config.h>
+#include <os/mm.h>
 
 static int use_kb_pid;
 static int use_mouse_pid;
@@ -234,12 +235,12 @@ void message_exit(struct s_task *ptask)
 	ptask->msg_last = NULL;
 }
 
-long sys_send(int pid_to, MSG *m)	//是否阻塞由msg决定
+asmlinkage long sys_send(int pid_to, MSG *m)	//是否阻塞由msg决定
 {
 	return do_send(pid_to, m, 0);
 }
 
-long sys_recv(int pid_from, MSG *m, int block)
+asmlinkage long sys_recv(int pid_from, MSG *m, int block)
 {
 	return do_recv(pid_from, m, block);
 }

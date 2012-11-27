@@ -3,7 +3,7 @@ AS=as -m32
 CC=gcc -m32
 CPP=gcc -E -nostdinc -fno-leading-underscore $(INC)
 LD=ld -melf_i386
-CFLAGS=-march=i386 -g  -fno-delete-null-pointer-checks -fomit-frame-pointer -finline-functions -fno-strict-aliasing -fno-leading-underscore -fno-builtin -fno-stack-protector -nostdinc -Wall $(INC) -c
+CFLAGS=-march=i386 -g -O2  -fno-delete-null-pointer-checks -fomit-frame-pointer -finline-functions -fno-strict-aliasing -fno-leading-underscore -fno-builtin -fno-stack-protector -nostdinc -Wall $(INC) -c
 OBJCOPY=objcopy
 AR=ar
 

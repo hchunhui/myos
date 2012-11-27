@@ -7,6 +7,8 @@
 #include <lib/klib.h>
 #include <lib/string.h>
 #include <os/sem.h>
+#include <os/asm.h>
+#include <os/vfs.h>
 
 /* FIXME: fork shm support */
 long do_fork(unsigned long pc, unsigned int flags)
@@ -40,12 +42,12 @@ long do_fork(unsigned long pc, unsigned int flags)
 	return ptask->pid;	/* return pid for father */	
 }
 
-long sys_fork()
+asmlinkage long sys_fork()
 {
 	return do_fork((unsigned long)call_after_fork, 0);
 }
 
-long sys_vfork()
+asmlinkage long sys_vfork()
 {
 	return do_fork((unsigned long)call_after_fork, FORK_VFORK);
 }

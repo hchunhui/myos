@@ -2,6 +2,8 @@
 #include <os/hz.h>
 #include <lib/klib.h>
 #include <os/devfs.h>
+#include <os/asm.h>
+#include <os/task.h>
 
 static long startup_time;
 
@@ -20,7 +22,7 @@ void time_init()
 	printk("  startup_time: %ld\n",startup_time);
 }
 
-long sys_gettime()
+asmlinkage long sys_gettime()
 {
 	long time = time_get_startup_time();
 	long ticks = task_get_ticks();

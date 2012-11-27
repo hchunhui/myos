@@ -6,6 +6,8 @@
 #include <lib/klib.h>
 #include <lib/string.h>
 #include <os/sem.h>
+#include <os/asm.h>
+#include <os/vfs.h>
 
 int do_waitpid(int pid, int *status, int options)
 {
@@ -98,7 +100,7 @@ int do_exit(int exit_code)
 	return 0;
 }
 
-long sys_exit(int exit_code)
+asmlinkage long sys_exit(int exit_code)
 {
 	int ret;
 	ret = do_exit(exit_code);
@@ -110,7 +112,7 @@ long sys_exit(int exit_code)
 	return 0;
 }
 
-long sys_waitpid(int pid,int *status,int options)
+asmlinkage long sys_waitpid(int pid,int *status,int options)
 {
 	return do_waitpid(pid, status, options);
 }

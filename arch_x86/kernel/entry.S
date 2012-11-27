@@ -29,8 +29,6 @@ I8259S=	0xa0
 	save
 .endm
 
-user_info:
-.string "resched\n"
 .macro GET_CURRENT_EBX
 	movl %esp, %ebx
 	andl $~4095, %ebx
@@ -53,19 +51,10 @@ user_info:
 3:	cmpl $0, TASK_RESCHED(%ebx)
 	jz   4f
 	movl $0, TASK_RESCHED(%ebx)
-	/*push $user_info
-	call printk
-	addl $4, %esp*/
 	cli
 	call task_sched
 4:	movl %ebp,%esp
 .endm
-
-ret_to_user:
-	push user_info
-	call printk
-	addl $4, %esp
-	ret
 	
 .macro pre_ret
 	popl %ebx

@@ -2,7 +2,7 @@
 #define _KLIB_H_
 //screen
 extern void (*print)(char* obj);
-void panic(char* text);
+void panic(char* text) __attribute__((noreturn));
 int printk(const char* fmt,...);
 //kmalloc
 void* kmalloc(int size);
