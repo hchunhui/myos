@@ -1,5 +1,5 @@
-#ifndef _UNISTD_H_
-#define _UNISTD_H_
+#ifndef _MYOS_UNISTD_H_
+#define _MYOS_UNISTD_H_
 #define usr_sys_call0(nr)	\
 		({long res;	\
 		asm volatile (	\
