@@ -23,10 +23,7 @@ static struct isr_desc *isr_table[64];
 int isr_register(int no, isr_func fn)
 {
 	struct isr_desc *desc;
-	if(no < 0 || no >= 64)
-	{
-		panic("isr_register: no.");
-	}
+	assert(no >= 0 && no < 64);
 
 	desc = kmalloc(sizeof(struct isr_desc));
 
@@ -53,7 +50,7 @@ void isr_init()
 
 int isr_dummy(void)
 {
-	printk("unhandled int/exception.\n");
+	panic("unhandled int/exception.");
 	/* printk("vec_no: %d\n" */
 	/*        "eflags: %x\n" */
 	/*        "cs: %x\n" */
@@ -64,7 +61,6 @@ int isr_dummy(void)
 	/*        pregs->ip); */
 	/* if(pregs->err_code != 0xffffffff) */
 	/* 	printk("err_code: %x\n", pregs->err_code); */
-	panic("isr_dummy");
 	return 0;
 }
 

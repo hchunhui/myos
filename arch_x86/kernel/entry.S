@@ -218,7 +218,10 @@ sys_call:
 	movl %eax, 24(%esp)
 	jmp 2f
 1:	push $(bad_info)
-	call panic
+	push $(bad_info)
+	push $0
+	push $(bad_info)
+	call __panic
 2:	leave_kernel
 	pre_ret
 	iretl

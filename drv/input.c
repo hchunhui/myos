@@ -178,8 +178,7 @@ struct dev_desc inputsys_dev_desc = {
 static struct input_dev_desc *idev_desc[INPUT_MINOR_MAX];
 int input_dev_register(int minor, struct input_dev_desc *desc)
 {
-	if(minor < 0 || minor >= INPUT_MINOR_MAX)
-		panic("input_register: minor");
+	assert(minor >= 0 && minor < INPUT_MINOR_MAX);
 	if(idev_desc[minor])
 		return -1;
 	idev_desc[minor] = desc;
@@ -199,8 +198,7 @@ int input_dev_register(int minor, struct input_dev_desc *desc)
 
 int input_dev_unregister(int minor)
 {
-	if(minor < 0 || minor >= INPUT_MINOR_MAX)
-		panic("input_register: minor");
+	assert(minor >= 0 && minor < INPUT_MINOR_MAX);
 	if(idev_desc[minor]->exit)
 		if(idev_desc[minor]->exit())
 		{

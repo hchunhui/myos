@@ -220,6 +220,7 @@ static void mm_panic(char *reason, unsigned long cr2)
 	struct s_regs *pregs;
 
 	pregs = get_user_regs(ptask);
+	print = print_early;
 	printk("mm panic:\n%s:\n"
 		"CR2: 0x%x\n"
 		"err_code: 0x%x\n"

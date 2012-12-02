@@ -7,8 +7,7 @@ static struct dev_desc *dev_desc[256];
 
 int dev_register(int major, struct dev_desc *desc)
 {
-	if(major < 0 || major > 255)
-		panic("dev_register: major");
+	assert(major >= 0 && major <= 255);
 	if(dev_desc[major])
 		return -1;
 	dev_desc[major] = desc;
@@ -25,8 +24,7 @@ int dev_register(int major, struct dev_desc *desc)
 
 int dev_unregister(int major)
 {
-	if(major < 0 || major > 255)
-		panic("dev_unregister: major");
+	assert(major >= 0 && major <= 255);
 	if(dev_desc[major])
 	{
 		if(dev_desc[major]->exit)
@@ -55,8 +53,7 @@ int dev_find_major(char *name)
 /* raw interface */
 int dev_simp_open(int major, int minor, int mode, void **data)
 {
-	if(major < 0 || major > 255)
-		panic("dev_open: major");
+	assert(major >= 0 && major <= 255);
 	if(dev_desc[major])
 	{
 		if(dev_desc[major]->open)
@@ -71,8 +68,7 @@ int dev_simp_open(int major, int minor, int mode, void **data)
 
 int dev_simp_close(int major, int minor, void *data)
 {
-	if(major < 0 || major > 255)
-		panic("dev_close: major");
+	assert(major >= 0 && major <= 255);
 	if(dev_desc[major])
 	{
 		if(dev_desc[major]->close)
@@ -86,8 +82,7 @@ int dev_simp_close(int major, int minor, void *data)
 
 int dev_simp_ioctl(int major, int minor, void *data, int cmd, void *arg)
 {
-	if(major < 0 || major > 255)
-		panic("dev_ctl: major");
+	assert(major >= 0 && major <= 255);
 	if(dev_desc[major])
 	{
 		if(dev_desc[major]->ctl)
@@ -103,8 +98,7 @@ int dev_simp_ioctl(int major, int minor, void *data, int cmd, void *arg)
 
 long dev_simp_read(int major, int minor, void *data, long off, void *buf, long n)
 {
-	if(major < 0 || major > 255)
-		panic("dev_read: major");
+	assert(major >= 0 && major <= 255);
 	if(dev_desc[major])
 	{
 		if(dev_desc[major]->read)
@@ -121,8 +115,7 @@ long dev_simp_read(int major, int minor, void *data, long off, void *buf, long n
 
 long dev_simp_write(int major, int minor, void *data, long off, void *buf, long n)
 {
-	if(major < 0 || major > 255)
-		panic("dev_write: major");
+	assert(major >= 0 && major <= 255);
 	if(dev_desc[major])
 	{
 		if(dev_desc[major]->write)
@@ -139,8 +132,7 @@ long dev_simp_write(int major, int minor, void *data, long off, void *buf, long 
 
 int dev_simp_poll(int major, int minor, void *data, int func, struct list_head *lsem)
 {
-	if(major < 0 || major > 255)
-		panic("dev_write: major");
+	assert(major >= 0 && major <= 255);
 	if(dev_desc[major])
 	{
 		if(dev_desc[major]->poll)

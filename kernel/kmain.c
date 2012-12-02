@@ -45,6 +45,6 @@ void kmain()
 	idle_task_func();
 
 	/* 不可能到达这里 */
-	panic("kernel!\n");
+	panic("kernel!");
 }
 

@@ -44,8 +44,7 @@ static int poll_close(int minor, void *data)
 	list_for_each_entry_safe(p, tmp, &poll->int_list, int_list)
 	{
 		sfd = current->vfs->fdtab[p->fd];
-		if(sfd == NULL)
-			panic("poll_write_event\n");
+		assert(sfd != NULL);
 		h = sfd->handle;
 		if(h->super->opr->poll)
 			if(h->super->opr->poll(
@@ -137,8 +136,7 @@ static int poll_write_event(struct s_poll *poll)
 	list_for_each_entry(p, &poll->int_list, int_list)
 	{
 		sfd = current->vfs->fdtab[p->fd];
-		if(sfd == NULL)
-			panic("poll_write_event\n");
+		assert(sfd != NULL);
 		h = sfd->handle;
 		if(h->super->opr->poll)
 			if(h->super->opr->poll(

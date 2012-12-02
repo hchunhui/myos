@@ -44,16 +44,7 @@ void kmalloc_init()
 void* kmalloc(int size)
 {
 	int i,n,t=size;
-	if(size<=0)
-	{
-		panic("kmalloc size<=0\n");
-		return NULL;
-	}
-	if(size>8192)
-	{
-		panic("kmalloc: size>8192\n");
-		return NULL;
-	}
+	assert(size > 0 && size <= 8192);
 	for(n=-1;t>0;n++)t/=2;
 	if(size-(1<<n))n++;
 	//printk("kmalloc: ask size=%d , real size=%d   ",size, 1<<n);
@@ -68,7 +59,6 @@ void* kmalloc(int size)
 		}
 	}
 	panic("kmalloc: no memory\n");
-	return NULL;
 }
 
 void kfree(void* ptr)
@@ -76,11 +66,7 @@ void kfree(void* ptr)
 	unsigned long nr=(unsigned long)ptr;
 	int i;
 	if(nr<kmalloc_mem_start)
-	{
-		printk("nr=%x\n",nr);
-		panic("kfree: addr error!\n");
-		return;
-	}
+		panic("addr error! nr=%x\n", nr);
 	nr-=kmalloc_mem_start;
 	for(i=0;limit[i]!=-1;i++)
 	{
@@ -90,22 +76,15 @@ void kfree(void* ptr)
 	if(limit[i]!=-1)
 	{
 		if(nr%(1<<i))
-		{
-			panic("kfree: addr error2!\n");
-			return;
-		}
+			panic("addr error2!\n");
 		nr/=(1<<i);
 		//printk("kfree: real size=%d,nr=%d\n",(1<<i),nr);
 		if(!mem_map[i].map[nr])
-		{
-			panic("kfree: free a free addr!\n");
-			return;
-		}
+			panic("free a free addr!\n");
 		mem_map[i].map[nr]=0;
 		//printk("kfree: ok.\n");
 		return;
 	}
-	printk("kfree: ptr=%x\n",ptr);
-	panic("kfree: not found.");
+	panic("ptr=%x not found.", ptr);
 }
 

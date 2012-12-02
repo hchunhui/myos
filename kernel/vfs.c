@@ -456,7 +456,7 @@ void vfs_start()
 	printk("vfs: mount root\n");
 	ram_super = kmalloc(sizeof(struct s_super));
 	if(fsys_ramfs.mount(ram_super, 0, 0, 0))
-		panic("unable to mount root!\n");
+		panic("unable to mount root!");
 	list_add(&ram_super->list, &supers);
 	sysroot = ram_super;
 

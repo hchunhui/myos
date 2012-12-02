@@ -27,8 +27,7 @@ void kbd_thread()
 	struct s_event event;
 	int fd;
 	fd = vfs_open("/dev/input/"xstr(INPUT_MINOR_KBD), 0);
-	if(fd == -1)
-		panic("kbd_thread: fd");
+	assert(fd != -1);
 	printk("kbdfd = %d\n", fd);
 	asm("sti");
 	for(;;)

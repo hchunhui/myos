@@ -94,7 +94,7 @@ redo:
 	}
 	/* 有就绪任务，有时间片 */
 	if(next_running == -1)
-		panic("choose_next: next_running == -1!\n");
+		panic("next_running == -1!");
 	//printk("ne:%d  ", next_running);
 	return &task[next_running];
 }
@@ -143,8 +143,7 @@ int task_pid_hash(int pid)
 		if( hash_table[j] == pid )
 			return j;
 	}
-	printk("task_pid_hash: can't find task (pid = %d)\n", pid);
-	panic("task\n");
+	panic("can't find task (pid = %d)", pid);
 }
 
 int task_pid_hash_create(int pid)
@@ -165,8 +164,7 @@ int task_pid_hash_create(int pid)
 			return j;
 		}
 	}
-	printk("task_pid_hash_create: hash table is too short\n", pid);
-	panic("task\n");
+	panic("hash table is too short");
 }
 
 void task_pid_hash_remove(int pid)
@@ -181,10 +179,9 @@ struct s_task *task_struct_alloc()
 
 	if(task[nr].state != TASK_STAT_EMPTY)
 	{
-		printk("nr == %d, task[nr].state == %d\n",
-		       nr,
-		       task[nr].state);
-		panic("task_struct_alloc: error");
+		panic("bug, nr == %d, task[nr].state == %d\n",
+		      nr,
+		      task[nr].state);
 	}
 
 	task[nr].pid = pid;

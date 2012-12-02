@@ -28,8 +28,7 @@ void mouse_thread()
 	int fd;
 	struct s_event event;
 	fd = vfs_open("/dev/input/"xstr(INPUT_MINOR_MOUSE), 0);
-	if(fd == -1)
-		panic("mouse_thread: fd");
+	assert(fd != -1);
 	printk("mousefd = %d\n", fd);
 	asm("sti");
 	for(;;)

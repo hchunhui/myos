@@ -45,9 +45,7 @@ extern struct s_task *task;
 void arch_task_init(struct s_task *idle_task)
 {
 	printk("sizeof(s_task)=%d\n", sizeof(struct s_task));
-	if(sizeof(struct s_task) != 4096)
-		panic("task size error!");
-	
+	assert(sizeof(struct s_task) == 4096);
 	memset(&tss,0,sizeof(struct s_tss));
 	tss.esp0 = ((unsigned long)get_user_regs(idle_task)) +
 		sizeof(struct s_regs);
