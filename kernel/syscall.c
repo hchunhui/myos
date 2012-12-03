@@ -7,10 +7,17 @@
 #include <lib/string.h>
 #include <os/unistd.h>
 #include <os/asm.h>
+#include <os/arch_config.h>
 
-asmlinkage long sys_sbrk(int delta)
+asmlinkage unsigned long sys_sbrk(int delta)
 {
-	return 0;
+	unsigned long xbrk, obrk;
+	obrk = current->brk;
+	xbrk = obrk + delta;
+	if(xbrk < kernel_brk || xbrk >= usr_stack_top)
+		return -1;
+	current->brk = xbrk;
+	return obrk;
 }
 
 asmlinkage long sys_get_ticks()
