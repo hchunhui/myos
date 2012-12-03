@@ -171,6 +171,8 @@ static void video_putchar(unsigned char x,int attr)
 		for(;step;step--)
 			*(video_base + (cpos++)) = -1;
 		break;
+	case 0:
+		break;
 	default:
 		*(video_base + cpos) = (attr<<8) | x;
 		cpos++;

@@ -5,13 +5,12 @@
 #include <drv/klog.h>
 
 #define NR_TTY 4
-#define TTY_BUF_SIZE (80*25)
+#define TTY_BUF_SIZE (80*25*2)
 struct s_tty
 {
-	int pos;
-	u8 buffer[80*25];
+	u8 buffer[TTY_BUF_SIZE];
 	int i;
-	u8 pend[80*25];
+	u8 pend[TTY_BUF_SIZE];
 	int pi;
 	int pipe_in;
 	int pipe_out;
@@ -32,21 +31,17 @@ void t_print(char *str)
 	write(video_fd, str, strlen(str));
 }
 
-void update_pos(struct s_tty *tty)
-{
-	tty->pos++;
-	if(tty->pos >= 80*25) tty->pos -= 80;
-}
-
 void write_tty(struct s_tty *tty, char *buf, int len)
 {
 	if(tty == tty_now)
+	{
+
 		write(video_fd, buf, len);
+	}
 	for(;len--;)
 	{
 		tty->buffer[tty->i] = *buf++;
 		tty->i = (tty->i + 1)%TTY_BUF_SIZE;
-		update_pos(tty);
 	}
 }
 
@@ -56,7 +51,6 @@ void echo_tty(int ch)
 	write(video_fd, tmp, 1);
 	tty_now->buffer[tty_now->i] = ch;
 	tty_now->i = (tty_now->i + 1)%TTY_BUF_SIZE;
-	update_pos(tty_now);
 }
 
 void put_tty(int ch)
@@ -94,14 +88,13 @@ void clear_video()
 
 void switch_tty(struct s_tty *tty)
 {
-	int i, pad;
-	ioctl(video_fd, VIDEO_CMD_GET_POS, &tty_now->pos);
+	int i;
 	clear_video();
 	i = tty->i;
-	pad = 80 - (tty->i%80);
-	write(video_fd,
-	      tty->buffer + i + pad,
-	      TTY_BUF_SIZE - i - pad);
+	if(i < TTY_BUF_SIZE/2)
+		write(video_fd,
+		      tty->buffer + TTY_BUF_SIZE/2,
+		      TTY_BUF_SIZE/2);
 	write(video_fd,
 	      tty->buffer,
 	      i);
