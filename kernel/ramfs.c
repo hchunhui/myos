@@ -217,10 +217,24 @@ static long ramfs_read(struct s_handle *h, long off, void *buf, long len)
 static long ramfs_write(struct s_handle *h, long off, void *buf, long len)
 {
 	struct s_iramfs *inode;
+	char *o_buf;
+	long i;
 	inode = h->inode;
 	if(inode->isdir)
 		return -1;
-	return 0;
+	if(off+len > inode->alloc_len)
+	{
+		o_buf = inode->data;
+		inode->data = kmalloc(off + len);
+		if(o_buf)
+		{
+			memcpy(inode->data, o_buf, off);
+			kfree(o_buf);
+		}
+	}
+	memcpy(inode->data + off, buf, len);
+	inode->len = off+len;
+	return len;
 }
 
 struct s_fsys fsys_ramfs = {
