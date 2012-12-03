@@ -318,7 +318,8 @@ int do_page_fault(struct s_regs *pregs)
 		phy_pg_no = ADDR2NO(cr2);
 	else
 		phy_pg_no = mm_get_free_page();
-	mm_set_pte(ptask->mm->pd, phy_pg_no, ADDR2NO(cr2), MM_RW);
+	if(phy_pg_no != -1)
+		mm_set_pte(ptask->mm->pd, phy_pg_no, ADDR2NO(cr2), MM_RW);
 	refresh_page();
 	return 0;
 }
@@ -345,10 +346,11 @@ unsigned long mm_get_free_page()		/* 不考虑特殊情况，返回页号 */
 			return i;
 		}
 	}
-	panic("Mem not enough");
-	
-	//disable warning
-	return 0;
+	printk("current pid=%d, out of memory, kill\n", current->pid);
+	do_exit(99);
+	current->resched = 1;
+	return -1;
+	//panic("Mem not enough");
 }
 
 void mm_fork(struct s_task *task_new, struct s_task *task_old, unsigned int flags)
@@ -438,6 +440,8 @@ void mm_fork(struct s_task *task_new, struct s_task *task_old, unsigned int flag
 			else
 			{
 				new_pg_no = mm_get_free_page();
+				if(new_pg_no == -1)
+					goto out;
 				*pnew_pte = ADDR_ATTR(
 					NO2ADDR(new_pg_no),
 					ATTR(*pold_pte));
