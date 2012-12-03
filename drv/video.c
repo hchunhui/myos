@@ -153,6 +153,7 @@ static void video_get_graph_info(struct myos_graph_info *info)
 
 static void video_putchar(unsigned char x,int attr)
 {
+	int step;
 	u16 *video_base = (u16*)video_text_base_addr;
 	switch(x)
 	{
@@ -160,8 +161,15 @@ static void video_putchar(unsigned char x,int attr)
 		cpos += 80 - cpos%80;
 		break;
 	case '\b':
-		cpos--;
-		*(video_base + cpos) = (attr<<8) | ' ';
+		do {
+			cpos--;
+			*(video_base + cpos) = (attr<<8) | ' ';
+		}while(*(video_base+cpos-1) == 65535 && cpos%8);
+		break;
+	case '\t':
+		step = 8 - cpos%8;
+		for(;step;step--)
+			*(video_base + (cpos++)) = -1;
 		break;
 	default:
 		*(video_base + cpos) = (attr<<8) | x;
