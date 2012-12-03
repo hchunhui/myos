@@ -50,4 +50,5 @@
 #define __NR_mknod              36
 #define __NR_readdir		37
 #define __NR_fstat		38
+#define __NR_lseek		39
 #endif
