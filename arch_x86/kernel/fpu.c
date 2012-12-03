@@ -64,6 +64,7 @@ void fpu_exit(struct s_task *ptask)
 	{
 		printk("aa\n");
 		last_use = NULL;
+		ptask->used_fpu = 0;
 	}
 	printk("fpu_exit: last use: %x   patsk:%x\n",last_use,ptask);
 
