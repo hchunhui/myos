@@ -31,6 +31,8 @@ int do_execve(char *path, char *argv[], char *envp[])
 	char *xhdr;
 	int fd;
 	char type;
+	unsigned long entry;
+	unsigned long brk_addr;
 	
 	ppath = kmalloc(strlen(path)+1);
 	pargs = kmalloc(4096);
@@ -57,6 +59,7 @@ int do_execve(char *path, char *argv[], char *envp[])
 		goto out;
 	}
 
+	/* 排列参数 */
 	argsc = 0;
 	if(argv) {
 		for(argvc = 0; argvc < ARGS_MAX - 1; argvc++)
@@ -100,9 +103,14 @@ int do_execve(char *path, char *argv[], char *envp[])
 	mm_exit(ptask);
 	mm_fork(ptask, NULL, 0);
 
+	/* vfork时叫醒父亲 */
 	sem_up(&ptask->vfork_sem);
+
+	/* 加载文件 */
+	ptask->brk = usr_stack_top;
 	if(type == 'B') {
-		ptask->brk = kernel_brk + 256*1024*1024;
+		brk_addr = kernel_brk + 256*1024*1024;
+		entry = kernel_brk;
 
 		memcpy((char *)kernel_brk, xhdr, cc);
 		while((chunk = vfs_read(fd, (char *)(kernel_brk + cc), 4096)) > 0)
@@ -111,17 +119,28 @@ int do_execve(char *path, char *argv[], char *envp[])
 	else if(type == 'E') {
 		Elf32_Ehdr *elf_hdr;
 		int i;
+		brk_addr = 0;
 		elf_hdr = (Elf32_Ehdr *)xhdr;
+		if(elf_hdr->e_type != ET_EXEC)
+		{
+			retval = -2;
+			goto out;
+		}
+		entry = elf_hdr->e_entry;
 		printk("exec: elf e_phnum=%d\n", elf_hdr->e_phnum);
 		for(i = 0; i < elf_hdr->e_phnum; i++) {
-			int poff = elf_hdr->e_phoff + (i * elf_hdr->e_phentsize);
+			long poff = elf_hdr->e_phoff + (i*elf_hdr->e_phentsize);
 			Elf32_Phdr *prog_hdr = (Elf32_Phdr *)(xhdr + poff);
+			unsigned long pend;
 			assert(poff < 4096);
 			if(prog_hdr->p_type == PT_LOAD) {
 				vfs_lseek(fd, prog_hdr->p_offset, 0);
 				vfs_read(fd,
 					 (void *)prog_hdr->p_vaddr,
 					 prog_hdr->p_filesz);
+				pend = prog_hdr->p_vaddr + prog_hdr->p_memsz;
+				if(brk_addr < pend)
+					brk_addr = pend;
 			}
 
 		}
@@ -130,6 +149,7 @@ int do_execve(char *path, char *argv[], char *envp[])
 		panic("wrong type");
 	vfs_close(fd);
 	
+	/* 设置堆栈 */
 	stack_top = usr_stack_top - 4096;
 	memcpy((void *)stack_top,
 	       pargs,
@@ -152,17 +172,20 @@ int do_execve(char *path, char *argv[], char *envp[])
 	((unsigned long *)stack_top)[2] =
 		prev_stack_top + ARGS_MAX*sizeof(unsigned long);
 	
+	/* 设置寄存器 */
 	memset(get_user_regs(ptask), 0, sizeof(struct s_regs));
 	init_regs(get_user_regs(ptask));
-	USR_PC_REG(ptask) = kernel_brk;
+	USR_PC_REG(ptask) = entry;
 	USR_SP_REG(ptask) = stack_top;
 
+	ptask->brk = brk_addr;
 	vfs_exec(ptask);
 	/* 成功变身 */
 out:	kfree(ppath);
 	kfree(pargv);
 	kfree(penvp);
 	kfree(pargs);
+	kfree(xhdr);
 	return retval;
 }
 
