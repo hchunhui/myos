@@ -31,18 +31,16 @@
 #define PDE_COUNT  1024
 #define PTE_COUNT  1024
 
-#define page_table_addr		0x300000	//页表 3M~7M
-#define task_addr		0x700000
+#define page_table_addr		0x700000	//页表 7M~9M
+#define task_addr		0xf00000	//15~16M
 
-#define message_buffer		0x800000
+#define message_buffer		0xe00000	//14~15M
 #define message_buffer_len	0x100000
-#define kmalloc_mem_start	0x900000
+#define kmalloc_mem_start	0xb00000	//11~14M
 
-#define page_info_addr		0xe00000
+#define page_info_addr		0x900000	//9~11M
 
 #define kernel_brk		0x1000000
-#define app_entry		(kernel_brk+0x100)
-#define app_start		(kernel_brk)
 #define usr_stack_top		0x80000000
 #define	max_usr_pde		(usr_stack_top/PAGE_SIZE/PDE_COUNT)
 #define normal_stack_size	0x1000000	//16M

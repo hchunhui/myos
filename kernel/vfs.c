@@ -500,6 +500,8 @@ void vfs_start()
 	{
 		s = (char *)(mod->string);
 		l = strlen(s);
+		for(; s[l-1] == ' '; s[--l] = 0);
+		printk("module: %s xx\n", s);
 		if((l > 3 && strcmp(s+l-4, ".tar") == 0) ||
 		   (l > 6 && strcmp(s+l-7, ".tar.gz") == 0))
 			vfs_import_tar((char *)mod->mod_start);
