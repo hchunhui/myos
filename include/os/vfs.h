@@ -93,6 +93,7 @@ int vfs_close(int fd);
 long vfs_read(int fd, void *buf, long count);
 long vfs_write(int fd, void *buf, long count);
 int vfs_ioctl(int fd, int cmd, void *arg);
+long vfs_lseek(int fd, long offset, int whence);
 void vfs_fork(struct s_task *child, struct s_task *father);
 void vfs_exec(struct s_task *ptask);
 void vfs_exit(struct s_task *ptask);

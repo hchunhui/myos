@@ -347,6 +347,38 @@ int vfs_fstat(int fd, struct stat *stat)
 				   0);
 }
 
+long vfs_lseek(int fd, long offset, int whence)
+{
+	struct s_fd *sfd;
+	struct s_handle *h;
+	long xoff;
+	struct stat st;
+	int ret;
+	sfd = current->vfs->fdtab[fd];
+	if(sfd == NULL)
+		return -1;
+	if((ret = vfs_fstat(fd, &st)) < 0)
+		return ret;
+	switch(whence)
+	{
+	case 0:
+		xoff = offset;
+		break;
+	case 1:
+		xoff = sfd->offset + offset;
+		break;
+	case 2:
+		xoff = st.st_size + offset;
+		break;
+	default:
+		return -1;
+	};
+	if(xoff < 0 || xoff > st.st_size)
+		return -1;
+	sfd->offset = xoff;
+	return xoff;
+}
+
 void vfs_init(struct s_task *ptask)
 {
 	ptask->vfs = kmalloc(sizeof(struct s_vfs));
@@ -530,32 +562,5 @@ asmlinkage long sys_fstat(int fd, struct stat *stat)
 
 asmlinkage long sys_lseek(int fd, long offset, int whence)
 {
-	struct s_fd *sfd;
-	struct s_handle *h;
-	long xoff;
-	struct stat st;
-	int ret;
-	sfd = current->vfs->fdtab[fd];
-	if(sfd == NULL)
-		return -1;
-	if((ret = vfs_fstat(fd, &st)) < 0)
-		return ret;
-	switch(whence)
-	{
-	case 0:
-		xoff = offset;
-		break;
-	case 1:
-		xoff = sfd->offset + offset;
-		break;
-	case 2:
-		xoff = st.st_size + offset;
-		break;
-	default:
-		return -1;
-	};
-	if(xoff < 0 || xoff > st.st_size)
-		return -1;
-	sfd->offset = xoff;
-	return xoff;
+	return vfs_lseek(fd, offset, whence);
 }

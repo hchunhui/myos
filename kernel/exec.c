@@ -11,6 +11,7 @@
 #define ARGS_MAX 512
 
 const char sign_bin[] = {0xeb, 0x4, 'X', 'B', 'I', 'N'};
+const char sign_elf[] = {0x7f, 'E', 'L', 'F'};
 
 int do_execve(char *path, char *argv[], char *envp[])
 {
@@ -27,31 +28,31 @@ int do_execve(char *path, char *argv[], char *envp[])
 	unsigned long stack_top, prev_stack_top;
 	long chunk, cc;
 	struct s_task *ptask = current;
-
+	char *xhdr;
 	int fd;
-	char sign[sizeof(sign_bin)];
+	char type;
 	
 	ppath = kmalloc(strlen(path)+1);
 	pargs = kmalloc(4096);
 	pargv = kmalloc(ARGS_MAX*sizeof(int));
 	penvp = kmalloc(ARGS_MAX*sizeof(int));
 	strcpy(ppath, path);
+	xhdr = kmalloc(4096);
 
 	fd = vfs_open(path, 0);
-	if(fd < 0)
-	{
+	if(fd < 0) {
 		retval = -1;
 		goto out;
 	}
 
-	if(vfs_read(fd, sign, sizeof(sign)) != sizeof(sign))
-	{
-		retval = -2;
-		goto out;
-	}
+	cc = vfs_read(fd, xhdr, 4096);
 
-	if(memcmp(sign, sign_bin, sizeof(sign)))
-	{
+	/* 检测格式 */
+	if(memcmp(xhdr, sign_bin, sizeof(sign_bin)) == 0) {
+		type = 'B';
+	} else if(memcmp(xhdr, sign_elf, sizeof(sign_elf)) == 0) {
+		type = 'E';
+	} else {
 		retval = -2;
 		goto out;
 	}
@@ -100,14 +101,33 @@ int do_execve(char *path, char *argv[], char *envp[])
 	mm_fork(ptask, NULL, 0);
 
 	sem_up(&ptask->vfork_sem);
-	ptask->brk = kernel_brk + 256*1024*1024;
+	if(type == 'B') {
+		ptask->brk = kernel_brk + 256*1024*1024;
 
-	memcpy((char *)kernel_brk, sign, sizeof(sign));
-	cc = sizeof(sign);
-	chunk = vfs_read(fd, (char *)(kernel_brk + cc), 4096 - cc);
-	cc += chunk;
-	while((chunk = vfs_read(fd, (char *)(kernel_brk + cc), 4096)) > 0)
-		cc += chunk;
+		memcpy((char *)kernel_brk, xhdr, cc);
+		while((chunk = vfs_read(fd, (char *)(kernel_brk + cc), 4096)) > 0)
+			cc += chunk;
+	}
+	else if(type == 'E') {
+		Elf32_Ehdr *elf_hdr;
+		int i;
+		elf_hdr = (Elf32_Ehdr *)xhdr;
+		printk("exec: elf e_phnum=%d\n", elf_hdr->e_phnum);
+		for(i = 0; i < elf_hdr->e_phnum; i++) {
+			int poff = elf_hdr->e_phoff + (i * elf_hdr->e_phentsize);
+			Elf32_Phdr *prog_hdr = (Elf32_Phdr *)(xhdr + poff);
+			assert(poff < 4096);
+			if(prog_hdr->p_type == PT_LOAD) {
+				vfs_lseek(fd, prog_hdr->p_offset, 0);
+				vfs_read(fd,
+					 (void *)prog_hdr->p_vaddr,
+					 prog_hdr->p_filesz);
+			}
+
+		}
+	}
+	else
+		panic("wrong type");
 	vfs_close(fd);
 	
 	stack_top = usr_stack_top - 4096;
