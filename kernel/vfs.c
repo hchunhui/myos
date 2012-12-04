@@ -468,8 +468,8 @@ void vfs_start()
 	{
 		s = (char *)(mod->string);
 		l = strlen(s);
-		if(l > 3 && s[l-4] == '.' &&
-		   s[l-3] == 't' && s[l-2] == 'a' && s[l-1] == 'r')
+		if((l > 3 && strcmp(s+l-4, ".tar") == 0) ||
+		   (l > 6 && strcmp(s+l-7, ".tar.gz") == 0))
 			vfs_import_tar((char *)mod->mod_start);
 	}
 }

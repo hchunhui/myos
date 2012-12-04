@@ -37,15 +37,16 @@ mktar:
 	cp app/*.bin root/bin
 	cp app/w/*.bin root/bin
 	cp app/mario/src/mario.bin root/bin
-	rm -f initrd.tar
+	rm -f initrd.tar{,.gz}
 	cd root;tar cvf ../initrd.tar *;cd ..
+	gzip -9 initrd.tar
 mkimg: mktar mount_img domkimg umount_img
 domkimg:
 	sudo rm -f mnt/*.bin
 	sudo rm -f mnt/boot/grub/menu.lst
 	sudo cp mykern.bin mnt/
 	sudo cp menu.lst mnt/boot/grub/menu.lst
-	sudo cp initrd.tar mnt/
+	sudo cp initrd.tar.gz mnt/
 mount_img:
 	sudo mount `sudo losetup -o 32256 --find --show new.img` mnt
 umount_img:

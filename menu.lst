@@ -10,7 +10,7 @@ timeout 0
 title OS
 	root (hd0,0)
 	kernel /mykern.bin
-	module /initrd.tar
+	module /initrd.tar.gz
 # Halt the machine
 title Turn off power!
 halt
