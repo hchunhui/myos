@@ -73,7 +73,9 @@ syscall.o: syscall.c ../arch_x86/include/os/protect.h \
  ../include/lib/list.h ../arch_x86/include/os/mm.h ../include/os/fork.h \
  ../include/os/devfs.h ../include/os/vfs.h ../include/lib/klib.h \
  ../include/lib/stdarg.h ../include/lib/string.h ../include/os/unistd.h \
- ../include/os/asm.h
+ ../include/os/asm.h ../arch_x86/include/os/arch_config.h \
+ ../include/drv/pit_i8253.h ../include/drv/cmos.h \
+ ../arch_x86/include/os/pic_i8259.h
 task.o: task.c ../include/os/type.h ../arch_x86/include/os/arch_config.h \
  ../include/drv/pit_i8253.h ../include/os/devfs.h ../include/lib/list.h \
  ../include/os/vfs.h ../include/os/sem.h ../include/drv/cmos.h \
