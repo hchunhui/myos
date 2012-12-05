@@ -373,7 +373,7 @@ long vfs_lseek(int fd, long offset, int whence)
 	default:
 		return -1;
 	};
-	if(xoff < 0 || xoff > st.st_size)
+	if(xoff < 0)
 		return -1;
 	sfd->offset = xoff;
 	return xoff;

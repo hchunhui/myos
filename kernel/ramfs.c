@@ -228,12 +228,21 @@ static long ramfs_write(struct s_handle *h, long off, void *buf, long len)
 		inode->data = kmalloc(off + len);
 		if(o_buf)
 		{
-			memcpy(inode->data, o_buf, off);
+			memcpy(inode->data,
+			       o_buf,
+			       inode->alloc_len);
 			kfree(o_buf);
 		}
+		if(off > inode->alloc_len)
+		{
+			memset(inode->data + inode->alloc_len,
+			       0,
+			       off - inode->alloc_len);
+		}
+		inode->alloc_len = off+len;
+		inode->len = off+len;
 	}
 	memcpy(inode->data + off, buf, len);
-	inode->len = off+len;
 	return len;
 }
 
