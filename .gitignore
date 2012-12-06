@@ -9,3 +9,7 @@ bak
 root
 *.tar
 *.gz
+toolchain/build
+toolchain/install
+toolchain/pkg
+

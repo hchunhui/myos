@@ -1,0 +1,22 @@
+--- gcc-4.7.2-o/gcc/config/i386/i386elf.h	2012-12-02 12:10:49.194139343 +0800
++++ gcc-4.7.2/gcc/config/i386/i386elf.h	2012-12-02 12:11:24.864152748 +0800
+@@ -30,12 +30,17 @@
+ #undef CPP_SPEC
+ #define CPP_SPEC ""
+ 
+-#define ENDFILE_SPEC "crtend.o%s"
++#define ENDFILE_SPEC "crtend.o%s crtn.o%s"
+ 
+ #define STARTFILE_SPEC "%{!shared: \
+ 			 %{!symbolic: \
+ 			  %{pg:gcrt0.o%s}%{!pg:%{p:mcrt0.o%s}%{!p:crt0.o%s}}}}\
+-			crtbegin.o%s"
++			crti.o%s crtbegin.o%s"
++#undef LIB_SPEC
++#define LIB_SPEC "%{!shared:%{g*:-lg} %{!p:%{!pg:-lc}}%{p:-lc_p}%{pg:-lc_p}} -lmyos"
++
++#undef LINK_SPEC
++#define LINK_SPEC "-Tmyos.ld"
+ 
+ #undef DBX_REGISTER_NUMBER
+ #define DBX_REGISTER_NUMBER(n) \

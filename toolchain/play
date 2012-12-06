@@ -1,0 +1,62 @@
+#!/bin/bash
+J=4
+TARGET=i686-myos-elf
+PREFIX=$PWD/install
+PKG_PATH=$PWD/pkg
+PATCH_PATH=$PWD/patch
+BINUTILS=binutils-2.23.1
+GCC=gcc-4.7.2
+NEWLIB=newlib-1.20.0
+cd build
+echo Build Binutils...
+mkdir -p build-binutils
+tar xf $PKG_PATH/$BINUTILS.tar.bz2
+cd build-binutils
+../$BINUTILS/configure --target=$TARGET --prefix=$PREFIX --disable-nls --disable-shared || exit 1
+make -j$J || exit 1
+make install || exit 1
+cd ..
+
+echo Build GCC PASS 1...
+mkdir -p build-gcc
+tar xf $PKG_PATH/$GCC.tar.bz2
+cd $GCC
+patch -p1 < $PATCH_PATH/gcc.patch || exit 1
+cd ..
+cd build-gcc
+../$GCC/configure --target=$TARGET --prefix=$PREFIX --disable-nls --disable-shared --disable-multilib --disable-threads --disable-tls --disable-libgomp --with-newlib --enable-languages=c,c++ || exit 1
+make all-gcc -j$J || exit 1
+make install-gcc || exit 1
+make all-target-libgcc -j$J || exit 1
+make install-target-libgcc || exit 1
+cd ..
+
+echo Build newlib...
+export PATH=$PREFIX/bin:$PATH
+mkdir -p build-newlib
+tar xf $PKG_PATH/$NEWLIB.tar.gz
+cd $NEWLIB
+patch -p1 < $PATCH_PATH/newlib.patch || exit 1
+mkdir -p libgloss/myos386
+for x in `ls $PATCH_PATH/newlib-myos386`;do
+ln -s $PATCH_PATH/newlib-myos386/$x libgloss/myos386/$x
+done
+cd libgloss
+autoconf || exit 1
+cd myos386
+aclocal -I .. || exit 1
+autoconf || exit 1
+cd ../../..
+cd build-newlib
+../$NEWLIB/configure --target=$TARGET --prefix=$PREFIX || exit 1
+make -j$J || exit 1
+make install || exit 1
+cd ..
+
+echo Build GCC PASS 2...
+cd build-gcc
+make -j$J || exit 1
+make install || exit 1
+cd ..
+
+echo DONE.
