@@ -8,6 +8,7 @@
 #include <os/sem.h>
 #include <os/asm.h>
 #include <os/vfs.h>
+#include <os/errno.h>
 
 int do_waitpid(int pid, int *status, int options)
 {
