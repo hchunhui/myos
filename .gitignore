@@ -14,3 +14,4 @@ toolchain/install
 toolchain/pkg
 Makefile.arch
 arch
+kernel/Makefile
