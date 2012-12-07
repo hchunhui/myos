@@ -22,8 +22,8 @@ clean:
 	rm -f *~
 dep:
 	sed '/\#\#auto/d;/\#\#dep/q' Makefile>tmp_make
-	for i in `ls *.c`;do `echo '$(CPP) -M' $$i`>>tmp_make;done
-	for i in `ls *.S`;do `echo '$(CPP) -M -D__ASSEMBLY__' $$i`>>tmp_make;done 
+	for i in `ls *.c`;do `echo '$(CPP) -MM' $$i`>>tmp_make;done
+	for i in `ls *.S`;do `echo '$(CPP) -MM -D__ASSEMBLY__' $$i`>>tmp_make;done 
 	echo AUTOOBJS=|tr "\n" " ">tmp_make2
 	ls -m *.c *.S|sed 's/\.[cS]/.o/g;s/,//g'|tr "\n" " "| \
 	sed '/$$/a\#\#auto'|tr "\n" " "|sed '/$$/a\'>>tmp_make2
