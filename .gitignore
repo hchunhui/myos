@@ -12,4 +12,5 @@ root
 toolchain/build
 toolchain/install
 toolchain/pkg
-
+Makefile.arch
+arch
