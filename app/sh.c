@@ -115,9 +115,21 @@ int main(int argc, char **argv)
 		}
 		else if(buf[0]=='/')
 		{
+			int i, len, j;
+			char *xargv[10]={0};
+			len = strlen(buf);
+			buf[len] = 0;
+			j = 0;
+			xargv[0] = buf;
+			for(i = 0; i < len; i++)
+				if(buf[i] == ' ')
+				{
+					buf[i] = 0;
+					xargv[++j] = buf+i+1;
+				}
 			if(vfork()==0)
 			{
-				exit(execle(buf, buf, 0, environ));
+				exit(execve(buf, xargv, environ));
 			}
 			int status,pid;
 			pid=waitpid(-1,&status,0);
