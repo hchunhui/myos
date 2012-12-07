@@ -7,10 +7,14 @@
 #include <lib/string.h>
 #include <os/unistd.h>
 #include <os/asm.h>
+#include <os/fork.h>
 #include <signal.h>
 #include <ucontext.h>
+#include <unistd.h>
 
 extern sigset_t old_set;
+
+long do_execve(char *path, char **argv, char **envp);
 
 void arch_task_init(struct s_task *idle_task)
 {
@@ -20,13 +24,13 @@ void arch_task_init(struct s_task *idle_task)
 void idle_task_func()
 {
 	sigprocmask(SIG_SETMASK, &old_set, NULL);
+	do_fork((unsigned long)init_task_exec, 0);
 	for(;;)
 	{
 		pause();
 	}
 }
 
-long do_exec(char *filename);
 
 void task2()
 {
@@ -43,8 +47,8 @@ void init_task_exec()
 {
 	int a=0;
 	printk("do_exec /app1.bin\n");
-	do_fork(task2);
-	do_exec("/app1.bin");
+	do_fork((unsigned long)task2, 0);
+	do_execve("/app1.bin", NULL, NULL);
 	
 	sigprocmask(SIG_SETMASK, &old_set, NULL);
 	for(;;)

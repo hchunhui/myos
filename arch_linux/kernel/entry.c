@@ -1,5 +1,6 @@
 #include <os/asm.h>
 #include <os/regs.h>
+#include <os/task.h>
 #include <lib/klib.h>
 
 asmlinkage void do_isr(int vec_no, struct s_regs *pregs);
@@ -7,6 +8,11 @@ asmlinkage void do_isr(int vec_no, struct s_regs *pregs);
 void irq##i() \
 { \
 	do_isr(i, (void *)0);			\
+	if(current->resched)			\
+	{					\
+		current->resched = 0;		\
+		task_sched();			\
+	}					\
 }
 
 MAKEIRQ(0)

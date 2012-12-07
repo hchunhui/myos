@@ -5,7 +5,6 @@
 #include <os/task.h>
 #include <lib/string.h>
 #include <os/asm.h>
-#include <drv/tty.h>
 #include <os/shm.h>
 #include <os/isr.h>
 
@@ -16,15 +15,15 @@ static unsigned int mem_size;
 //interfaces
 void mm_recycle_page(unsigned long pg_no)
 {
-	free((void *)pg_no);
+	kfree((void *)pg_no);
 }
 
 unsigned long mm_get_free_page()		/* 不考虑特殊情况，返回页号 */
 {
-	return (unsigned long)malloc(PAGE_SIZE);
+	return (unsigned long)kmalloc(PAGE_SIZE);
 }
 
-void mm_fork(struct s_task *task_new, struct s_task *task_old)
+void mm_fork(struct s_task *task_new, struct s_task *task_old, unsigned int flags)
 {
 	printk("mm_fork\n");
 }
@@ -66,7 +65,6 @@ void mm_switch(struct s_task *prev, struct s_task *next)
 
 void mm_init(unsigned int size)
 {
-	int i,j;
 	mem_size = size;
 	if(mem_size > usr_stack_top)
 	{

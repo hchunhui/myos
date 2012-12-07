@@ -1,5 +1,6 @@
 #include <lib/klib.h>
 #include <drv/pit_i8253.h>
+#include <unistd.h>
 
 #define I8253_TIMER_FREQ 1193182UL
 
@@ -17,17 +18,7 @@ static int i8253_exit()
 	return 0;
 }
 
-static int i8253_open(int minor, int mode)
-{
-	return 0;
-}
-
-static int i8253_close(int minor)
-{
-	return 0;
-}
-
-static int i8253_ctl(int minor, int cmd, void *arg)
+static int i8253_ctl(int minor, void *data, int cmd, void *arg)
 {
 	unsigned long ularg = (unsigned long)arg;
 	if(minor != 0 && minor != 2)
@@ -48,7 +39,5 @@ struct dev_desc i8253_dev_desc = {
 	.name = "timer_i8253",
 	.init = i8253_init,
 	.exit = i8253_exit,
-	.open = i8253_open,
-	.close = i8253_close,
 	.ctl = i8253_ctl,
 };

@@ -1,3 +1,4 @@
+#include <stdio.h>
 #include <lib/klib.h>
 
 void drv_tty_put_rqueue()
@@ -22,4 +23,3 @@ void drv_video_putchar(unsigned char x,int attr)
 {
 	putchar(x);
 }
-

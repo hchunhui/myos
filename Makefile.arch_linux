@@ -1,9 +1,9 @@
-INC=-I\/usr\/include -I$(ROOT)\/arch_linux\/include -I$(ROOT)\/include
+INC=-I$(ROOT)/arch_linux/include -I$(ROOT)/include
 AS=as -m32
 CC=gcc -m32
-CPP=gcc -E -nostdinc -fno-leading-underscore $(INC)
+CPP=gcc -E -fno-leading-underscore $(INC)
 LD=gcc -m32
-CFLAGS=-march=i386 -g -fno-delete-null-pointer-checks -fomit-frame-pointer -finline-functions -fno-strict-aliasing -fno-stack-protector -Wall $(INC) -c
+CFLAGS=-march=i386 -g -O2 -fno-delete-null-pointer-checks -fomit-frame-pointer -finline-functions -fno-strict-aliasing -fno-stack-protector -Wall $(INC) -c
 OBJCOPY=objcopy
 AR=ar
 
@@ -22,7 +22,7 @@ clean:
 	rm -f *~
 dep:
 	sed '/\#\#auto/d;/\#\#dep/q' Makefile>tmp_make
-	for i in *.c *.S;do `echo $$i|sed '/^/s//$(CPP) -M /;/*/d'`>>tmp_make;done
+	for i in `ls *.c`;do `echo '$(CPP) -M' $$i`>>tmp_make;done
 	echo AUTOOBJS=|tr "\n" " ">tmp_make2
 	ls -m *.c *.S|sed 's/\.[cS]/.o/g;s/,//g'|tr "\n" " "| \
 	sed '/$$/a\#\#auto'|tr "\n" " "|sed '/$$/a\'>>tmp_make2
@@ -40,6 +40,6 @@ clean1:
 	make -C umdrv clean
 	make -C kernel clean
 	make -C arch clean
-mykern.bin:arch_linux/init/build.a umdrv/build.a arch_linux/kernel/build.a kernel/build.a
+mykern.bin:arch_linux/init/build.a umdrv/build.a arch_linux/kernel/build.a arch_linux/lib/build.a kernel/build.a
 	$(LD) -o mykern -Wl,--start-group $^ -Wl,--end-group
 

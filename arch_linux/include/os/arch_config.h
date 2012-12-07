@@ -1,5 +1,6 @@
 #ifndef _ARCH_CONFIG_H_
 #define _ARCH_CONFIG_H_
+#include <lib/klib.h>
 
 /* about timer */
 #include <drv/pit_i8253.h>
@@ -29,9 +30,9 @@
 #define PDE_COUNT  1024
 #define PTE_COUNT  1024
 
-static void *__task_addr()
+static inline void *__task_addr()
 {
-	return malloc(1024*1024);
+	return kmalloc(1024*1024);
 }
 #define task_addr		__task_addr()
 

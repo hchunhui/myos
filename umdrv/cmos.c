@@ -31,17 +31,7 @@ static int cmos_exit()
 	return 0;
 }
 
-static int cmos_open(int minor, int mode)
-{
-	return 0;
-}
-
-static int cmos_close(int minor)
-{
-	return 0;
-}
-
-static int cmos_ctl(int minor, int cmd, void *arg)
+static int cmos_ctl(int minor, void *data, int cmd, void *arg)
 {
 	switch(cmd)
 	{
@@ -59,7 +49,5 @@ struct dev_desc cmos_dev_desc = {
 	.name = "cmos",
 	.init = cmos_init,
 	.exit = cmos_exit,
-	.open = cmos_open,
-	.close = cmos_close,
 	.ctl = cmos_ctl,
 };
