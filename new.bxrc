@@ -32,7 +32,7 @@ clock: sync=realtime, time0=local
 # where do we send log messages?
 #log: bochsout.txt
 
-sb16: midimode=1, midi=/dev/midi00, wavemode=1, wave=/dev/dsp, loglevel=2, dmatimer=600000
+#sb16: midimode=1, midi=/dev/midi00, wavemode=1, wave=/dev/dsp, loglevel=2, dmatimer=600000
 
 # disable the mouse, since DLX is text only
 mouse: enabled=0
