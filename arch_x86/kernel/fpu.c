@@ -21,13 +21,13 @@
 
 struct s_fpu
 {
-	DWORD cwd;
-	DWORD twd;
-	DWORD fip;
-	DWORD fcs;
-	DWORD foo;
-	DWORD fos;
-	DWORD st[20];
+	u32 cwd;
+	u32 twd;
+	u32 fip;
+	u32 fcs;
+	u32 foo;
+	u32 fos;
+	u32 st[20];
 };
 
 static struct s_task *last_use = NULL;
@@ -116,13 +116,13 @@ int do_fpu_fault(struct s_regs *pregs)
 	clts();
 #else
 	clts();
-	printk("fpu_fault\n");
-	printk("  last use %x current %x\n", last_use, current);
+//	printk("fpu_fault\n");
+//	printk("  last use %x current %x\n", last_use, current);
 	if(current != last_use)
 	{
 		if(last_use && last_use->fpu_info)
 		{
-			printk("  fsave fpu_info=%x\n",last_use->fpu_info);
+//			printk("  fsave fpu_info=%x\n",last_use->fpu_info);
 			fsave(last_use->fpu_info);
 		}
 		if(last_use && !last_use->fpu_info)
@@ -130,12 +130,12 @@ int do_fpu_fault(struct s_regs *pregs)
 		
 		if(current->fpu_info)
 		{
-			printk("  frstor fpu_info=%x\n",current->fpu_info);
+//			printk("  frstor fpu_info=%x\n",current->fpu_info);
 			frstor(current->fpu_info);
 		}
 		else
 		{
-			printk("  fninit\n");
+//			printk("  fninit\n");
 			current->fpu_info = kmalloc(sizeof(struct s_fpu));
 			fninit();
 		}

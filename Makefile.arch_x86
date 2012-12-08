@@ -3,7 +3,7 @@ AS=i686-myos-elf-as  #as -m32
 CC=i686-myos-elf-gcc #gcc -m32
 CPP=i686-myos-elf-gcc -E -nostdinc -fno-leading-underscore $(INC)
 LD=i686-myos-elf-ld  #ld -melf_i386
-CFLAGS=-march=i386 -g -O2  -fno-delete-null-pointer-checks -fomit-frame-pointer -finline-functions -fno-strict-aliasing -fno-leading-underscore -fno-builtin -fno-stack-protector -nostdinc -Wall $(INC) -c
+CFLAGS=-march=i386 -g -O2  -fno-delete-null-pointer-checks -fomit-frame-pointer -finline-functions -fno-strict-aliasing -fno-leading-underscore -fno-builtin -fno-stack-protector -nostdinc -Wall $(INC) -D__KERNEL__ -c
 OBJCOPY=i686-myos-elf-objcopy
 AR=i686-myos-elf-ar
 

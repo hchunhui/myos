@@ -139,7 +139,7 @@ static struct s_handle *path_open(char *ps)
 		}
 	found:
 		opr->close(h);
-		h->inode = dbuf.inode;
+		h->inode = (void *)dbuf.d_ino;
 		if(h->inode == NULL)
 			return NULL;
 		continue;

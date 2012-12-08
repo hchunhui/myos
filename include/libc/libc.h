@@ -5,7 +5,14 @@
 #include <os/unistd.h>
 #include <lib/string.h>
 #include <drv/video.h>
-
+typedef __size_t size_t;
+typedef __ssize_t ssize_t;
+typedef __s8 s8;
+typedef __s16 s16;
+typedef __s32 s32;
+typedef __u8 u8;
+typedef __u16 u16;
+typedef __u32 u32;
 typedef char *va_list;
 
 /* Amount of space required in an argument list for an arg of type TYPE.
@@ -92,19 +99,11 @@ int toupper(int x);
 void *malloc(int size);
 void free(void* ptr);
 
-struct dirent {
-	char d_name[256];
-	void *inode;
-};
+#include <os/dirent.h>
+#include <os/stat.h>
 
-struct stat
-{
-	unsigned int st_mode;
-	long st_size;
-};
-
-int read(int fd, void *buf, s32 count);
-int write(int fd, void *buf, s32 count);
+int read(int fd, void *buf, ssize_t count);
+int write(int fd, void *buf, ssize_t count);
 int open(char *name, int flags);
 int close(int fd);
 int nice(int nice);

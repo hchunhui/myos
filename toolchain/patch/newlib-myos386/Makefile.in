@@ -85,7 +85,7 @@ libmyos.a: $(OBJS)
 	${AR} ${ARFLAGS} $@ $(OBJS)
 	${RANLIB} $@
 syscalls.o: ${srcdir}/syscalls.c
-	$(CC) -I/home/chunhui/old/include -c $(CFLAGS) @NEED_UNDERSCORE@ $(<) -o $@
+	$(CC) -c $(CFLAGS) @NEED_UNDERSCORE@ $(<) -o $@
 
 doc:	
 

@@ -30,7 +30,7 @@ void ll(char *path)
 		       dbuf.d_name,
 		       isdir ? "<dir>" : "",
 		       stat.st_size,
-		       dbuf.inode);
+		       dbuf.d_ino);
 	}
 	close(fd);
 }

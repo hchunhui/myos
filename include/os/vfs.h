@@ -2,6 +2,8 @@
 #define _VFS_H_
 #include <lib/list.h>
 #include <os/sem.h>
+#include <os/dirent.h>
+#include <os/stat.h>
 #define PATH_MAX 256
 
 struct s_task;
@@ -36,18 +38,6 @@ struct s_fd
 	int ref_count;
 };
 
-struct stat
-{
-	unsigned int st_mode;
-	long st_size;
-};
-
-struct dirent {
-	char d_name[256];
-	void *inode;
-};
-
-#define S_IFDIR 1
 struct s_fsys
 {
 	char name[16];

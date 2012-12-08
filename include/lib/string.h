@@ -1,15 +1,8 @@
 #ifndef _STRING_H_
 #define _STRING_H_
-
-#ifndef NULL
-#define NULL ((void *) 0)
-#endif
-
-#ifndef _SIZE_T
-#define _SIZE_T
-typedef unsigned int size_t;
-#endif
-
+#include <os/type.h>
+typedef __size_t size_t;
+#define NULL ((void *)0)
 #define EXPORT_SYMBOL(a)
 
 /* form linux-2.6.26 */

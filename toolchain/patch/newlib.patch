@@ -21,7 +21,7 @@ diff -Nru newlib-1.20.0/newlib/configure.host newlib-1.20.0-new/newlib/configure
 +  i[34567]86-myos-elf)
 +       syscall_dir=syscalls
 +       posix_dir=posix
-+       newlib_cflags="-DHAVE_OPENDIR -D_NO_GLOB -D_NO_EXECVE -D_NO_WORDEXP"
++#newlib_cflags="-DHAVE_OPENDIR -D_NO_GLOB -D_NO_EXECVE -D_NO_WORDEXP"
 +       ;;
    *-*-cygwin*)
         test -z "$cygwin_srcdir" && cygwin_srcdir=`cd ${srcdir}/../winsup/cygwin; pwd`

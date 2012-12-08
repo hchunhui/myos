@@ -142,12 +142,12 @@ int shm_free(int key)
 	return usr_sys_call1(__NR_shm_free, key);
 }
 
-int read(int fd, void *buf, s32 count)
+int read(int fd, void *buf, ssize_t count)
 {
 	return usr_sys_call3(__NR_read, fd, buf, count);
 }
 
-int write(int fd, void *buf, s32 count)
+int write(int fd, void *buf, ssize_t count)
 {
 	return usr_sys_call3(__NR_write, fd, buf, count);
 }

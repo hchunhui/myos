@@ -1,6 +1,6 @@
 #ifndef _PYOS_BMP_H_
 #define _PYOS_BMP_H_
-#include <os/type.h>
+#include <libc/libc.h>
 /******************************************************
 * bmp 格式处理文件                                    *
 * 现只支持 16位色(5:6:5) 非压缩 Windows 标准 bmp 格式 *

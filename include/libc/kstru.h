@@ -13,7 +13,7 @@ typedef struct s_msg
 	int arg5;
 	struct s_msg *next;
 } MSG;
-typedef u32	HANDLE;
+typedef __u32	HANDLE;
 #define MSG_MAX 32
 #define MSG_TYPE_BLOCK (1<<0)
 

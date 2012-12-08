@@ -193,7 +193,8 @@ static long ramfs_readdir(struct s_handle *h, long off, struct dirent *buf, long
 		if(i + off >= inode->len)
 			break;
 		strcpy(buf[i].d_name, inode->ds[i+off].name);
-		buf[i].inode = inode->ds[i+off].inode;
+		buf[i].d_ino = (__ino_t)inode->ds[i+off].inode;
+		buf[i].d_reclen = sizeof(struct dirent);
 	}
 	return i;
 }
