@@ -1,0 +1,11 @@
+#!/bin/bash
+. play-head
+echo Build Binutils...
+mkdir -p build-binutils
+tar xf $PKG_PATH/$BINUTILS.tar.bz2
+cd build-binutils
+../$BINUTILS/configure --target=$TARGET --prefix=$PREFIX --disable-nls --disable-shared || exit 1
+make -j$J || exit 1
+make install || exit 1
+cd ..
+

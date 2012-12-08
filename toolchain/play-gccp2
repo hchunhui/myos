@@ -1,0 +1,8 @@
+#!/bin/bash
+. play-head
+echo Build GCC PASS 2...
+cd build-gcc
+make -j$J || exit 1
+make install || exit 1
+cd ..
+

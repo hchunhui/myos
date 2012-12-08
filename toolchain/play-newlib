@@ -1,0 +1,30 @@
+#!/bin/bash
+. play-head
+echo Build newlib...
+export PATH=$PREFIX/bin:$PATH
+mkdir -p build-newlib
+tar xf $PKG_PATH/$NEWLIB.tar.gz
+cd $NEWLIB
+patch -p1 < $PATCH_PATH/newlib.patch || exit 1
+mkdir -p libgloss/myos386
+for x in `ls $PATCH_PATH/newlib-myos386`;do
+ln -s $PATCH_PATH/newlib-myos386/$x libgloss/myos386/$x
+done
+echo copy myos include file...
+rm -rf newlib/libc/include/sys
+rm -rf newlib/libc/include/machine
+cp -rfv $MYOS_PATH/include/* newlib/libc/include
+cp -rfv $MYOS_PATH/arch/include/* newlib/libc/include
+cd libgloss
+autoconf || exit 1
+cd myos386
+aclocal -I .. || exit 1
+autoconf || exit 1
+cd ../../..
+cd build-newlib
+../$NEWLIB/configure --target=$TARGET --prefix=$PREFIX || exit 1
+make -j$J || exit 1
+make install || exit 1
+cp -rfv $MYOS_PATH/include/os $PREFIX/$TARGET/include
+cd ..
+

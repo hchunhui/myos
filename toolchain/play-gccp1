@@ -1,0 +1,16 @@
+#!/bin/bash
+. play-head
+echo Build GCC PASS 1...
+mkdir -p build-gcc
+tar xf $PKG_PATH/$GCC.tar.bz2
+cd $GCC
+patch -p1 < $PATCH_PATH/gcc.patch || exit 1
+cd ..
+cd build-gcc
+../$GCC/configure --target=$TARGET --prefix=$PREFIX --disable-nls --disable-shared --disable-multilib --disable-threads --disable-tls --disable-libgomp --with-newlib --enable-languages=c,c++ || exit 1
+make all-gcc -j$J || exit 1
+make install-gcc || exit 1
+make all-target-libgcc -j$J || exit 1
+make install-target-libgcc || exit 1
+cd ..
+
