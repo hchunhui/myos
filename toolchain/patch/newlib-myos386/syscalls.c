@@ -7,6 +7,7 @@
 #include <os/unistd.h>
 #include <fcntl.h>
 #include <utime.h>
+#include <dirent.h>
 #undef errno
 extern int errno;
 
@@ -150,6 +151,20 @@ int _write(int fd, void *buf, int count)
 		write += n;
 	}
 	return write;
+}
+
+int getdents(int fd, struct dirent *dirp, int count)
+{
+	int ret;
+	if(count < sizeof(struct dirent))
+	{
+		errno = EINVAL;
+		return -1;
+	}
+	ret = usr_sys_call3(__NR_readdir, fd, dirp, 1);
+	if(ret == -1)
+		return -1;
+	return ret*sizeof(struct dirent);
 }
 
 int mkdir(const char *path, mode_t mode)
