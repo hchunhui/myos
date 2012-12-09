@@ -8,6 +8,7 @@
 #include <os/i386-elf.h>
 #include <os/sem.h>
 #include <os/vfs.h>
+#include <os/errno.h>
 #define ARGS_MAX 512
 
 const char sign_bin[] = {0xeb, 0x4, 'X', 'B', 'I', 'N'};
@@ -43,7 +44,7 @@ int do_execve(char *path, char *argv[], char *envp[])
 
 	fd = vfs_open(path, 0);
 	if(fd < 0) {
-		retval = -1;
+		retval = fd;
 		goto out;
 	}
 
@@ -53,9 +54,16 @@ int do_execve(char *path, char *argv[], char *envp[])
 	if(memcmp(xhdr, sign_bin, sizeof(sign_bin)) == 0) {
 		type = 'B';
 	} else if(memcmp(xhdr, sign_elf, sizeof(sign_elf)) == 0) {
+		Elf32_Ehdr *elf_hdr;
+		elf_hdr = (Elf32_Ehdr *)xhdr;
+		if(elf_hdr->e_type != ET_EXEC)
+		{
+			retval = -ENOEXEC;
+			goto out;
+		}
 		type = 'E';
 	} else {
-		retval = -2;
+		retval = -ENOEXEC;
 		goto out;
 	}
 
@@ -121,11 +129,6 @@ int do_execve(char *path, char *argv[], char *envp[])
 		int i;
 		brk_addr = 0;
 		elf_hdr = (Elf32_Ehdr *)xhdr;
-		if(elf_hdr->e_type != ET_EXEC)
-		{
-			retval = -2;
-			goto out;
-		}
 		entry = elf_hdr->e_entry;
 		printk("exec: elf e_phnum=%d\n", elf_hdr->e_phnum);
 		for(i = 0; i < elf_hdr->e_phnum; i++) {

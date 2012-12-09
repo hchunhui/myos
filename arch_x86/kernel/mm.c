@@ -7,6 +7,7 @@
 #include <os/asm.h>
 #include <os/shm.h>
 #include <os/isr.h>
+#include <os/waitexit.h>
 
 /* 386 PDE && PTE */
 struct s_pde

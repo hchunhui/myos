@@ -22,7 +22,8 @@ exec.o: exec.c ../arch_x86/include/os/protect.h \
  ../include/os/task.h ../arch_x86/include/os/arch_task.h \
  ../arch_x86/include/os/regs.h ../include/libc/kstru.h \
  ../arch_x86/include/os/mm.h ../include/os/fork.h ../include/lib/klib.h \
- ../include/lib/stdarg.h ../include/lib/string.h ../include/os/i386-elf.h
+ ../include/lib/stdarg.h ../include/lib/string.h ../include/os/i386-elf.h \
+ ../include/os/errno.h
 fork.o: fork.c ../include/os/task.h ../arch_x86/include/os/arch_task.h \
  ../arch_x86/include/os/regs.h ../include/os/type.h \
  ../include/libc/kstru.h ../include/os/sem.h ../include/lib/list.h \
@@ -60,7 +61,7 @@ ramfs.o: ramfs.c ../include/os/type.h ../include/lib/klib.h \
  ../arch_x86/include/os/arch_task.h ../arch_x86/include/os/regs.h \
  ../include/libc/kstru.h ../include/os/sem.h ../include/lib/list.h \
  ../include/lib/string.h ../include/os/vfs.h ../include/os/dirent.h \
- ../include/os/stat.h
+ ../include/os/stat.h ../include/os/errno.h
 sem.o: sem.c ../include/os/task.h ../arch_x86/include/os/arch_task.h \
  ../arch_x86/include/os/regs.h ../include/os/type.h \
  ../include/libc/kstru.h ../include/os/sem.h ../include/lib/list.h \
@@ -83,7 +84,8 @@ syscall.o: syscall.c ../arch_x86/include/os/protect.h \
  ../include/os/stat.h ../include/lib/klib.h ../include/lib/stdarg.h \
  ../include/lib/string.h ../include/os/unistd.h ../include/os/asm.h \
  ../arch_x86/include/os/arch_config.h ../include/drv/pit_i8253.h \
- ../include/drv/cmos.h ../arch_x86/include/os/pic_i8259.h
+ ../include/drv/cmos.h ../arch_x86/include/os/pic_i8259.h \
+ ../include/os/errno.h
 task.o: task.c ../include/os/type.h ../arch_x86/include/os/arch_config.h \
  ../include/drv/pit_i8253.h ../include/os/devfs.h ../include/lib/list.h \
  ../include/os/vfs.h ../include/os/sem.h ../include/os/dirent.h \
@@ -118,7 +120,7 @@ vfs.o: vfs.c ../include/os/type.h ../include/lib/klib.h \
  ../include/libc/kstru.h ../include/os/sem.h ../include/lib/list.h \
  ../include/lib/string.h ../include/os/vfs.h ../include/os/dirent.h \
  ../include/os/stat.h ../include/os/devfs.h ../include/os/asm.h \
- ../include/os/multiboot.h
+ ../include/os/multiboot.h ../include/os/errno.h
 waitexit.o: waitexit.c ../include/os/task.h \
  ../arch_x86/include/os/arch_task.h ../arch_x86/include/os/regs.h \
  ../include/os/type.h ../include/libc/kstru.h ../include/os/sem.h \

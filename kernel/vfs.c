@@ -6,6 +6,7 @@
 #include <os/devfs.h>
 #include <os/asm.h>
 #include <os/multiboot.h>
+#include <os/errno.h>
 
 extern struct s_fsys fsys_ramfs;
 static struct list_head supers; /* list of struct s_super */
@@ -76,7 +77,7 @@ static int release_fd(
 	int ret = 0;
 	struct s_handle *h;
 	if(fdtab[i] == NULL)
-		return -1;
+		return -EBADF;
 	if(fdtab[i]->ref_count == 1)
 	{
 		h = fdtab[i]->handle;
@@ -186,13 +187,13 @@ int vfs_open(char *name, int flags)
 	/* resolve path */
 	h = path_resolve(name);
 	if(h == NULL)
-		return -1;
+		return -ENOENT;
 	/* get fd */
 	fd = get_new_fd(current->vfs->fdtab);
 	if(fd == -1)
 	{
 		free_handle(h);
-		return -1;
+		return -EMFILE;
 	}
 	sfd = current->vfs->fdtab[fd];
 	
@@ -212,7 +213,7 @@ int vfs_open(char *name, int flags)
 		return fd;
 	}
 	printk("vfs_open: fail!\n");
-	return -1;
+	return -EFAULT;
 }
 
 int vfs_close(int fd)
@@ -227,7 +228,7 @@ long vfs_read(int fd, void *buf, long count)
 	long read;
 	sfd = current->vfs->fdtab[fd];
 	if(sfd == NULL)
-		return -1;
+		return -EBADF;
 	h = sfd->handle;
 	if(h->super->opr->read == NULL)
 		return count;
@@ -246,7 +247,7 @@ long vfs_readdir(int fd, struct dirent *dirp, long count)
 	long read;
 	sfd = current->vfs->fdtab[fd];
 	if(sfd == NULL)
-		return -1;
+		return -EBADF;
 	h = sfd->handle;
 	if(h->super->opr->readdir == NULL)
 		return count;
@@ -304,7 +305,7 @@ long vfs_write(int fd, void *buf, long count)
 	long write;
 	sfd = current->vfs->fdtab[fd];
 	if(sfd == NULL)
-		return -1;
+		return -EBADF;
 	h = sfd->handle;
 	if(h->super->opr->write == NULL)
 		return count;
@@ -322,10 +323,10 @@ int vfs_ioctl(int fd, int cmd, void *arg)
 	struct s_handle *h;
 	sfd = current->vfs->fdtab[fd];
 	if(sfd == NULL)
-		return -1;
+		return -EBADF;
 	h = sfd->handle;
 	if(h->super->opr->ioctl == NULL)
-		return -1;
+		return -ENOTTY;
 	return h->super->opr->ioctl(h,
 				    cmd,
 				    arg);
@@ -338,10 +339,10 @@ int vfs_fstat(int fd, struct stat *stat)
 	struct s_handle *h;
 	sfd = current->vfs->fdtab[fd];
 	if(sfd == NULL)
-		return -1;
+		return -EBADF;
 	h = sfd->handle;
 	if(h->super->opr->stat == NULL)
-		return -1;
+		return -EACCES;
 	return h->super->opr->stat(h,
 				   stat,
 				   0);
@@ -350,13 +351,12 @@ int vfs_fstat(int fd, struct stat *stat)
 long vfs_lseek(int fd, long offset, int whence)
 {
 	struct s_fd *sfd;
-	struct s_handle *h;
 	long xoff;
 	struct stat st;
 	int ret;
 	sfd = current->vfs->fdtab[fd];
 	if(sfd == NULL)
-		return -1;
+		return -EBADF;
 	if((ret = vfs_fstat(fd, &st)) < 0)
 		return ret;
 	switch(whence)
@@ -371,10 +371,10 @@ long vfs_lseek(int fd, long offset, int whence)
 		xoff = st.st_size + offset;
 		break;
 	default:
-		return -1;
+		return -EINVAL;
 	};
 	if(xoff < 0)
-		return -1;
+		return -EINVAL;
 	sfd->offset = xoff;
 	return xoff;
 }
@@ -540,13 +540,14 @@ asmlinkage long sys_ioctl(int fd, int cmd, void *arg)
 
 asmlinkage long sys_dup2(int oldfd, int newfd)
 {
+	int ret;
 	if(oldfd < 0 || oldfd >= FD_MAX)
-		return -1;
+		return -EBADF;
 	if(newfd < 0 || newfd >= FD_MAX)
-		return -1;
+		return -EBADF;
 	if(current->vfs->fdtab[newfd])
-		if(release_fd(current->vfs->fdtab, newfd, 1))
-			return -1;
+		if((ret = release_fd(current->vfs->fdtab, newfd, 1)))
+			return ret;
 	current->vfs->fdtab[oldfd]->ref_count++;
 	current->vfs->fdtab[newfd] = current->vfs->fdtab[oldfd];
 	return 0;

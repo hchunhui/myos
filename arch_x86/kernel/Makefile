@@ -26,7 +26,7 @@ mm.o: mm.c ../../include/os/type.h \
  ../../include/os/task.h ../../arch_x86/include/os/arch_task.h \
  ../../arch_x86/include/os/regs.h ../../include/libc/kstru.h \
  ../../include/lib/string.h ../../include/os/asm.h ../../include/os/shm.h \
- ../../include/os/isr.h
+ ../../include/os/isr.h ../../include/os/waitexit.h
 pic_i8259.o: pic_i8259.c ../../include/os/type.h \
  ../../arch_x86/include/os/arch_config.h ../../include/drv/pit_i8253.h \
  ../../include/os/devfs.h ../../include/lib/list.h ../../include/os/vfs.h \

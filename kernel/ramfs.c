@@ -4,6 +4,7 @@
 #include <lib/string.h>
 #include <os/vfs.h>
 #include <lib/list.h>
+#include <os/errno.h>
 
 extern struct s_fsys fsys_ramfs;
 
@@ -146,27 +147,27 @@ static int ramfs_stat(struct s_handle *h, struct stat *st, int set)
 	struct s_iramfs *inode;
 	inode = h->inode;
 	if(inode == NULL)
-		return -2;
+		return -EFAULT;
 	if(!set)
 	{
-		st->st_mode = inode->isdir;
+		st->st_mode = (inode->isdir?S_IFDIR:S_IFREG) | 0777;
 		st->st_size = inode->len;
 	}
 	else
 	{
-		return -1;
+		return -ENOSYS;
 	}
 	return 0;
 }
 
 static int ramfs_link(struct s_handle *from, struct s_handle *to)
 {
-	return -1;
+	return -ENOSYS;
 }
 
 static int ramfs_unlink(struct s_handle *h)
 {
-	return -1;
+	return -ENOSYS;
 }
 
 static int ramfs_open(struct s_handle *h, int mode)
@@ -187,7 +188,7 @@ static long ramfs_readdir(struct s_handle *h, long off, struct dirent *buf, long
 	long i;
 	inode = h->inode;
 	if(!inode->isdir)
-		return -1;
+		return -ENOTDIR;
 	for(i = 0; i < len; i++)
 	{
 		if(i + off >= inode->len)
@@ -205,7 +206,7 @@ static long ramfs_read(struct s_handle *h, long off, void *buf, long len)
 	long i;
 	inode = h->inode;
 	if(inode->isdir)
-		return -1;
+		return -EISDIR;
 	for(i = 0; i < len; i++)
 	{
 		if(i + off >= inode->len)
@@ -219,10 +220,9 @@ static long ramfs_write(struct s_handle *h, long off, void *buf, long len)
 {
 	struct s_iramfs *inode;
 	char *o_buf;
-	long i;
 	inode = h->inode;
 	if(inode->isdir)
-		return -1;
+		return -EISDIR;
 	if(off+len > inode->alloc_len)
 	{
 		o_buf = inode->data;
