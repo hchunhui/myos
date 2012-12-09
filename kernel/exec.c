@@ -49,7 +49,11 @@ int do_execve(char *path, char *argv[], char *envp[])
 	}
 
 	cc = vfs_read(fd, xhdr, 4096);
-
+	if(cc < 0)
+	{
+		retval = cc;
+		goto out;
+	}
 	/* 检测格式 */
 	if(memcmp(xhdr, sign_bin, sizeof(sign_bin)) == 0) {
 		type = 'B';
