@@ -35,6 +35,7 @@ extern struct s_fsys fsys_devfs;
 #define DEV_MAJOR_KB 4
 #define DEV_MAJOR_MOUSE 5
 #define DEV_MAJOR_INPUT 6
+#define DEV_MAJOR_TIMER 7
 
 #define DEV_MAJOR_PIPE 128
 #define DEV_MAJOR_POLL 129

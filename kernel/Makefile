@@ -109,11 +109,11 @@ timer.o: timer.c ../include/os/type.h ../include/os/asm.h \
  ../include/os/devfs.h ../include/lib/list.h ../include/os/vfs.h \
  ../include/os/sem.h ../include/os/dirent.h ../include/os/stat.h \
  ../include/drv/cmos.h ../arch_x86/include/os/pic_i8259.h \
+ ../include/lib/klib.h ../include/lib/stdarg.h ../include/lib/string.h \
  ../include/os/task.h ../arch_x86/include/os/arch_task.h \
  ../arch_x86/include/os/regs.h ../include/libc/kstru.h \
  ../arch_x86/include/os/protect.h ../arch_x86/include/os/hz.h \
- ../include/lib/klib.h ../include/lib/stdarg.h ../include/os/message.h \
- ../include/os/isr.h
+ ../include/os/message.h ../include/os/isr.h ../include/os/errno.h
 vfs.o: vfs.c ../include/os/type.h ../include/lib/klib.h \
  ../include/lib/stdarg.h ../include/os/task.h \
  ../arch_x86/include/os/arch_task.h ../arch_x86/include/os/regs.h \
