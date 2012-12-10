@@ -1,4 +1,4 @@
-AUTOOBJS= devfs.o exec.o fork.o isr.o kmain.o message.o ramfs.o sem.o shm.o syscall.o task.o time.o timer.o vfs.o waitexit.o  ##auto 
+AUTOOBJS= devfs.o exec.o fork.o isr.o klog.o kmain.o message.o null.o pipe.o poll.o ramfs.o sem.o shm.o syscall.o task.o time.o timer.o vfs.o waitexit.o  ##auto 
 OBJS=$(AUTOOBJS)
 ROOT=..
 everything: build.a
@@ -40,6 +40,12 @@ isr.o: isr.c ../arch_x86/include/os/arch_config.h \
  ../include/lib/klib.h ../include/lib/stdarg.h \
  ../arch_x86/include/os/regs.h ../include/lib/string.h \
  ../include/os/isr.h
+klog.o: klog.c ../include/os/type.h ../include/lib/klib.h \
+ ../include/lib/stdarg.h ../include/lib/string.h ../include/os/task.h \
+ ../arch_x86/include/os/arch_task.h ../arch_x86/include/os/regs.h \
+ ../include/libc/kstru.h ../include/os/sem.h ../include/lib/list.h \
+ ../include/os/devfs.h ../include/os/vfs.h ../include/os/dirent.h \
+ ../include/os/stat.h ../include/drv/klog.h
 kmain.o: kmain.c ../arch_x86/include/os/arch_config.h \
  ../include/drv/pit_i8253.h ../include/os/devfs.h ../include/lib/list.h \
  ../include/os/type.h ../include/os/vfs.h ../include/os/sem.h \
@@ -56,6 +62,20 @@ message.o: message.c ../include/os/task.h \
  ../include/os/dirent.h ../include/os/stat.h ../include/drv/cmos.h \
  ../arch_x86/include/os/pic_i8259.h ../arch_x86/include/os/mm.h \
  ../include/os/fork.h
+null.o: null.c ../include/lib/klib.h ../include/lib/stdarg.h \
+ ../include/os/devfs.h ../include/lib/list.h ../include/os/type.h \
+ ../include/os/vfs.h ../include/os/sem.h ../include/os/dirent.h \
+ ../include/os/stat.h
+pipe.o: pipe.c ../include/lib/klib.h ../include/lib/stdarg.h \
+ ../include/os/devfs.h ../include/lib/list.h ../include/os/type.h \
+ ../include/os/vfs.h ../include/os/sem.h ../include/os/dirent.h \
+ ../include/os/stat.h ../include/os/asm.h
+poll.o: poll.c ../include/os/type.h ../include/lib/klib.h \
+ ../include/lib/stdarg.h ../include/os/task.h \
+ ../arch_x86/include/os/arch_task.h ../arch_x86/include/os/regs.h \
+ ../include/libc/kstru.h ../include/os/sem.h ../include/lib/list.h \
+ ../include/os/devfs.h ../include/os/vfs.h ../include/os/dirent.h \
+ ../include/os/stat.h ../include/drv/poll.h
 ramfs.o: ramfs.c ../include/os/type.h ../include/lib/klib.h \
  ../include/lib/stdarg.h ../include/os/task.h \
  ../arch_x86/include/os/arch_task.h ../arch_x86/include/os/regs.h \
