@@ -69,7 +69,7 @@ struct poll_sem {
 #define POLL_FUNC_REGISTER 3
 #define POLL_FUNC_UNREGISTER 4
 
-#define FD_MAX 16
+#define FD_MAX 64
 struct s_vfs
 {
 	struct s_fd *fdtab[FD_MAX];
@@ -87,4 +87,6 @@ long vfs_lseek(int fd, long offset, int whence);
 void vfs_fork(struct s_task *child, struct s_task *father);
 void vfs_exec(struct s_task *ptask);
 void vfs_exit(struct s_task *ptask);
+struct s_fd *vfs_sendfd(int fd);
+int vfs_recvfd(struct s_fd *pfd, int newfd);
 #endif /* _VFS_H_ */

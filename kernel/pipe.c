@@ -2,20 +2,24 @@
 #include <os/devfs.h>
 #include <os/sem.h>
 #include <os/asm.h>
+#include <os/vfs.h>
+#include <drv/pipe.h>
+#include <os/errno.h>
 
 #define PIPE_SIZE 1024
 struct s_pipe {
 	char buf[PIPE_SIZE];
 	int fp, ep;
-#if 0
-	sem_t read;
-	sem_t write;
-#else
 	int count;
 	sem_t empty;
 	struct list_head poll_read;
-#endif
+	sem_t semfd;
+	struct s_fd *sendfd;
+	int ref_count;
 };
+
+#define PORT_MAX 1024
+struct s_pipe *ports[PORT_MAX+1];
 
 static int pipe_init()
 {
@@ -32,32 +36,70 @@ static int pipe_exit()
 static int pipe_open(int minor, int mode, void **data)
 {
 	struct s_pipe *pipe;
+	if(minor > 0 && minor <= PORT_MAX && ports[minor])
+	{
+		ports[minor]->ref_count++;
+		*data = ports[minor];
+		return 0;
+	}
 	pipe = kmalloc(sizeof(struct s_pipe));
 	pipe->fp = 0;
 	pipe->ep = 0;
-#if 0
-	sem_init(&pipe->read, 0);
-	sem_init(&pipe->write, PIPE_SIZE);
-#else
+	if(minor < 0)
+		return -EINVAL;
 	pipe->count = 0;
 	sem_init(&pipe->empty, 0);
 	INIT_LIST_HEAD(&pipe->poll_read);
-#endif
+	sem_init(&pipe->semfd, 0);
+	pipe->sendfd = NULL;
+	pipe->ref_count = 1;
 	*data = pipe;
+	if(minor > 0 && minor <= PORT_MAX)
+		ports[minor] = pipe;
 	return 0;
 }
 
 static int pipe_close(int minor, void *data)
 {
-	kfree(data);
+	struct s_pipe *pipe = data;
+	pipe->ref_count--;
+	if(pipe->ref_count == 0)
+	{
+		if(pipe->sendfd)
+			panic("unclean sendfd\n");
+		kfree(pipe);
+		if(minor > 0 && minor <= PORT_MAX)
+			ports[minor] = NULL;
+	}
 	return 0;
 }
 
 static int pipe_ctl(int minor, void *data, int cmd, void *arg)
 {
+	struct s_pipe *pipe;
+	int fd, *pfd;
+	pipe = data;
 	switch(cmd)
 	{
-		
+	case PIPE_CMD_SENDFD:
+		fd = (long)arg;
+		if(pipe->sendfd)
+			return -1;
+		pipe->sendfd = vfs_sendfd(fd);
+		sem_up(&pipe->semfd);
+		return 0;
+		break;
+	case PIPE_CMD_RECVFD:
+		pfd = arg;
+		sem_down(&pipe->semfd);
+		fd = vfs_recvfd(pipe->sendfd, *pfd);
+		if(fd >= 0)
+			*pfd = fd;
+		pipe->sendfd = NULL;
+		return fd;
+		break;
+	case PIPE_CMD_TESTFD:
+		return pipe->sendfd?1:0;
 	}
 	return 0;
 }
@@ -70,20 +112,6 @@ static long pipe_read(int minor, void *data, void *buf, long n, long off)
 	struct poll_sem *upsem;
 	cbuf = buf;
 	pipe = data;
-#if 0
-	sem_down(&pipe->read);
-	*cbuf++ = pipe->buf[pipe->fp];
-	pipe->fp = (pipe->fp + 1)%PIPE_SIZE;
-	sem_up(&pipe->write);
-	for(read = 1; read < n; read++)
-	{
-		if(!sem_trydown(&pipe->read))
-			break;
-		*cbuf++ = pipe->buf[pipe->fp];
-		pipe->fp = (pipe->fp + 1)%PIPE_SIZE;
-		sem_up(&pipe->write);
-	}
-#else
 	while(pipe->count == 0)
 		sem_down(&pipe->empty);
 	for(read = 0; read < n && pipe->count; read++, pipe->count--)
@@ -98,7 +126,6 @@ static long pipe_read(int minor, void *data, void *buf, long n, long off)
 			sem_up(upsem->sem);
 		}
 	}
-#endif
 	return read;
 }
 
@@ -111,16 +138,6 @@ static long pipe_write(int minor, void *data, void *buf, long n, long off)
 	int up;
 	cbuf = buf;
 	pipe = data;
-#if 0
-	for(write = 0; write < n; write++)
-	{
-		if(!sem_trydown(&pipe->write))
-			break;
-		pipe->buf[pipe->ep] = *cbuf++;
-		pipe->ep = (pipe->ep + 1)%PIPE_SIZE;
-		sem_up(&pipe->read);
-	}
-#else
 	if(n && pipe->count == 0)
 		up = 1;
 	else
@@ -140,7 +157,6 @@ static long pipe_write(int minor, void *data, void *buf, long n, long off)
 			sem_up(upsem->sem);
 		}
 	}
-#endif
 	return write;
 }
 

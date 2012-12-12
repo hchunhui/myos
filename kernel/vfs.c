@@ -508,6 +508,38 @@ void vfs_start()
 	}
 }
 
+struct s_fd *vfs_sendfd(int fd)
+{
+	if(fd < 0 || fd >= FD_MAX)
+		return NULL;
+	if(current->vfs->fdtab[fd] == NULL)
+		return NULL;
+	current->vfs->fdtab[fd]->ref_count++;
+	return current->vfs->fdtab[fd];
+}
+
+int vfs_recvfd(struct s_fd *pfd, int newfd)
+{
+	int i;
+	int ret;
+	if(pfd == NULL)
+		return -EBADF;
+	if(newfd == -1)
+		for (i = 0; i < FD_MAX; ++i)
+			if(current->vfs->fdtab[i] == NULL)
+			{
+				newfd = i;
+				break;
+			}
+	if(newfd < 0 || newfd >= FD_MAX)
+		return -EBADF;
+	if(current->vfs->fdtab[newfd])
+		if((ret = release_fd(current->vfs->fdtab, newfd, 1)))
+			return ret;
+	current->vfs->fdtab[newfd] = pfd;
+	return newfd;
+}
+
 asmlinkage long sys_open(char *name, int flags)
 {
 	return vfs_open(name, flags);
@@ -540,17 +572,9 @@ asmlinkage long sys_ioctl(int fd, int cmd, void *arg)
 
 asmlinkage long sys_dup2(int oldfd, int newfd)
 {
-	int ret;
-	if(oldfd < 0 || oldfd >= FD_MAX)
-		return -EBADF;
-	if(newfd < 0 || newfd >= FD_MAX)
-		return -EBADF;
-	if(current->vfs->fdtab[newfd])
-		if((ret = release_fd(current->vfs->fdtab, newfd, 1)))
-			return ret;
-	current->vfs->fdtab[oldfd]->ref_count++;
-	current->vfs->fdtab[newfd] = current->vfs->fdtab[oldfd];
-	return 0;
+	struct s_fd *sfd;
+	sfd = vfs_sendfd(oldfd);
+	return vfs_recvfd(sfd, newfd);
 }
 
 asmlinkage long sys_mknod(char *name, int type)

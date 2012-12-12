@@ -3,6 +3,7 @@
 #include <drv/poll.h>
 #include <drv/video.h>
 #include <drv/klog.h>
+#include <drv/pipe.h>
 
 #define NR_TTY 4
 #define TTY_BUF_SIZE (80*25*2)
@@ -19,9 +20,6 @@ struct s_tty
 static struct s_tty tty[NR_TTY];
 static struct s_tty *tty_now;
 int video_fd;
-int kb_fd;
-int mouse_fd;
-int klog_fd;
 int poll_fd;
 
 extern char **environ;
@@ -35,7 +33,6 @@ void write_tty(struct s_tty *tty, char *buf, int len)
 {
 	if(tty == tty_now)
 	{
-
 		write(video_fd, buf, len);
 	}
 	for(;len--;)
@@ -258,33 +255,103 @@ void poll_set_event(int pollfd, int fd, int type)
 		t_print ("ioctl error\n");
 }
 
-void fork_shell(struct s_tty *ptty)
+void poll_unset_event(int pollfd, int fd)
 {
-	int ret;
-	ptty->pipe_in = open("/dev/pipe/0", 0);
-	ptty->pipe_out = open("/dev/pipe/0", 0);
-	poll_set_event(poll_fd, ptty->pipe_out, POLL_TYPE_READ);
-	ret = vfork();
-	if(ret == 0) {
-		dup2(ptty->pipe_in, 0);
-		dup2(ptty->pipe_out, 1);
-		dup2(ptty->pipe_out, 2);
-		exit(execl("/bin/login.bin", "login", 0));
-	} else if(ret < 0) {
-		t_print("error!\n");
-		exit(1);
+	struct s_poll_event event;
+	event.fd = fd;
+	event.type = 0;
+	if(ioctl(pollfd, POLL_CMD_UNSET, &event))
+		t_print ("ioctl error\n");
+}
+
+typedef int (*act_func_t)(int fd);
+act_func_t act_func[64];
+int extra[64];
+
+int act_noop(int fd)
+{
+	return 0;
+}
+
+int act_kbfd(int fd)
+{
+	struct s_event event;
+	read(fd, &event, sizeof(struct s_event));
+	translate(event.code, event.value);
+	return 0;
+}
+
+int act_msfd(int fd)
+{
+	struct s_event event;
+	read(fd, &event, sizeof(struct s_event));
+	return 0;
+}
+
+int act_klogfd(int fd)
+{
+	int n;
+	char buf[640];
+	n = read(fd, buf, 640);
+	if(n > 0)
+		write_tty(tty + 3, buf, n);
+	return 0;
+}
+
+int act_ttyfd(int fd)
+{
+	int n;
+	char buf[640];
+	n = read(fd, buf, 640);
+	write_tty(tty+extra[fd], buf, n);
+	return 0;
+}
+
+int act_sendfd(int fd)
+{
+	char buf[2];
+	buf[1] = 0;
+	read(fd, buf, 1);
+	if(buf[0] >= '1' && buf[0] <= '3') {
+		//request stdin
+		ioctl(fd, PIPE_CMD_SENDFD, tty[buf[0]-'1'].pipe_in);
+	} else if(buf[0] >= '4' && buf[0] <= '6') {
+		//request stdout
+		ioctl(fd, PIPE_CMD_SENDFD, tty[buf[0]-'4'].pipe_out);
+	} else {
+		poll_unset_event(poll_fd, fd);
+		act_func[fd] = act_noop;
+		close(fd);
 	}
+	return 0;
+}
+
+int act_lisfd(int fd)
+{
+	char buf[1];
+	int xfd;
+	read(fd, buf, 1);
+	xfd = -1;
+	if(ioctl(fd, PIPE_CMD_TESTFD, 0))
+	{
+		ioctl(fd, PIPE_CMD_RECVFD, &xfd);
+		if(xfd < 0)
+			t_print("listen fd recv error!\n");
+		poll_set_event(poll_fd, xfd, POLL_TYPE_READ);
+		act_func[xfd] = act_sendfd;
+	}
+	else
+		t_print("bad protocol\n");
 }
 
 int main(int argc, char **argv)
 {	
 	int i;
+	int xfd;
 	struct s_poll_event poll_event;
-	struct s_event kb_event;
-	struct s_event mouse_event;
-	char buf[640];
 	if(argc >= 1 && strcmp(argv[0], "*tty*"))
 		exit(1);
+	/* global var init */
 	tty_now = tty;
 	is_lshift=0;
 	is_rshift=0;
@@ -293,20 +360,38 @@ int main(int argc, char **argv)
 	is_lalt=0;
 	is_ralt=0;
 	led=0;
-	klog_fd = open("/dev/klog/0", 0);
-	ioctl(klog_fd, KLOG_CMD_BEGIN, 0);
+	for(i = 0; i < 64; i++)
+		act_func[i] = act_noop;
+	/* setup fd */
 	video_fd = open("/dev/video/0", 0);
-	kb_fd = open("/dev/input/1", 0);
-	mouse_fd = open("/dev/input/2", 0);
 	poll_fd = open("/dev/poll/0", 0);
-	if(kb_fd == -1 || poll_fd == -1 || mouse_fd == -1)
+
+	xfd = open("/dev/klog/0", 0);
+	poll_set_event(poll_fd, xfd, POLL_TYPE_READ);
+	act_func[xfd] = act_klogfd;
+	ioctl(xfd, KLOG_CMD_BEGIN, 0);
+
+	xfd = open("/dev/input/1", 0);
+	poll_set_event(poll_fd, xfd, POLL_TYPE_READ);
+	act_func[xfd] = act_kbfd;
+
+	xfd = open("/dev/input/2", 0);
+	poll_set_event(poll_fd, xfd, POLL_TYPE_READ);
+	act_func[xfd] = act_msfd;
+
+	/* setup pipe */
+	for(i = 0; i < NR_TTY; i++)
 	{
-		t_print("fd error\n");
-		exit(1);
+		tty[i].pipe_in = open("/dev/pipe/0", 0);
+		tty[i].pipe_out = open("/dev/pipe/0", 0);
+		poll_set_event(poll_fd, tty[i].pipe_out, POLL_TYPE_READ);
+		act_func[tty[i].pipe_out] = act_ttyfd;
+		extra[tty[i].pipe_out] = i;
 	}
-	poll_set_event(poll_fd, kb_fd, POLL_TYPE_READ);
-	poll_set_event(poll_fd, mouse_fd, POLL_TYPE_READ);
-	poll_set_event(poll_fd, klog_fd, POLL_TYPE_READ);
+
+	xfd = open("/dev/pipe/1", 0);
+	poll_set_event(poll_fd, xfd, POLL_TYPE_READ);
+	act_func[xfd] = act_lisfd;
 
 	/* test arg */
 	for(i = 0; i < argc; i++)
@@ -319,38 +404,14 @@ int main(int argc, char **argv)
 		t_print(environ[i]);
 		t_print("\n");
 	}
-	/* fork shell */
-	for(i = 0; i < 3; i++)
-		fork_shell(&tty[i]);
-	
+
+	/* main loop */
 	for(;;)
 	{
 		if(read(poll_fd, &poll_event, sizeof(struct s_poll_event)) == -1)
 			break;
-		if(poll_event.fd == kb_fd) {
-			read(kb_fd, &kb_event, sizeof(struct s_event));
-			translate(kb_event.code, kb_event.value);
-		} else if(poll_event.fd == mouse_fd) {
-			read(mouse_fd, &mouse_event, sizeof(struct s_event));
-		} else if(poll_event.fd == klog_fd) {
-			int n;
-			n = read(klog_fd, buf, 640);
-			if(n > 0)
-				write_tty(tty + 3, buf, n);
-		} else {
-			for(i = 0; i < NR_TTY; i++)
-			{
-				if(poll_event.fd == tty[i].pipe_out)
-				{
-					int n;
-					n = read(tty[i].pipe_out, buf, 640);
-					write_tty(tty + i, buf, n);
-					break;
-				}
-			}
-			//t_print("poll error\n");
-			//exit(1);
-		}
+		xfd = poll_event.fd;
+		act_func[xfd](xfd);
 	}
 	return 0;
 }
