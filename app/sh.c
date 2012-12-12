@@ -86,6 +86,7 @@ int main(int argc, char **argv)
 		getline(buf);
 		for(p=buf;*p!='\n';p++);
 		*p='\0';
+		printf("%s\n", buf);
 		if(strcmp(buf,"exit")==0)
 		{
 			exit(0);
@@ -145,6 +146,16 @@ int main(int argc, char **argv)
 		else if(buf[0] == '!')
 		{
 			printf("testing float\n");
+			int fd;
+			int inter=1;
+			int ticks;
+			fd = open("/dev/timer/0", 0);
+			for(;;){
+				//scanf("%d", &inter);
+				write(fd, &inter, sizeof(inter));
+				read(fd, &ticks, sizeof(ticks));
+				printf("ticks=%d\n", ticks);
+			}
 			float_test();
 		}
 		else
