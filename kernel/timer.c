@@ -9,12 +9,8 @@
 #include <os/sem.h>
 #include <os/hz.h>
 #include <lib/klib.h>
-#include <os/message.h>
 #include <os/isr.h>
 #include <os/errno.h>
-
-extern int timer;	//in HZ
-extern int timer_long;	//in USR_HZ
 
 struct timer_data {
 	struct list_head list;
@@ -60,13 +56,6 @@ int do_timer_int()
 		else
 			break;
 	}
-	/* if(--timer < 0) */
-	/* { */
-	/* 	MSG msg; */
-	/* 	msg.type = KM_TIMER; */
-	/* 	timer = timer_long * (HZ/USR_HZ); */
-	/* 	do_send_to_user(&msg); */
-	/* } */
 
 	task_clock();
 	return 0;

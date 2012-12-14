@@ -2,7 +2,6 @@
 #include <os/mm.h>
 #include <os/fpu.h>
 #include <os/waitexit.h>
-#include <os/message.h>
 #include <lib/klib.h>
 #include <lib/string.h>
 #include <os/sem.h>
@@ -82,7 +81,6 @@ int do_exit(int exit_code)
 
 	ptask_run->state = TASK_STAT_DIE;
 	ptask_run->exit_code = exit_code;
-	message_exit(current);
 	fpu_exit(current);
 	vfs_exit(current);
 

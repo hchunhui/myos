@@ -7,7 +7,6 @@
 #include <lib/string.h>
 #include <os/unistd.h>
 #include <os/asm.h>
-#include <os/message.h>
 #include <os/fpu.h>
 #include <os/isr.h>
 #include <os/vfs.h>
@@ -223,7 +222,6 @@ void task_init()
 	task_running = 0;
 	arch_task_init(idle_task);
 	mm_fork(idle_task, NULL, 0);
-	message_init(current);
 	fpu_init(current);
 	vfs_init(current);
 }

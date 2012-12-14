@@ -1,7 +1,6 @@
 #ifndef _STDARG_H
 #define _STDARG_H
 #include <os/type.h>
-#include <libc/kstru.h>
 #include <os/unistd.h>
 #include <lib/string.h>
 #include <drv/video.h>
@@ -64,9 +63,6 @@ int waitpid(int pid,int* status,int options);
 void getline(char* buf);
 long gettime();
 
-int get_graph_info(struct myos_graph_info *info);
-int tty_switch(int nr);
-
 int rand(void);
 void srand(unsigned seed);
 
@@ -75,8 +71,6 @@ clock_t clock();
 long mystrtol(const char *nptr, /*char **endptr,*/ int base);
 int scanf(const char* fmt,...);
 
-int send(int pid_to, MSG *m);
-int recv(int pid_from, MSG *m, int block);
 int getpid();
 int getppid();
 

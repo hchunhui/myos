@@ -254,8 +254,8 @@ sys_call_table:
 	.long sys_gettime
 	.long 0
 	.long sys_pause
-	.long sys_send		/* 20 */
-	.long sys_recv
+	.long 0			/* 20 */
+	.long 0
 	.long sys_getpid
 	.long sys_getppid
 	.long sys_shm_get

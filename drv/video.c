@@ -3,7 +3,6 @@
 #include <lib/klib.h>
 #include <os/mm.h>
 #include <lib/string.h>
-#include <libc/kstru.h>
 #include <os/io.h>
 #include <drv/video.h>
 

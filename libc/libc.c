@@ -92,26 +92,6 @@ void uprint(char* obj)
 	}
 }
 
-int get_graph_info(struct myos_graph_info *info)
-{
-	int ret;
-	int fd;
-	fd = open("/dev/video/0", 0);
-	ret = ioctl(fd, VIDEO_CMD_GET_INFO, info);
-	close(fd);
-	return ret;
-}
-
-int send(int pid_to, MSG *m)
-{
-	return usr_sys_call2(__NR_send, pid_to, m);
-}
-
-int recv(int pid_from, MSG *m, int block)
-{
-	return usr_sys_call3(__NR_recv, pid_from, m, block);
-}
-
 int getpid()
 {
 	return usr_sys_call0(__NR_getpid);
@@ -175,10 +155,6 @@ int nice(int nice)
 int dup2(int oldfd, int newfd)
 {
 	return usr_sys_call2(__NR_dup2, oldfd, newfd);
-}
-
-int tty_switch(int dummy)
-{
 }
 
 int mknod(char *name, int type)

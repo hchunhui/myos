@@ -4,7 +4,6 @@
 
 #ifndef __ASSEMBLY__
 #include <os/arch_task.h>
-#include <libc/kstru.h>
 #include <os/sem.h>
 struct s_fpu;
 struct s_vfs;
@@ -36,11 +35,6 @@ struct s_task
 	/* 信号 */
 	unsigned int signal;
 	
-	/* 消息 */
-	MSG *msg_list;
-	MSG *msg_last;
-	int msg_count;
-	
 	/* FPU */
 	int used_fpu;
 	struct s_fpu *fpu_info;
@@ -52,7 +46,7 @@ struct s_task
 	sem_t vfork_sem;
 	struct s_thread thread;
 	/* 为进程内核态堆栈保留空间 */
-	unsigned long kernel_stack[1024-25];
+	unsigned long kernel_stack[1024-22];
 };
 
 void task_set_signal(struct s_task *ptask, unsigned int signal_mask);
@@ -82,9 +76,6 @@ struct s_task *task_struct_alloc();
 #define TASK_STAT_READY	2
 #define TASK_STAT_DIE	3
 #define TASK_STAT_BLOCK	4
-
-#define SIGRECV		(1<<1)		//recv告诉send已经接收到消息
-#define SIGSEND		(1<<2)		//send告诉recv消息已发出
 
 #define TASK_RESCHED  0
 #define TASK_LEVEL    4

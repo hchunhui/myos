@@ -31,8 +31,6 @@
 #define __NR_execve		14
 #define __NR_gettime		17
 #define __NR_pause		19
-#define __NR_send		20
-#define __NR_recv		21
 #define __NR_getpid		22
 #define __NR_getppid		23
 #define __NR_shm_get		24

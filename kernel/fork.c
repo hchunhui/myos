@@ -3,7 +3,6 @@
 #include <os/waitexit.h>
 #include <os/mm.h>
 #include <os/fpu.h>
-#include <os/message.h>
 #include <lib/klib.h>
 #include <lib/string.h>
 #include <os/sem.h>
@@ -17,7 +16,6 @@ long do_fork(unsigned long pc, unsigned int flags)
 	ptask_run = current;
 	ptask = task_struct_dup(ptask_run);
 	
-	message_init(ptask);
 	fpu_fork(ptask, ptask_run);
 	mm_fork(ptask, ptask_run, flags);
 	vfs_fork(ptask, ptask_run);
