@@ -11,6 +11,39 @@ struct s_poll {
 	struct list_head int_list;
 };
 
+static int poll_write_event(struct s_poll *poll)
+{
+	struct poll_sem *p;
+	struct s_fd *sfd;
+	struct s_handle *h;
+	struct s_poll_event event;
+	int ret;
+	ret = 0;
+	list_for_each_entry(p, &poll->int_list, int_list)
+	{
+		sfd = current->vfs->fdtab[p->fd];
+		assert(sfd != NULL);
+		h = sfd->handle;
+		if(h->super->opr->poll)
+			if(h->super->opr->poll(
+				   h,
+				   POLL_FUNC_READABLE,
+				   NULL))
+			{
+				event.fd = p->fd;
+				event.type = POLL_TYPE_READ;
+				dev_simp_write(DEV_MAJOR_PIPE,
+					       0,
+					       poll->pipe_data,
+					       0,
+					       &event,
+					       sizeof(struct s_poll_event));
+				ret++;
+			}
+	}
+	return ret;
+}
+
 static int poll_init()
 {
 	printk("poll up\n");
@@ -115,47 +148,20 @@ static int poll_ctl(int minor, void *data, int cmd, void *arg)
 {
 	struct s_poll *poll = data;
 	struct s_poll_event *event = arg;
+	int nr;
 	switch(cmd)
 	{
 	case POLL_CMD_SET:
 		return poll_set(poll, event->fd, event->type);
 	case POLL_CMD_UNSET:
 		return poll_unset(poll, event->fd);
+	case POLL_CMD_PEEK:
+		if((nr = dev_simp_poll(DEV_MAJOR_PIPE, 0, poll->pipe_data,
+				       POLL_FUNC_READABLE, 0)))
+			return nr / sizeof(struct s_poll_event);
+		return poll_write_event(poll);
 	}
 	return -1;
-}
-
-static int poll_write_event(struct s_poll *poll)
-{
-	struct poll_sem *p;
-	struct s_fd *sfd;
-	struct s_handle *h;
-	struct s_poll_event event;
-	int ret;
-	ret = 0;
-	list_for_each_entry(p, &poll->int_list, int_list)
-	{
-		sfd = current->vfs->fdtab[p->fd];
-		assert(sfd != NULL);
-		h = sfd->handle;
-		if(h->super->opr->poll)
-			if(h->super->opr->poll(
-				   h,
-				   POLL_FUNC_READABLE,
-				   NULL))
-			{
-				event.fd = p->fd;
-				event.type = POLL_TYPE_READ;
-				dev_simp_write(DEV_MAJOR_PIPE,
-					       0,
-					       poll->pipe_data,
-					       0,
-					       &event,
-					       sizeof(struct s_poll_event));
-				ret++;
-			}
-	}
-	return ret;
 }
 
 static long poll_read(int minor, void *data, void *buf, long n, long off)

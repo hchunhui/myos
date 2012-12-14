@@ -3,6 +3,7 @@
 
 #define POLL_CMD_SET 1
 #define POLL_CMD_UNSET 2
+#define POLL_CMD_PEEK 3
 
 #define POLL_TYPE_READ 1
 #define POLL_TYPE_WRITE 2
