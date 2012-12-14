@@ -138,6 +138,11 @@ static long pipe_write(int minor, void *data, void *buf, long n, long off)
 	int up;
 	cbuf = buf;
 	pipe = data;
+	if(n < 0)
+		return 0;
+	/* atomic write */
+	if(n <= 128 && (PIPE_SIZE - pipe->count) < n)
+		return 0;
 	if(n && pipe->count == 0)
 		up = 1;
 	else
