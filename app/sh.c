@@ -72,13 +72,6 @@ extern char **environ;
 int main(int argc, char **argv)
 {
 	char *p;
-	printf(
-		"Alt+(1,2,3,4) : change console.\n"
-		"Alt+5         : graphic mode.\n"
-		"/w.bin        : a window manager.\n"
-		"/task2.bin    : a window.\n"
-		"/gauss.bin    : gauss elimination method.\n\n"
-		);
 	for(;;)
 	{
 		printf("#");
@@ -86,7 +79,6 @@ int main(int argc, char **argv)
 		getline(buf);
 		for(p=buf;*p!='\n';p++);
 		*p='\0';
-		printf("%s\n", buf);
 		if(strcmp(buf,"exit")==0)
 		{
 			exit(0);
