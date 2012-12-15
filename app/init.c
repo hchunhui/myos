@@ -12,6 +12,11 @@ char *sh_argv[] = {
 	0,
 };
 
+char *w_argv[] = {
+	"w",
+	0
+};
+
 extern char **environ;
 int video_fd;
 
@@ -37,6 +42,9 @@ int main(int argc, char **argv)
 	int pid;
 	int tty_pid, sh_pid[3];
 
+	open("/dev/null/0", 0);
+	dup2(0, 1);
+	dup2(0, 2);
 	video_fd = open("/dev/video/0", 0);
 	t_print("my os init...\n");
 	t_print("spawning tty driver...\n");
@@ -48,6 +56,7 @@ int main(int argc, char **argv)
 	sh_pid[1] = spawn("/bin/login.bin", sh_argv);
 	sh_argv[1] = "3";
 	sh_pid[2] = spawn("/bin/login.bin", sh_argv);
+	pid = spawn("/bin/w.bin", w_argv);
 	while(1)
 	{
 		pid = waitpid(-1,&status,0);
