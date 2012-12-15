@@ -77,14 +77,16 @@ static int poll_close(int minor, void *data)
 	list_for_each_entry_safe(p, tmp, &poll->int_list, int_list)
 	{
 		sfd = current->vfs->fdtab[p->fd];
-		assert(sfd != NULL);
-		h = sfd->handle;
-		if(h->super->opr->poll)
-			if(h->super->opr->poll(
-				   h,
-				   POLL_FUNC_UNREGISTER,
-				   &p->list))
-				panic("poll_unset\n");
+		if(sfd)
+		{
+			h = sfd->handle;
+			if(h->super->opr->poll)
+				if(h->super->opr->poll(
+					   h,
+					   POLL_FUNC_UNREGISTER,
+					   &p->list))
+					panic("poll_unset\n");
+		}
 		list_del(&p->int_list);
 	}
 	dev_simp_close(DEV_MAJOR_PIPE, 0, poll->pipe_data);
@@ -112,6 +114,7 @@ static int poll_unset(struct s_poll *poll, int fd)
 					   &p->list))
 					panic("poll_unset\n");
 			list_del(&p->int_list);
+			kfree(p);
 		}
 	}
 	return 0;
