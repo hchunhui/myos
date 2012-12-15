@@ -1,105 +1,40 @@
 #include <libc/libc.h>
+#include <drv/pipe.h>
+#include <drv/poll.h>
 #include "w/draw.h"
-
-int w_pid;
-
-void do_timer(HANDLE hwnd);
+#include "w/msg.h"
+#include "kb_state.h"
 
 int get_utime()
 {
 	return usr_sys_call0(__NR_get_utime);
 }
 
-void pause()
+static void poll_set_event(int pollfd, int fd, int type)
 {
-	usr_sys_call0(__NR_pause);
+	struct s_poll_event event;
+	event.fd = fd;
+	event.type = type;
+	if(ioctl(pollfd, POLL_CMD_SET, &event))
+		printf ("ioctl error\n");
 }
 
-double sin(double x)
+static void poll_unset_event(int pollfd, int fd)
 {
-	double ret;
-	asm (
-	"fldl %1\n\t"
-	"fsin\n\t"
-	"fstpl %0"
-	:"=m"(ret)
-	:"m"(x)
-	);
-	return ret;
-}
-
-double cos(double x)
-{
-	double ret;
-	asm (
-	"fldl %1\n\t"
-	"fcos\n\t"
-	"fstpl %0"
-	:"=m"(ret)
-	:"m"(x)
-	);
-	return ret;
+	struct s_poll_event event;
+	event.fd = fd;
+	event.type = 0;
+	if(ioctl(pollfd, POLL_CMD_UNSET, &event))
+		printf ("ioctl error\n");
 }
 
 u16 *buff = (void *)(1024*1024*1024);
 DrawCanvas _canv;
 DrawCanvas * const canv = &_canv;
 
-int shm_key;
-
-HANDLE w_create(int attr, int x, int y, int w, int h, char *name)
-{
-	MSG msg;
-	msg.type = WM_WINDOW_CREATE;
-	msg.arg1 = attr;
-	msg.arg2 = (x << 16) | y;
-	msg.arg3 = (w << 16) | h;
-	msg.arg4 = (HANDLE) name;
-	msg.arg5 = strlen(name) + 1;
-	send( w_pid, &msg);
-	do {
-		recv( -1, &msg, 1);
-	} while(msg.type != UM_REPLY);
-	
-	shm_key = msg.arg2;
-	shm_at(shm_key, buff, SHM_RW);
-	return msg.arg1;
-}
-
-void w_refresh(HANDLE hwnd, int x, int y ,int w, int h)
-{
-	MSG msg;
-	msg.type = WM_WINDOW_REFRESH;
-	msg.arg1 = hwnd;
-	msg.arg2 = 0;
-	msg.arg3 = (x << 16) | y;
-	msg.arg4 = (w << 16) | h;
-	send( w_pid, &msg);
-}
-
-int w_destroy(HANDLE hwnd)
-{
-	MSG msg;
-	msg.type = WM_WINDOW_DESTROY;
-	msg.arg1 = hwnd;
-	send( w_pid, &msg);
-	do {
-		recv( -1, &msg, 1);
-		printf("msg.type = %d\n",msg.type);
-	} while(msg.type != UM_REPLY);
-	
-	shm_dt(shm_key, buff);
-	return msg.arg1;
-}
-
-void w_timer(HANDLE hwnd,int val)
-{
-	MSG msg;
-	msg.type = WM_WINDOW_TIMER;
-	msg.arg1 = hwnd;
-	msg.arg2 = val;
-	send( w_pid, &msg);
-}
+long shm_key;
+int priv_fd, ifd, ofd;
+WHandle hwnd;
 
 int x = 0;
 int y = 0;
@@ -120,7 +55,9 @@ int headx, heady;
 int over = 0;
 int skip = 0;
 
-void do_paint(HANDLE hwnd)
+void do_timer();
+
+void do_paint()
 {
 	int i,j;
 	for(i = 0; i < N; i++)
@@ -136,7 +73,7 @@ void do_paint(HANDLE hwnd)
 		}
 	}
 	//draw_fill_rect(0, 15, 15, 15, RGB(31,63,31));
-	w_refresh(hwnd, 0 ,0 , 300, 315);
+	w_send_wrefresh(ofd, hwnd, 0 ,0 , 300, 315);
 }
 
 void new_apple()
@@ -151,30 +88,30 @@ void new_apple()
 	data[x][y] = APPLE;
 }
 
-void game_over(HANDLE hwnd)
+void game_over()
 {
 	over = 1;
 	char buf[100];
 	sprintf(buf, "Snake time:%d score:%d Game Over     ", time, score);
 	draw_string(canv, 0, 0, buf, 0);
-	w_refresh(hwnd, 0, 0, 300, 15);
+	w_send_wrefresh(ofd, hwnd, 0, 0, 300, 15);
 }
 
-void show_title(HANDLE hwnd)
+void show_title()
 {
 	char buf[100];
 	if(over)
 	{
-		game_over(hwnd);
+		game_over();
 		return;
 	}
 	sprintf(buf, "Snake time:%d score:%d (%4d,%4d) %s %s %s", time, score, x, y, 
 	btn&1?"L":" ", btn&2?"R":" ", btn&4?"M":" ");
 	draw_string(canv, 0, 0, buf, 0);
-	w_refresh(hwnd, 0, 0, 300, 15);
+	w_send_wrefresh(ofd, hwnd, 0, 0, 300, 15);
 }
 
-void do_kepress(HANDLE hwnd, int key)
+void do_kepress(int key)
 {
 	int stat;
 	int stat1;
@@ -205,7 +142,7 @@ void do_kepress(HANDLE hwnd, int key)
 	}
 	if( data[headx][heady] == stat || data[headx][heady] == stat1) 
 		return;
-	do_timer(hwnd);
+	do_timer();
 	nx = headx;
 	ny = heady;
 	skip = 1; //skip next move
@@ -222,7 +159,7 @@ void do_kepress(HANDLE hwnd, int key)
 			}
 			else if( data[(nx - 1 + N) % N][(ny - dir + M) % M] != 0)
 			{
-				game_over(hwnd);
+				game_over();
 				return;
 			}
 			data[nx][ny] = 0;
@@ -238,7 +175,7 @@ void do_kepress(HANDLE hwnd, int key)
 			}
 			else if( data[(nx - dir + N) % N][(ny - 1 + M) % M] != 0)
 			{
-				game_over(hwnd);
+				game_over();
 				return;
 			}
 			data[nx][ny] = 0;
@@ -254,7 +191,7 @@ void do_kepress(HANDLE hwnd, int key)
 			}
 			else if( data[(nx + 1 + N) % N][(ny - dir + M) % M] != 0)
 			{
-				game_over(hwnd);
+				game_over();
 				return;
 			}
 			data[nx][ny] = 0;
@@ -270,7 +207,7 @@ void do_kepress(HANDLE hwnd, int key)
 			}
 			else if( data[(nx - dir + N) % N][(ny + 1) % M] != 0)
 			{
-				game_over(hwnd);
+				game_over();
 				return;
 			}
 			data[nx][ny] = 0;
@@ -295,7 +232,7 @@ void print_data()
 	
 }
 
-void run(HANDLE hwnd)
+void run()
 {
 	int nx, ny, lastx, lasty;
 	nx = headx;
@@ -318,7 +255,7 @@ void run(HANDLE hwnd)
 			}
 			else if( data[(nx + 1) % N][ny] != 0)
 			{
-				game_over(hwnd);
+				game_over();
 				return;
 			}
 			data[(nx + 1) % N][ny] = LEFT;
@@ -334,7 +271,7 @@ void run(HANDLE hwnd)
 			}
 			else if( data[nx][(ny + 1) % M] != 0)
 			{
-				game_over(hwnd);
+				game_over();
 				return;
 			}
 			data[nx][(ny + 1) % M] = UP;
@@ -350,7 +287,7 @@ void run(HANDLE hwnd)
 			}
 			else if( data[(nx - 1 + N) % N][ny] != 0)
 			{
-				game_over(hwnd);
+				game_over();
 				return;
 			}
 			data[(nx - 1 + N) % N][ny] = RIGHT;
@@ -366,7 +303,7 @@ void run(HANDLE hwnd)
 			}
 			else if( data[nx][(ny - 1 + M) % M] != 0)
 			{
-				game_over(hwnd);
+				game_over();
 				return;
 			}
 			data[nx][(ny - 1 + M) % M] = DOWN;
@@ -409,49 +346,75 @@ void run(HANDLE hwnd)
 	data[lastx][lasty] = TAIL;
 }
 
-void do_timer(HANDLE hwnd)
+void do_timer()
 {
-	run(hwnd);
-	do_paint(hwnd);
-	show_title(hwnd);
+	run();
+	do_paint();
+	show_title();
 }
 
+int destroy_window()
+{
+	long ret;
+	w_send_wdestroy(ofd, hwnd);
+	w_wait_reply(ifd, &ret, NULL);
+	return ret;
+}
 
 void main_loop()
 {
-	MSG msg;
-	HANDLE hwnd;
-	
-	for(;recv( -1, &msg, 1);)
+	WMsg msg;
+	struct s_poll_event ev;
+	int poll_fd;
+	int tm_fd;
+	int tick, t;
+
+	poll_fd = open("/dev/poll/0", 0);
+	tm_fd = open("/dev/timer/0", 0);
+	tick = 10;
+	write(tm_fd, &tick, sizeof(tick));
+	poll_set_event(poll_fd, tm_fd, POLL_TYPE_READ);
+	poll_set_event(poll_fd, ifd, POLL_TYPE_READ);
+
+	for(;;)
 	{
-		hwnd = msg.arg1;
-		
-		switch( msg.type&(~MSG_TYPE_BLOCK) )
+		if(read(poll_fd, &ev, sizeof(ev)) == -1)
+			break;
+		if(ev.fd == tm_fd)
 		{
-			case UM_KEYPRESS:
-				if(msg.arg2 == 'q')
-					if(w_destroy(hwnd))
-						return;
-				do_kepress(hwnd, msg.arg2);
+			write(tm_fd, &tick, sizeof(tick));
+			read(tm_fd, &t, sizeof(t));
+			if(!over)
+			{
+				time++;
+				do_timer();
+			}
+		}
+		else
+		{
+			w_recv(ifd, &msg, sizeof(msg));
+			switch(msg.type)
+			{
+			case UM_KEY:
+				if(!(msg.arg4 & KBS_BRK))
+				{
+					if(msg.arg2 == 'q')
+						if(destroy_window())
+							return;
+					do_kepress(msg.arg2);
+				}
 				break;
-			case UM_MOUSEACT:
+			case UM_MOUSE:
 				x = msg.arg2;
 				y = msg.arg3;
 				btn = msg.arg4;
-				show_title(hwnd);
+				show_title();
 				break;
 			case UM_EXIT:
-				if(w_destroy(hwnd))
+				if(destroy_window())
 					return;
 				break;
-			case UM_TIMER:
-				if((!over))
-				{
-					time++;
-					do_timer(hwnd);
-				}
-			default:
-				break;
+			}
 		}
 	}
 }
@@ -468,26 +431,25 @@ void game_init()
 
 int main()
 {
-	HANDLE hwnd;
-	
-	printf("enter window manager 's pid:\n");
-	scanf("%d", &w_pid);
 	srand(get_utime());
 	
 	draw_init();
 	draw_set_canvas(canv, buff);
-	
-	hwnd = w_create(0, 250, 150, 300, 315, "Snake");
+	if(w_connect(&priv_fd, &ifd, &ofd))
+		return -1;
+	w_send_wcreate(ofd, 0, 250, 150, 300, 315, "Snake");
+	w_wait_reply(ifd, &hwnd, &shm_key);
+	shm_at(shm_key, buff, SHM_RW);
 	
 	printf("hwnd: %x\n",hwnd);
 	
 	game_init();
-	w_refresh(hwnd, 0 ,0 , 300, 315);
-	w_timer(hwnd, 1);
+	w_send_wrefresh(ofd, hwnd, 0 ,0 , 300, 315);
 	
 	main_loop();
 	
+	w_disconnect(priv_fd, ifd, ofd);
+	shm_dt(shm_key, buff);
 	printf("exit with exit code 0\n");
 	return 0;
 }
-
