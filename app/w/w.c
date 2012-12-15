@@ -4,12 +4,20 @@
  */
  
 #include <libc/libc.h>
+#include <drv/input.h>
+#include <drv/poll.h>
+#include <drv/video.h>
+#include <drv/pipe.h>
 #include "draw.h"
+#include "cursor.h"
 #include "w.h"
+#include "wnd.h"
 #include "msg.h"
-#include "kb.h"
-#include "mouse.h"
-#include "timer.h"
+#include "../kb_state.h"
+
+int poll_fd;
+int video_fd;
+int my_turn;
 
 u16 virtmem[800*600];
 
@@ -18,27 +26,17 @@ DrawCanvas _virt;
 DrawCanvas * const real = &_real;
 DrawCanvas * const virt = &_virt;
 
-static void send_um_keypress(WND *hwnd, int key, int ckey, int led, int isbrk)
+typedef struct s_client
 {
-	MSG msg;
-	msg.type = isbrk ? UM_KEYUP : UM_KEYPRESS;
-	msg.arg1 = (HANDLE) hwnd;
-	msg.arg2 = key;
-	msg.arg3 = ckey;
-	msg.arg4 = led;
-	send( hwnd->pid, &msg);
-}
+	int priv_fd;
+	int ifd, ofd;
+} WClient;
+#define WCLIENT_MAX 8
+WClient wc[WCLIENT_MAX];
 
-static void send_um_mouseact(WND *hwnd, int x, int y, int lrb)
-{
-	MSG msg;
-	msg.type = UM_MOUSEACT;
-	msg.arg1 = (HANDLE) hwnd;
-	msg.arg2 = x;
-	msg.arg3 = y;
-	msg.arg4 = lrb;
-	send( hwnd->pid, &msg);
-}
+int timer_diff = 10;
+
+extern char **environ;
 
 static void draw_mouse(WInfo *pwinfo)
 {
@@ -47,127 +45,368 @@ static void draw_mouse(WInfo *pwinfo)
 		0xffff);
 }
 
-void draw_restore(WInfo *pwinfo)
+static void draw_restore(WInfo *pwinfo)
 {
 	draw_copy(pwinfo->virt, real,
 		pwinfo->mouse_x, pwinfo->mouse_y,
 		12, 20);
 }
 
-/* 重画以(x1,y1),(x2,y2)为顶点的矩形(左上右下) */
-void w_redraw(WInfo *pwinfo, int x1, int y1, int x2, int y2)
+static void send_um_key(WWnd *hwnd, struct kb_state *kbs)
 {
-	__wnd_redraw(pwinfo, x1, y1, x2, y2);
-	draw_copy(pwinfo->virt, real,
-		x1, y1, x2 - x1, y2 - y1);
-	draw_mouse(pwinfo);
+	WMsg msg;
+	msg.type = UM_KEY;
+	msg.arg1 = (WHandle) hwnd;
+	msg.arg2 = kbs->ch;
+	msg.arg3 = kbs->func;
+	msg.arg4 = kbs->state;
+	msg.arg5 = kbs->leds;
+	w_send(hwnd->ifd, &msg, sizeof(WMsg));
 }
 
-int no_handler(WInfo *pwinfo, MSG *pmsg)
+static void send_um_mouse(WWnd *hwnd, int x, int y, int lrb)
 {
-	printf("no handler: msg.type = %d\n", pmsg->type);
-	return 1;
+	WMsg msg;
+	msg.type = UM_MOUSE;
+	msg.arg1 = (WHandle) hwnd;
+	msg.arg2 = x;
+	msg.arg3 = y;
+	msg.arg4 = lrb;
+	w_send(hwnd->ifd, &msg, sizeof(WMsg));
 }
 
-int do_km_keypress(WInfo *pwinfo, MSG *pmsg)
+static void send_um_reply(int fd, int retval1, int retval2)
 {
-	kb_do_km_keypress(pwinfo, pmsg);
-	
-	if(pwinfo->hwnd)
-	send_um_keypress(pwinfo->hwnd,
-		pmsg->arg1, pmsg->arg2, pmsg->arg3, pmsg->arg4);
-	else
+	WMsg msg;
+	msg.type = UM_REPLY;
+	msg.arg1 = retval1;
+	msg.arg2 = retval2;
+	w_send(fd, &msg, sizeof(WMsg));
+}
+
+static void poll_set_event(int pollfd, int fd, int type)
+{
+	struct s_poll_event event;
+	event.fd = fd;
+	event.type = type;
+	if(ioctl(pollfd, POLL_CMD_SET, &event))
+		printf ("ioctl error\n");
+}
+
+static void poll_unset_event(int pollfd, int fd)
+{
+	struct s_poll_event event;
+	event.fd = fd;
+	event.type = 0;
+	if(ioctl(pollfd, POLL_CMD_UNSET, &event))
+		printf ("ioctl error\n");
+}
+
+typedef int (*act_func_t)(WInfo *pwinfo,int fd);
+act_func_t act_func[64];
+
+int act_noop(WInfo *pwinfo, int fd)
+{
+	return 0;
+}
+
+int act_kbfd(WInfo *pwinfo, int fd)
+{
+	int mode = 0x4114;
+	struct s_event event;
+	struct kb_state *kbs;
+	read(fd, &event, sizeof(struct s_event));
+	kbs = kb_trans(event.code, event.value);
+	if(kbs->state & KBS_LAL ||
+	   kbs->state & KBS_RAL)
 	{
-		if(pmsg->arg4) goto next;
-		if(pwinfo->kb_ascii == 'f')
-			w_redraw(pwinfo, 0, 0,
-				pwinfo->virt->x, pwinfo->virt->y);
-		else if(pwinfo->kb_ascii == 'q')
-			return 1;
-	next:	;
+		if(kbs->state & KBS_BRK)
+			goto next;
+		if(kbs->func == KB_F5)
+		{
+			ioctl(video_fd, VIDEO_CMD_SET_MODE, &mode);
+			my_turn = 1;
+			w_redraw(pwinfo, 0, 0, virt->x, virt->y);
+		}
+		else if(kbs->func >= KB_F1 && kbs->func <= KB_F12)
+		{
+			ioctl(video_fd, VIDEO_CMD_RESET_MODE, 0);
+			my_turn = 0;
+		}
+	}
+next:
+	if(my_turn)
+	{
+		pwinfo->kb = kbs;
+		if(pwinfo->hwnd)
+		{
+			send_um_key(pwinfo->hwnd, kbs);
+		}
+		else
+		{
+			if(kbs->state & KBS_BRK) return 0;
+			if(kbs->ch == 'f')
+				w_redraw(pwinfo, 0, 0,
+					 pwinfo->virt->x, pwinfo->virt->y);
+			else if(kbs->ch == 'q')
+				return 1;
+		}
 	}
 	return 0;
 }
 
-int do_km_mouseact(WInfo *pwinfo, MSG *pmsg)
+int act_msfd(WInfo *pwinfo, int fd)
 {
-	draw_restore(pwinfo);
-	mouse_do_km_mouseact(pwinfo, pmsg);
-	draw_mouse(pwinfo);
-	
-	/* 位置检测 */
-	wnd_reset_hwnd(pwinfo);
-	
+	struct s_event event;
+	read(fd, &event, sizeof(struct s_event));
+	if(my_turn)
+	{
+		draw_restore(pwinfo);
+		pwinfo->mouse_lx = pwinfo->mouse_x;
+		pwinfo->mouse_ly = pwinfo->mouse_y;
+		pwinfo->mouse_lbtn = pwinfo->mouse_btn;
+		pwinfo->mouse_x += (short)(event.value>>16);
+		pwinfo->mouse_y += (short)(event.value&0xffff);
+		pwinfo->mouse_btn = event.code;
+		if(pwinfo->mouse_x < 0) pwinfo->mouse_x = 0;
+		if(pwinfo->mouse_y < 0) pwinfo->mouse_y = 0;
+		if(pwinfo->mouse_x > pwinfo->virt->x)
+			pwinfo->mouse_x = pwinfo->virt->x;
+		if(pwinfo->mouse_y > pwinfo->virt->y)
+			pwinfo->mouse_y = pwinfo->virt->y;
+		draw_mouse(pwinfo);
+
+		/* 位置检测 */
+		wnd_reset_hwnd(pwinfo);
+		if(pwinfo->hwnd)
+		{
+			send_um_mouse(pwinfo->hwnd,
+					      pwinfo->mouse_x - pwinfo->hwnd->x,
+					      pwinfo->mouse_y - pwinfo->hwnd->y,
+					      pwinfo->mouse_btn);
+}
+
+		/* 按键检测 */
+		if(pwinfo->mouse_btn&1)
+		{
+			if(!(pwinfo->mouse_lbtn&1))
+			{
+				/* 刚按下左键 */
+				wnd_set_top(pwinfo, pwinfo->hwnd);
+				pwinfo->mouse_cx = pwinfo->mouse_x;
+				pwinfo->mouse_cy = pwinfo->mouse_y;
+				pwinfo->mouse_chwnd = pwinfo->hwnd;
+				if(pwinfo->hwnd)
+				{
+					pwinfo->mouse_chwnd_x = pwinfo->hwnd->x;
+					pwinfo->mouse_chwnd_y = pwinfo->hwnd->y;
+				}
+			}
+		}
+		else
+		{
+			if(pwinfo->mouse_lbtn&1)
+				pwinfo->mouse_chwnd = NULL;
+		}
+	}
+	return 0;
+}
+
+int act_clifd(WInfo *pwinfo, int fd)
+{
+	WMsg msg;
+	int i;
+	char wname[32];
+	WWnd *hwnd;
+	int ret;
+	w_recv(fd, &msg, sizeof(WMsg));
+	if(msg.type == WM_WCREATE)
+	{
+		printf("w create\n");
+		w_recv(fd, wname, msg.arg5);
+		printf("w name %s\n", wname);
+		for(i = 0; i < WCLIENT_MAX; i++)
+		{
+			if(wc[i].ofd == fd)
+				break;
+		}
+		if(i == WCLIENT_MAX)
+		{
+			printf("bad!\n");
+			exit(1);
+		}
+		printf("ifd=%d\n", wc[i].ifd);
+		hwnd = wnd_create(pwinfo,
+				  wc[i].ifd,
+				  wc[i].ofd,
+				  msg.arg1,
+				  wname,
+				  (msg.arg2>>16)&0xffff,
+				  (msg.arg2)&0xffff,
+				  (msg.arg3>>16)&0xffff,
+				  (msg.arg3)&0xffff);
+		printf("w create ok\n");
+		send_um_reply(wc[i].ifd,
+			      (WHandle)hwnd,
+			      0x1100 + (hwnd - pwinfo->wtable));
+		printf("reply ok\n");
+		pwinfo->hwnd = wnd_in_area(pwinfo->mouse_x, pwinfo->mouse_y);
+	}
+	else if(msg.type == WM_WREFRESH)
+	{
+		WWnd *href = (WWnd *)msg.arg1;
+		u32 xy = (u32)msg.arg3;
+		u32 wh = (u32)msg.arg4;
+		int x = xy >> 16;
+		int y = xy & 0xffff;
+		int w = wh >> 16;
+		int h = wh & 0xffff;
+		if(w > href->w) w = href->w;
+		if(h > href->h) h = href->h;
+		if(pwinfo->need_redraw)
+		{
+			pwinfo->rx1 = min(pwinfo->rx1, x + href->x);
+			pwinfo->ry1 = min(pwinfo->ry1, y + href->y);
+			pwinfo->rx2 = max(pwinfo->rx2, href->x + x + w);
+			pwinfo->ry2 = max(pwinfo->ry2, href->y + y + h);
+		}
+		else
+		{
+			pwinfo->rx1 = x + href->x;
+			pwinfo->ry1 = y + href->y;
+			pwinfo->rx2 = href->x + x + w;
+			pwinfo->ry2 = href->y + y + h;
+			pwinfo->need_redraw = 1;
+		}
+	}
+	else if(msg.type == WM_WDESTROY)
+	{
+		hwnd = (WWnd *)msg.arg1;
+		ret = wnd_destroy(pwinfo, hwnd);
+		send_um_reply(hwnd->ifd, ret, 0);
+		return 0;
+	}
+	return 0;
+}
+
+int act_sendfd(WInfo *pwinfo, int fd)
+{
+	int i;
+	char buf[2];
+	buf[1] = 0;
+	read(fd, buf, 1);
+	if(buf[0] == 'a') {
+		for(i = 0; i < WCLIENT_MAX; i++)
+		{
+			if(wc[i].priv_fd == -1 &&
+			   wc[i].ifd == -1 &&
+			   wc[i].ofd == -1)
+				break;
+		}
+		if(i == WCLIENT_MAX)
+		{
+			printf("Too many client !!\n");
+			exit(1);
+		}
+		wc[i].priv_fd = fd;
+		wc[i].ifd = open("/dev/pipe/0", 0);
+		wc[i].ofd = open("/dev/pipe/0", 0);
+		//request ifd
+		ioctl(fd, PIPE_CMD_SENDFD, (void *)(wc[i].ifd));
+	} else if(buf[0] == 'A') {
+		//request stdout
+		for(i = 0; i < WCLIENT_MAX; i++)
+		{
+			if(wc[i].priv_fd == fd)
+				break;
+		}
+		if(i == WCLIENT_MAX)
+		{
+			printf("bad protocol\n");
+		}
+		ioctl(fd, PIPE_CMD_SENDFD, (void *)(wc[i].ofd));
+		poll_set_event(poll_fd, wc[i].ofd, POLL_TYPE_READ);
+		act_func[wc[i].ofd] = act_clifd;
+	} else {
+		for(i = 0; i < WCLIENT_MAX; i++)
+		{
+			if(wc[i].priv_fd == fd)
+			{
+				poll_unset_event(poll_fd, fd);
+				act_func[fd] = act_noop;
+				close(fd);
+				if(wc[i].ifd != -1)
+				{
+					close(wc[i].ifd);
+					wc[i].ifd = -1;
+				}
+				if(wc[i].ofd != -1)
+				{
+					poll_unset_event(poll_fd,
+							 wc[i].ofd);
+					close(wc[i].ofd);
+					wc[i].ofd = -1;
+				}
+				wc[i].priv_fd = -1;
+				break;
+			}
+		}
+	}
+	return 0;
+}
+
+int act_lisfd(WInfo *pwinfo, int fd)
+{
+	char buf[1];
+	int xfd;
+	read(fd, buf, 1);
+	xfd = -1;
+	if(ioctl(fd, PIPE_CMD_TESTFD, 0))
+	{
+		ioctl(fd, PIPE_CMD_RECVFD, &xfd);
+		if(xfd < 0)
+			printf("listen fd recv error!\n");
+		poll_set_event(poll_fd, xfd, POLL_TYPE_READ);
+		act_func[xfd] = act_sendfd;
+	}
+	else
+		printf("bad protocol\n");
+	return 0;
+}
+
+int idle_func(WInfo *pwinfo)
+{
+	if(pwinfo->need_redraw)
+	{
+		pwinfo->need_redraw = 1;
+		w_redraw(pwinfo,
+			 pwinfo->rx1, pwinfo->ry1,
+			 pwinfo->rx2, pwinfo->ry2);
+	}
+
+	/* status bar */
 	w_redraw(pwinfo, 0, 560, 799, 576);
 	if(pwinfo->hwnd)
 	{
 		draw_string(real, 0, 560, pwinfo->hwnd->name, 0);
-		send_um_mouseact(pwinfo->hwnd,
-			pwinfo->mouse_x - pwinfo->hwnd->x,
-			pwinfo->mouse_y - pwinfo->hwnd->y,
-			pmsg->arg3);
 	}
 	else
 	{
-		draw_string(real, 0, 560, "Desktop", 0);
-	}
-	
-	/* 按键检测 */
-	if(pwinfo->mouse_btn&1)
-	{
-		if(!(pwinfo->mouse_lbtn&1))
-		{
-			/* 刚按下左键 */
-			wnd_set_top(pwinfo, pwinfo->hwnd);
-			pwinfo->mouse_cx = pwinfo->mouse_x;
-			pwinfo->mouse_cy = pwinfo->mouse_y;
-			pwinfo->mouse_chwnd = pwinfo->hwnd;
-			if(pwinfo->hwnd)
-			{
-				pwinfo->mouse_chwnd_x = pwinfo->hwnd->x;
-				pwinfo->mouse_chwnd_y = pwinfo->hwnd->y;
-			}
-		}
-	}
-	else
-	{
-		if(pwinfo->mouse_lbtn&1)
-			pwinfo->mouse_chwnd = NULL;
-	}
-	
-	return 0;
-}
+		char buf[128];
+		sprintf(buf, "(%d, %d)", pwinfo->mouse_x, pwinfo->mouse_y);
 
-int do_km_timer(WInfo *pwinfo, MSG *pmsg)
-{
-	WND *pwin;
-	static int timer;
-	
-	timer_do_km_timer(pwinfo, pmsg);
-	
-	timer++;
-	wnd_for_each(pwinfo, pwin)
-	{
-		if(pwin->attr == WND_ATTR_USED &&
-		   pwin->use_timer &&
-		   timer%(pwin->use_timer) == 0)
-		{
-			MSG msg;
-			msg.type = UM_TIMER | MSG_TYPE_BLOCK;
-			msg.arg1 = (HANDLE) pwin;
-			send( pwin->pid, &msg);
-		}
+		draw_string(real, 0, 560, buf, 0);
 	}
-	
+
 	/* 下面处理窗口移动 */
 	if(
 		pwinfo->mouse_chwnd &&
 		pwinfo->mouse_btn&1 &&
-		(pwinfo->kb_aux & (1<<2)) )
+		(pwinfo->kb->state & KBS_LCT) )
 	{
 		int orgi_x, orgi_y;
 		int x1, x2, y1, y2;
-		WND *hwnd = pwinfo->mouse_chwnd;
+		WWnd *hwnd = pwinfo->mouse_chwnd;
 		orgi_x = hwnd->x;
 		orgi_y = hwnd->y;
 		hwnd->x = pwinfo->mouse_x - pwinfo->mouse_cx;
@@ -184,165 +423,89 @@ int do_km_timer(WInfo *pwinfo, MSG *pmsg)
 		y2 = max( hwnd->y, orgi_y ) + hwnd->h;
 		w_redraw(pwinfo, x1, y1, x2, y2);
 	}
-	
 	return 0;
 }
 
-typedef int (*KmMsgHandler)(WInfo *pwinfo, MSG *pmsg);
-KmMsgHandler km_handler[] = {
-	no_handler,				/* 0 */
-	no_handler,				/* USE_KB */
-	no_handler,				/* USE_MOUSE */
-	no_handler,				/* RESET_KB */
-	no_handler,				/* RESET_MOUSE */
-	do_km_keypress,				/* KEYPRESS */
-	do_km_mouseact,				/* MOUSEACT */
-	no_handler,				/* SET_TIMER */
-	no_handler,				/* RESET_TIMER */
-	do_km_timer,				/* TIMER */
-	};
-
-int do_wm_window_create(WInfo *pwinfo, MSG *pmsg)
+/* 重画以(x1,y1),(x2,y2)为顶点的矩形(左上右下) */
+void w_redraw(WInfo *pwinfo, int x1, int y1, int x2, int y2)
 {
-	int retval;
-	char wname[32];
-	
-	send_km_copydata(
-		pmsg->arg5,				/* len */
-		pmsg->pid,				/* pid */
-		(void *)pmsg->arg4,			/* sptr(name) */
-		wname);					/* dptr(wname) */
-	
-	retval = (int) wnd_create(			/* HWND */
-				pwinfo,
-				pmsg->pid,
-				pmsg->arg1, 
-				wname, 
-				(pmsg->arg2>>16)&0xffff,
-				(pmsg->arg2)&0xffff,
-				(pmsg->arg3>>16)&0xffff,
-				(pmsg->arg3)&0xffff );
-	
-	send_um_reply2(
-			pmsg->pid,
-			retval,
-			0x1100 + (((WND *)(retval)) - pwinfo->wtable)
-			);
-	pwinfo->hwnd = wnd_in_area(pwinfo->mouse_x, pwinfo->mouse_y);
-	
-	return 0;
-}
-
-int do_wm_window_destroy(WInfo *pwinfo, MSG *pmsg)
-{
-	int retval;
-	retval = wnd_destroy(pwinfo, (void *)pmsg->arg1);
-	send_um_reply(pmsg->pid, retval);
-	
-	return 0;
-}
-
-int do_wm_window_refresh(WInfo *pwinfo, MSG *pmsg)
-{
-	WND *href = (WND *)pmsg->arg1;
-	u32 xy = (u32)pmsg->arg3;
-	u32 wh = (u32)pmsg->arg4;
-	int x = xy >> 16;
-	int y = xy & 0xffff;
-	int w = wh >> 16;
-	int h = wh & 0xffff;
-
-	if(w > href->w) w = href->w;
-	if(h > href->h) h = href->h;
-	
-	w_redraw(pwinfo, href->x + x, href->y + y,
-		href->x + x + w, href->y + y + h);	
-	return 0;
-}
-
-int do_wm_window_timer(WInfo *pwinfo, MSG *pmsg)
-{
-	WND *hw=(WND *)pmsg->arg1;
-	hw->use_timer = pmsg->arg2;
-	
-	return 0;
-}
-
-typedef int (*WmMsgHandler)(WInfo *pwinfo, MSG *pmsg);
-WmMsgHandler wm_handler[] = {
-	no_handler,				/* 1000 */
-	do_wm_window_create,			/* WINDOW_CREATE */
-	do_wm_window_refresh,			/* WINDOW_REFRESH */
-	do_wm_window_destroy,			/* WINDOW_DESTROY */
-	do_wm_window_timer,			/* WINDOW_TIMER	 */
-	};
-
-void main_loop(WInfo *pwinfo)
-{
-	MSG msg;
-	int retval;
-	u32 msg_type;
-	
-	for(;recv( -1, &msg, 1);)
+	__wnd_redraw(pwinfo, x1, y1, x2, y2);
+	if(my_turn)
 	{
-		msg_type = msg.type&(~MSG_TYPE_BLOCK);
-		
-		if(msg_type <= KM_TIMER)
-		{
-			//printf("k%d ",msg_type>>1);
-			retval = (km_handler[msg_type>>1])(pwinfo, &msg);
-			if(retval)
-				return;
-		}
-		
-		if(msg_type >= WM_WINDOW_CREATE && msg_type <= WM_WINDOW_TIMER)
-		{
-			msg_type -= 1000 << 1;
-			//printf("w%d ", msg_type >>1);
-			retval = (wm_handler[msg_type>>1])(pwinfo, &msg);
-			if(retval)
-				return;
-		}
+		draw_copy(pwinfo->virt, real,
+			  x1, y1, x2 - x1, y2 - y1);
+		draw_mouse(pwinfo);
 	}
 }
 
-int main(int argc,char **argv)
+int main(int argc, char **argv)
 {
 	WInfo winfo;
-
-	nice(-10);
-	
-	/* w信息初始化 */
-	memset(&winfo, 0, sizeof(winfo));
-	
-	/* 绘图设备启动 */
+	int i, num_evs;
+	int xfd;
+	struct s_poll_event poll_event;
+	/* global init */
+	memset(&winfo, 0, sizeof(WInfo));
 	draw_init();
 	draw_set_canvas(real, NULL);
 	draw_set_canvas(virt, virtmem);
+	cursor_init(&winfo);
 	winfo.virt = virt;
-	
-	/* 输入设备启动 */
-	kb_init(&winfo);
-	mouse_init(&winfo);
-	timer_init(&winfo);
+	winfo.need_redraw = 0;
+	winfo.mouse_x = 400;
+	winfo.mouse_y = 300;
 	
 	/* 窗口管理启动 */
 	wnd_init(&winfo);
 	w_redraw(&winfo, 0, 0, virt->x, virt->y);
-	
-	/* 主循环 */
-	main_loop(&winfo);
-	
-	/* 窗口管理退出 */
-	wnd_exit(&winfo);
-	
-	/* 输入设备退出 */
-	timer_exit(&winfo);
-	mouse_exit(&winfo);
-	kb_exit(&winfo);
-	
-	/* 绘图设备退出，转回控制台 */
-	tty_switch(1);
+
+	for(i = 0; i < 64; i++)
+		act_func[i] = act_noop;
+	for(i = 0; i < WCLIENT_MAX; i++)
+	{
+		wc[i].priv_fd = -1;
+		wc[i].ifd = -1;
+		wc[i].ofd = -1;
+	}
+	/* setup fd */
+	poll_fd = open("/dev/poll/0", 0);
+	video_fd = open("/dev/video/0", 0);
+
+	xfd = open("/dev/input/1", 0);
+	poll_set_event(poll_fd, xfd, POLL_TYPE_READ);
+	act_func[xfd] = act_kbfd;
+
+	xfd = open("/dev/input/2", 0);
+	poll_set_event(poll_fd, xfd, POLL_TYPE_READ);
+	act_func[xfd] = act_msfd;
+
+	xfd = open("/dev/pipe/2", 0);
+	poll_set_event(poll_fd, xfd, POLL_TYPE_READ);
+	act_func[xfd] = act_lisfd;
+
+	/* main loop */
+	for(;;)
+	{
+		num_evs = ioctl(poll_fd, POLL_CMD_PEEK, 0);
+		if(num_evs == 0)
+		{
+			idle_func(&winfo);
+			num_evs = 1;
+		}
+		for(i = 0; i < num_evs; i++)
+		{
+			if(read(poll_fd,
+				&poll_event,
+				sizeof(struct s_poll_event)) == -1)
+				return -1;
+			xfd = poll_event.fd;
+			if(act_func[xfd](&winfo, xfd))
+				if(wnd_exit(&winfo) == 0)
+				{
+					ioctl(video_fd, VIDEO_CMD_RESET_MODE, 0);
+					return 0;
+				}
+		}
+	}
 	return 0;
 }
-

@@ -4,14 +4,13 @@
  */
 
 #include <libc/libc.h>
-#include <libc/kstru.h>
 #include "draw.h"
 #include "w.h"
 #include "wnd.h"
 #include "msg.h"
 
-static WND wtable[WND_MAX];	//窗口列表
-static WND *wnd_first = NULL;	//最顶层窗口
+static WWnd wtable[WND_MAX];	//窗口列表
+static WWnd *wnd_first = NULL;	//最顶层窗口
 
 char bmp[1024*1024];
 
@@ -36,10 +35,10 @@ void desktop_init()
 	read(fd, bmp, 1024*1024);
 	close(fd);
 	draw_bmp(desk, 120,20,bmp,0xffff,1);
-	draw_string(desk, 0, 0, "Hello World! Version 2", 0);
+	draw_string(desk, 0, 0, "Hello World! Version 3", 0);
 }
 
-void wnd_list_del(WND **pfirst, WND *pwin)
+void wnd_list_del(WWnd **pfirst, WWnd *pwin)
 {
 	if( pwin->next == pwin )
 	{
@@ -54,7 +53,7 @@ void wnd_list_del(WND **pfirst, WND *pwin)
 	}
 }
 
-void wnd_list_add_first(WND **pfirst, WND *pwin)
+void wnd_list_add_first(WWnd **pfirst, WWnd *pwin)
 {
 	if( !(*pfirst) )
 	{
@@ -84,7 +83,7 @@ void __wnd_redraw(WInfo *pwinfo, int x1, int y1, int x2, int y2)		//重画以(x1
 	draw_copy(desk, pwinfo->virt, x, y, w, h); //draw desktop
 	
 	if( !wnd_first ) return;
-	WND *pwin;
+	WWnd *pwin;
 	for( pwin = wnd_first->prev; pwin != wnd_first; pwin = pwin->prev)	//draw under windows
 	{
 		draw_window(&(pwin->bufcan), pwinfo->virt,
@@ -96,7 +95,7 @@ void __wnd_redraw(WInfo *pwinfo, int x1, int y1, int x2, int y2)		//重画以(x1
 		pwin->x, pwin->y, pwin->w, pwin->h);
 }
 
-int wnd_destroy(WInfo *pwinfo, WND *pwin)
+int wnd_destroy(WInfo *pwinfo, WWnd *pwin)
 {
 	if(pwin->attr == WND_ATTR_EMPTY)
 		return 0;
@@ -108,16 +107,18 @@ int wnd_destroy(WInfo *pwinfo, WND *pwin)
 	return 1;
 }
 
-WND *wnd_create(WInfo *pwinfo, int pid, u32 attr, char *name, int x, int y, int w, int h)
+WWnd *wnd_create(WInfo *pwinfo, int ifd, int ofd, u32 attr, char *name, int x, int y, int w, int h)
 {
-	WND *pwin;
-	for(pwin = wtable; pwin < wtable + 8; pwin++)
+	WWnd *pwin;
+	for(pwin = wtable; pwin < wtable + WND_MAX; pwin++)
 	{
+		printf("pwin->addr %x %d\n", pwin, pwin->attr);
 		if(pwin->attr == WND_ATTR_EMPTY)
 		{
 			strcpy(pwin->name, name);
 			pwin->attr = WND_ATTR_USED | attr;
-			pwin->pid = pid;
+			pwin->ifd = ifd;
+			pwin->ofd = ofd;
 			pwin->x = x;
 			pwin->y = y;
 			pwin->w = w;
@@ -135,10 +136,10 @@ WND *wnd_create(WInfo *pwinfo, int pid, u32 attr, char *name, int x, int y, int 
 
 #define __in_area(x,y,l,t,w,h) ( (l)<=(x) && (x)<=((l)+(w)) && (t)<=(y) && (y)<=((t)+(h)) )
 
-WND *wnd_in_area(int x,int y)
+WWnd *wnd_in_area(int x,int y)
 {
 	if( !wnd_first )return NULL;
-	WND *pwin;
+	WWnd *pwin;
 	//check top window
 	pwin = wnd_first;
 	if( __in_area(x, y, pwin->x, pwin->y, pwin->w, pwin->h) )
@@ -153,7 +154,7 @@ WND *wnd_in_area(int x,int y)
 	return NULL;
 }
 
-void wnd_set_top(WInfo *pwinfo, WND *pwin)
+void wnd_set_top(WInfo *pwinfo, WWnd *pwin)
 {
 	if(!pwin)
 		return;
@@ -174,7 +175,7 @@ void wnd_reset_hwnd(WInfo *pwinfo)
 int wnd_init(WInfo *pwinfo)
 {
 	int i;
-	for(i = 0; i < 8; i++)
+	for(i = 0; i < WND_MAX; i++)
 	{
 		if(shm_get(0x1100 + i, WIN_LEN) != 0)
 		{
@@ -196,33 +197,40 @@ int wnd_init(WInfo *pwinfo)
 	return 0;
 }
 
-int wnd_exit(WInfo *pwinfo)
+static void wnd_post_exit()
 {
 	int i;
-	WND *pwin;
-	MSG msg;
-	
-	for(pwin = wtable; pwin < wtable + 8; pwin++)
-	{
-		if(pwin->attr == WND_ATTR_USED)
-		{
-			send_um_exit(pwin);
-			recv( -1, &msg ,1);
-			if( (msg.type&(~MSG_TYPE_BLOCK)) == WM_WINDOW_DESTROY )
-			{
-				int retval = wnd_destroy(pwinfo, (void *)msg.arg1);
-				send_um_reply(msg.pid, retval);
-			}
-		}
-	}
-	
-	for(i = 0; i < 8; i++)
+	for(i = 0; i < WND_MAX; i++)
 	{
 		if(shm_dt(0x1100 + i, wtable[i].buffer) != 0)
 		{
 			printf("can't shm_dt\n");
 		}
 	}
-	return 0;
 }
 
+static void send_um_exit(WWnd *hwnd)
+{
+	WMsg msg;
+	msg.type = UM_EXIT;
+	msg.arg1 = (WHandle)hwnd;
+	w_send(hwnd->ifd, &msg, sizeof(WMsg));
+}
+
+int wnd_exit(WInfo *pwinfo)
+{
+	WWnd *pwin;
+	int flag;
+	flag = 0;
+	for(pwin = wtable; pwin < wtable + WND_MAX; pwin++)
+	{
+		if(pwin->attr == WND_ATTR_USED)
+		{
+			flag = 1;
+			send_um_exit(pwin);
+		}
+	}
+	if(flag == 0)
+		wnd_post_exit();
+	return flag;
+}

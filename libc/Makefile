@@ -38,14 +38,19 @@ dep:
 
 ##dep
 ctype.o: ctype.c ../include/os/type.h ../include/os/unistd.h \
- ../include/libc/libc.h ../include/libc/kstru.h ../include/lib/string.h
+ ../include/libc/libc.h ../include/lib/string.h ../include/drv/video.h \
+ ../include/os/dirent.h ../include/os/stat.h
 libc.o: libc.c ../include/os/type.h ../include/os/unistd.h \
- ../include/libc/libc.h ../include/libc/kstru.h ../include/lib/string.h
+ ../include/libc/libc.h ../include/lib/string.h ../include/drv/video.h \
+ ../include/os/dirent.h ../include/os/stat.h
 libc_init.o: libc_init.c
 malloc.o: malloc.c ../include/os/type.h ../include/libc/libc.h \
- ../include/libc/kstru.h ../include/os/unistd.h ../include/lib/string.h
+ ../include/os/unistd.h ../include/lib/string.h ../include/drv/video.h \
+ ../include/os/dirent.h ../include/os/stat.h
 printf.o: printf.c ../include/os/type.h ../include/os/unistd.h \
- ../include/libc/libc.h ../include/libc/kstru.h ../include/lib/string.h
+ ../include/libc/libc.h ../include/lib/string.h ../include/drv/video.h \
+ ../include/os/dirent.h ../include/os/stat.h
 scanf.o: scanf.c ../include/os/type.h ../include/os/unistd.h \
- ../include/libc/libc.h ../include/libc/kstru.h ../include/lib/string.h
-string.o: string.c ../include/lib/string.h
+ ../include/libc/libc.h ../include/lib/string.h ../include/drv/video.h \
+ ../include/os/dirent.h ../include/os/stat.h
+string.o: string.c ../include/lib/string.h ../include/os/type.h

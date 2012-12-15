@@ -1,36 +1,20 @@
-KM_KEYPRESS:
-arg1= ascii
-arg2= lrshift lrctrl lralt
-arg3= leds :num cap scr
-arg4= isbrk
-
-KM_MOUSEACT:
-arg1= xdiff
-arg2= ydiff
-arg3= lrb
-
 WM_WINDOW_CREATE:
 arg1= attr
 arg2= x<<16 | y
 arg3= w<<16 | h
-arg4= name_ptr
+arg4= 0
 arg5= name_len
 reply hwnd, shm_key
 
 WM_WINDOW_REFRESH:
 arg1= hwnd
-arg2= 0 		//remote_ptr(obstacle)
+arg2= 0
 arg3= x<<16 | y
 arg4= w<<16 | h
-
 
 WM_WINDOW_DESTROY:
 arg1= hwnd
 reply
-
-WM_WINDOW_TIMER:
-arg1= hwnd
-arg2= val
 
 UM_REPLY:
 arg1= retval1
@@ -38,9 +22,10 @@ arg2= retval2
 
 UM_KEYPRESS
 arg1= hwnd
-arg2= ascii
-arg3= lrshift lrctrl lralt
-arg4= leds :num cap scr
+arg2= ch
+arg3= func
+arg4= status
+arg5= leds
 
 UM_MOUSEACT:
 arg1= hwnd
@@ -50,7 +35,3 @@ arg4= lrb
 
 UM_EXIT:
 arg1= hwnd
-
-UM_TIMER:
-arg1= hwnd
-

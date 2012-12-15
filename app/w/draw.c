@@ -10,7 +10,9 @@ int
 draw_init()
 {
 	int fd;
-	get_graph_info(&info);
+	fd = open("/dev/video/0", 0);
+	ioctl(fd, VIDEO_CMD_GET_INFO, &info);
+	close(fd);
 	
 	if(info.depth != 16)
 	{
@@ -25,7 +27,6 @@ draw_init()
 	}
 	read(fd, asctab, 16*256);
 	close(fd);
-	tty_switch(4);
 	return 0;
 }
 
@@ -64,6 +65,7 @@ draw_get_point(DrawCanvas *pcanv, u32 x,u32 y)
 void
 draw_fill_rect(DrawCanvas *pcanv, u32 x1, u32 y1, u32 x2, u32 y2, u16 color)
 {
+	int x;
 	u32 y;
 	u16 *pos;
 	u32 w;
@@ -75,49 +77,23 @@ draw_fill_rect(DrawCanvas *pcanv, u32 x1, u32 y1, u32 x2, u32 y2, u16 color)
 	
 	pos = pcanv->video + (y1 * pcanv->x) + x1;
 	w = x2 - x1;
-#ifdef ASM_OPT
-	asm ("cld");
-	for(y = y1; y <= y2; y++)
-	{
-		asm (
-		"rep;stosw"
-		::"c"(w),"a"(color),"D"(pos)
-		:"memory"
-		);
-		pos += pcanv->x;
-	}
-#else
-	int x;
 	for(y = y1; y <= y2; y++)
 	{
 		for(x = 0; x < w; x++)
 			pos[x] = color;
 		pos += pcanv->x;
 	}
-#endif	
 }
 
 // 清屏函数
 void
 draw_clear_screen(DrawCanvas *pcanv, u16 color)
 {
-#ifdef ASM_OPT
-	asm (
-	"cld\n\t"
-	"rep;stosl"
-	::
-	"c"((pcanv->x * pcanv->y) >> 1),
-	"a"((color << 16) | color),
-	"D"(pcanv->video)
-	:"memory"
-		);
-#else
 	int i;
 	for(i = 0; i < pcanv->x * pcanv->y; i++)
 	{
 		pcanv->video[i] = color;
 	}
-#endif
 }
 
 // 拷贝函数
@@ -126,7 +102,7 @@ draw_clear_screen(DrawCanvas *pcanv, u16 color)
 void
 draw_copy(DrawCanvas *psrc, DrawCanvas *pobj, u32 x, u32 y, u32 w, u32 h)
 {
-	int j;
+	int i, j;
 	u32 offset1;
 	u32 offset2;
 	
@@ -145,23 +121,7 @@ draw_copy(DrawCanvas *psrc, DrawCanvas *pobj, u32 x, u32 y, u32 w, u32 h)
 
 	offset1 = y*psrc->x + x;
 	offset2 = y*pobj->x + x;
-#ifdef ASM_OPT	
-	asm ("cld");
-	for(j = 0; j < h; j++)
-	{
-		asm (
-		"rep;movsw"
-		:
-		:"c"(w),
-		 "S"(psrc->video + offset1),
-		 "D"(pobj->video + offset2)
-		:"memory"
-		);
-		offset1 += psrc->x;
-		offset2 += pobj->x;
-	}
-#else
-	int i;
+
 	for(j = 0; j < h; j++)
 	{
 		for(i = 0; i < w; i++)
@@ -173,14 +133,13 @@ draw_copy(DrawCanvas *psrc, DrawCanvas *pobj, u32 x, u32 y, u32 w, u32 h)
 		offset1 += psrc->x;
 		offset2 += pobj->x;
 	}
-#endif
 }
 
 //draw_windo语义：有效大小为w*h的src拷贝到obj的(x,y)坐标处
 void
 draw_window(DrawCanvas *psrc, DrawCanvas *pobj, u32 x, u32 y, u32 w, u32 h)
 {
-	int j;
+	int i, j;
 	u32 offset1;
 	u32 offset2;
 	
@@ -200,24 +159,6 @@ draw_window(DrawCanvas *psrc, DrawCanvas *pobj, u32 x, u32 y, u32 w, u32 h)
 	offset1 = 0;
 	offset2 = y*pobj->x + x;
 
-#ifdef ASM_OPT
-	asm ("cld");
-	for(j = 0; j < h; j++)
-	{
-		asm (
-		"rep;movsw"
-		:
-		:"c"(w),
-		 "S"(psrc->video + offset1),
-		 "D"(pobj->video + offset2)
-		 //注意与draw_copy的不同之处
-		:"memory"
-		);
-		offset1 += psrc->x;
-		offset2 += pobj->x;
-	}
-#else
-	int i;
 	for(j = 0; j < h; j++)
 	{
 		for(i = 0; i < w; i++)
@@ -229,7 +170,6 @@ draw_window(DrawCanvas *psrc, DrawCanvas *pobj, u32 x, u32 y, u32 w, u32 h)
 		offset1 += psrc->x;
 		offset2 += pobj->x;
 	}
-#endif		
 }
 
 //draw_cursor_mask
@@ -270,19 +210,10 @@ draw_cursor_mask(DrawCanvas *psrc, DrawCanvas *pobj, u32 x, u32 y, u16 mask)
 void
 draw_x_line(DrawCanvas *pdc, u32 y, u32 x1, u32 x2, u16 color)
 {
-#ifndef ASM_OPT
 	int x;
 	if(x1 > x2)return;
 	for(x = x1; x <= x2; x++)
 		draw_set_point(pdc, x, y, color);
-#else
-	if(x1 > x2)return;
-	asm("cld\n\t"
-	"rep;stosw"
-	::"c"(x2 - x1), "D"(pdc->video + y*pdc->x + x1), "a"(color)
-	:"memory"
-	);
-#endif
 }
 
 // 画竖线函数
@@ -431,10 +362,7 @@ draw_bmp(DrawCanvas *pdc, u32 x, u32 y, void *pbmp, u16 mask, int use_mask)
 {
 	struct bmp_bmp_head_struct *bmp_head = pbmp;
 	if(bmp_head->info_head.biBitCount==24)
-	{
-		//printf("use24\n");
 		draw_bmp24(pdc, x, y, pbmp, mask, use_mask);
-	}
 	else
 		draw_bmp16(pdc, x, y, pbmp, mask, use_mask);
 }
@@ -474,4 +402,3 @@ draw_bmp24(DrawCanvas *pdc, u32 x, u32 y, void *pbmp, u16 mask, int use_mask)
 		color = (void *)((u32)color + fill_length);
 	}
 }
-
