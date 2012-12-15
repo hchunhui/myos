@@ -31,7 +31,7 @@ void CGraph::Refresh()
 	RedrawWindow(m_hWnd,NULL,NULL,RDW_INVALIDATE|RDW_UPDATENOW);
 }
 
-void CGraph::Init(HANDLE hWnd)
+void CGraph::Init(WHandle hWnd)
 {
 	m_hWnd=hWnd;
 	HDC dc=GetDC(hWnd);
@@ -81,7 +81,7 @@ void CGraph::ShowText(int x,int y,const char * Text,int Colour)
 
 extern DrawCanvas  _canv;
 DrawCanvas * const canv = &_canv;
-void w_refresh(HANDLE hwnd, int x, int y ,int w, int h);
+void w_refresh(WHandle hwnd, int x, int y ,int w, int h);
 
 int CGraph::GetMemDC()
 {
@@ -126,7 +126,7 @@ void CGraph::Refresh()
 	
 }
 
-void CGraph::Init(HANDLE hWnd)
+void CGraph::Init(WHandle hWnd)
 {
 	int i;
 	m_hWnd=hWnd;

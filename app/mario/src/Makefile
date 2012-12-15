@@ -16,9 +16,9 @@ everything: ../../crt.o $(OBJS)
 .s.o:
 	$(CC) $(CFLAGS)	\
 	-o $*.o $<
-mario.bin: ../../w/draw.o $(AUTOOBJS)
+mario.bin: ../../w/draw.o $(AUTOOBJS) ../../w/msg.o
 #$(LD) --oformat binary -N -e start -T../../app.ld -o $@ ../../cxxrt.o ../../supc++.o ../../w/draw.o $(AUTOOBJS) ../../../libc/libc.a
-	$(LD) -N -e _start -T../../app.ld -o mario.x ../../cxxrt.o ../../supc++.o ../../w/draw.o $(AUTOOBJS) ../../../libc/libc.a
+	$(LD) -N -e _start -T../../app.ld -o mario.x ../../cxxrt.o ../../supc++.o ../../w/draw.o ../../w/msg.o $(AUTOOBJS) ../../../libc/libc.a
 	$(OBJCOPY) -j .text -j .rodata -j .eh_frame_hdr -j .eh_frame -j .data -O binary mario.x $@
 all:clean everything
 clean:
@@ -49,10 +49,12 @@ ClipDemon.o: ClipDemon.cpp ClipDemon.h Object.h ImgData.h Game.h Mario.h \
 Coin.o: Coin.cpp Coin.h Object.h ImgData.h Game.h Mario.h SoundMan.h \
  Sound.h
 Control.o: Control.cpp Control.h GraphMan.h Graph.h cross.h \
- ../../../include/os/type.h ../../../include/os/unistd.h \
- ../../../include/libc/kstru.h ../../../include/libc/libc.h \
- ../../../include/lib/string.h ../../w/draw.h ../../w/bmp.h Game.h \
- Object.h Mario.h SoundMan.h Sound.h
+ ../../../include/libc/libc.h ../../../include/os/type.h \
+ ../../../include/os/unistd.h ../../../include/lib/string.h \
+ ../../../include/drv/video.h ../../../include/os/dirent.h \
+ ../../../include/os/stat.h ../../../include/drv/pipe.h \
+ ../../../include/drv/poll.h ../../w/draw.h ../../w/bmp.h ../../w/msg.h \
+ ../../kb_state.h Game.h Object.h Mario.h SoundMan.h Sound.h
 Flower.o: Flower.cpp Flower.h Object.h ImgData.h Game.h Mario.h \
  SoundMan.h Sound.h
 FlyTortoiseDemon.o: FlyTortoiseDemon.cpp FlyTortoiseDemon.h Object.h \
@@ -64,32 +66,43 @@ FungusDemon.o: FungusDemon.cpp FungusDemon.h Object.h ImgData.h Game.h \
 Game.o: Game.cpp Game.h Object.h Mario.h SoundMan.h Sound.h MapData.h \
  Brick.h Ground.h Stone.h PipeBody.h PipeTop.h Question.h FungusDemon.h \
  TortoiseDemon.h FlyTortoiseDemon.h ClipDemon.h BeetleDemon.h Coin.h \
- cross.h ../../../include/os/type.h ../../../include/os/unistd.h \
- ../../../include/libc/kstru.h ../../../include/libc/libc.h \
- ../../../include/lib/string.h ../../w/draw.h ../../w/bmp.h
-Graph.o: Graph.cpp cross.h ../../../include/os/type.h \
- ../../../include/os/unistd.h ../../../include/libc/kstru.h \
- ../../../include/libc/libc.h ../../../include/lib/string.h \
- ../../w/draw.h ../../w/bmp.h Graph.h
-GraphMan.o: GraphMan.cpp GraphMan.h Graph.h cross.h \
+ cross.h ../../../include/libc/libc.h ../../../include/os/type.h \
+ ../../../include/os/unistd.h ../../../include/lib/string.h \
+ ../../../include/drv/video.h ../../../include/os/dirent.h \
+ ../../../include/os/stat.h ../../../include/drv/pipe.h \
+ ../../../include/drv/poll.h ../../w/draw.h ../../w/bmp.h ../../w/msg.h \
+ ../../kb_state.h
+Graph.o: Graph.cpp cross.h ../../../include/libc/libc.h \
  ../../../include/os/type.h ../../../include/os/unistd.h \
- ../../../include/libc/kstru.h ../../../include/libc/libc.h \
- ../../../include/lib/string.h ../../w/draw.h ../../w/bmp.h Game.h \
- Object.h Mario.h SoundMan.h Sound.h
+ ../../../include/lib/string.h ../../../include/drv/video.h \
+ ../../../include/os/dirent.h ../../../include/os/stat.h \
+ ../../../include/drv/pipe.h ../../../include/drv/poll.h ../../w/draw.h \
+ ../../w/bmp.h ../../w/msg.h ../../kb_state.h Graph.h
+GraphMan.o: GraphMan.cpp GraphMan.h Graph.h cross.h \
+ ../../../include/libc/libc.h ../../../include/os/type.h \
+ ../../../include/os/unistd.h ../../../include/lib/string.h \
+ ../../../include/drv/video.h ../../../include/os/dirent.h \
+ ../../../include/os/stat.h ../../../include/drv/pipe.h \
+ ../../../include/drv/poll.h ../../w/draw.h ../../w/bmp.h ../../w/msg.h \
+ ../../kb_state.h Game.h Object.h Mario.h SoundMan.h Sound.h
 Ground.o: Ground.cpp Ground.h Object.h ImgData.h Game.h Mario.h \
  SoundMan.h Sound.h
 ImgData.o: ImgData.cpp
-main.o: main.cpp Graph.h cross.h ../../../include/os/type.h \
- ../../../include/os/unistd.h ../../../include/libc/kstru.h \
- ../../../include/libc/libc.h ../../../include/lib/string.h \
- ../../w/draw.h ../../w/bmp.h GraphMan.h Game.h Object.h Mario.h \
- SoundMan.h Sound.h Control.h
+main.o: main.cpp Graph.h cross.h ../../../include/libc/libc.h \
+ ../../../include/os/type.h ../../../include/os/unistd.h \
+ ../../../include/lib/string.h ../../../include/drv/video.h \
+ ../../../include/os/dirent.h ../../../include/os/stat.h \
+ ../../../include/drv/pipe.h ../../../include/drv/poll.h ../../w/draw.h \
+ ../../w/bmp.h ../../w/msg.h ../../kb_state.h GraphMan.h Game.h Object.h \
+ Mario.h SoundMan.h Sound.h Control.h
 MapData.o: MapData.cpp
-Mario.o: Mario.cpp cross.h ../../../include/os/type.h \
- ../../../include/os/unistd.h ../../../include/libc/kstru.h \
- ../../../include/libc/libc.h ../../../include/lib/string.h \
- ../../w/draw.h ../../w/bmp.h Mario.h Object.h ImgData.h Game.h \
- SoundMan.h Sound.h Bullet.h
+Mario.o: Mario.cpp cross.h ../../../include/libc/libc.h \
+ ../../../include/os/type.h ../../../include/os/unistd.h \
+ ../../../include/lib/string.h ../../../include/drv/video.h \
+ ../../../include/os/dirent.h ../../../include/os/stat.h \
+ ../../../include/drv/pipe.h ../../../include/drv/poll.h ../../w/draw.h \
+ ../../w/bmp.h ../../w/msg.h ../../kb_state.h Mario.h Object.h ImgData.h \
+ Game.h SoundMan.h Sound.h Bullet.h
 Object.o: Object.cpp Object.h
 PipeBody.o: PipeBody.cpp PipeBody.h Object.h ImgData.h Game.h Mario.h \
  SoundMan.h Sound.h
@@ -97,14 +110,19 @@ PipeTop.o: PipeTop.cpp PipeTop.h Object.h ImgData.h Game.h Mario.h \
  SoundMan.h Sound.h
 Question.o: Question.cpp Question.h Object.h ImgData.h Game.h Mario.h \
  SoundMan.h Sound.h Fungus.h Flower.h Coin.h
-Sound.o: Sound.cpp cross.h ../../../include/os/type.h \
- ../../../include/os/unistd.h ../../../include/libc/kstru.h \
- ../../../include/libc/libc.h ../../../include/lib/string.h \
- ../../w/draw.h ../../w/bmp.h Sound.h
-SoundMan.o: SoundMan.cpp SoundMan.h Sound.h cross.h \
+Sound.o: Sound.cpp cross.h ../../../include/libc/libc.h \
  ../../../include/os/type.h ../../../include/os/unistd.h \
- ../../../include/libc/kstru.h ../../../include/libc/libc.h \
- ../../../include/lib/string.h ../../w/draw.h ../../w/bmp.h
+ ../../../include/lib/string.h ../../../include/drv/video.h \
+ ../../../include/os/dirent.h ../../../include/os/stat.h \
+ ../../../include/drv/pipe.h ../../../include/drv/poll.h ../../w/draw.h \
+ ../../w/bmp.h ../../w/msg.h ../../kb_state.h Sound.h
+SoundMan.o: SoundMan.cpp SoundMan.h Sound.h cross.h \
+ ../../../include/libc/libc.h ../../../include/os/type.h \
+ ../../../include/os/unistd.h ../../../include/lib/string.h \
+ ../../../include/drv/video.h ../../../include/os/dirent.h \
+ ../../../include/os/stat.h ../../../include/drv/pipe.h \
+ ../../../include/drv/poll.h ../../w/draw.h ../../w/bmp.h ../../w/msg.h \
+ ../../kb_state.h
 Star.o: Star.cpp Star.h Object.h ImgData.h Game.h Mario.h SoundMan.h \
  Sound.h
 Stone.o: Stone.cpp Stone.h Object.h ImgData.h Game.h Mario.h SoundMan.h \

@@ -151,81 +151,76 @@ int main()
 	return 0;
 }
 #else
-int w_pid;
-
 u16 *buff = (u16 *)(512*1024*1024);
 DrawCanvas _canv;
 DrawCanvas * const canv = &_canv;
 
-int shm_key;
+long shm_key;
+int priv_fd, ifd, ofd;
+WHandle hwnd;
 
-HANDLE w_create(int attr, int x, int y, int w, int h, char *name)
+static void poll_set_event(int pollfd, int fd, int type)
 {
-	MSG msg;
-	msg.type = WM_WINDOW_CREATE;
-	msg.arg1 = attr;
-	msg.arg2 = (x << 16) | y;
-	msg.arg3 = (w << 16) | h;
-	msg.arg4 = (HANDLE) name;
-	msg.arg5 = strlen(name) + 1;
-	send( w_pid, &msg);
-	do {
-		recv( -1, &msg, 1);
-	} while(msg.type != UM_REPLY);
-	
-	shm_key = msg.arg2;
-	shm_at(shm_key, buff, SHM_RW);
-	return msg.arg1;
+	struct s_poll_event event;
+	event.fd = fd;
+	event.type = type;
+	if(ioctl(pollfd, POLL_CMD_SET, &event))
+		printf ("ioctl error\n");
 }
 
-void w_refresh(HANDLE hwnd, int x, int y ,int w, int h)
+int destroy_window()
 {
-	MSG msg;
-	msg.type = WM_WINDOW_REFRESH;
-	msg.arg1 = hwnd;
-	msg.arg2 = 0;
-	msg.arg3 = (x << 16) | y;
-	msg.arg4 = (w << 16) | h;
-	send( w_pid, &msg);
-}
-
-int w_destroy(HANDLE hwnd)
-{
-	MSG msg;
-	msg.type = WM_WINDOW_DESTROY;
-	msg.arg1 = hwnd;
-	send( w_pid, &msg);
-	do {
-		recv( -1, &msg, 1);
-		printf("msg.type = %d\n",msg.type);
-	} while(msg.type != UM_REPLY);
-	
-	shm_dt(shm_key, buff);
-	return msg.arg1;
+	long ret;
+	w_send_wdestroy(ofd, hwnd);
+	w_wait_reply(ifd, &ret, NULL);
+	return ret;
 }
 
 void main_loop()
 {
-	MSG msg;
-	HANDLE hwnd;
+	char buf[100];
+	WMsg msg;
+	struct s_poll_event ev;
+	int poll_fd;
+	int tm_fd;
+	int tick, t;
+
 	int x = 0;
 	int y = 0;
 	int btn = 0;
 	int wcount = 1;
 	int KeyState;
-	for(;recv( -1, &msg, 1);)
+
+	poll_fd = open("/dev/poll/0", 0);
+	tm_fd = open("/dev/timer/0", 0);
+	tick = 10;
+	write(tm_fd, &tick, sizeof(tick));
+	poll_set_event(poll_fd, tm_fd, POLL_TYPE_READ);
+	poll_set_event(poll_fd, ifd, POLL_TYPE_READ);
+
+	for(;;)
 	{
-		hwnd = msg.arg1;
-		
-		switch( msg.type&(~MSG_TYPE_BLOCK) )
+		if(read(poll_fd, &ev, sizeof(ev)) == -1)
+			break;
+		if(ev.fd == tm_fd)
 		{
-			case UM_KEYPRESS:
-				if(msg.arg2 == 'q')
+			write(tm_fd, &tick, sizeof(tick));
+			read(tm_fd, &t, sizeof(t));
+			gControl.Clock();
+			w_send_wrefresh(ofd, hwnd, 0 ,0 , 288, 256);
+		}
+		else
+		{
+			w_recv(ifd, &msg, sizeof(msg));
+			switch(msg.type)
+			{
+			case UM_KEY:
+				if(!(msg.arg4 & KBS_BRK))
 				{
-					if(w_destroy(hwnd))
-						return;
+					if(msg.arg2 == 'q')
+						if(destroy_window())
+							return;
 				}
-				
 				KeyState = 0;
 				if(msg.arg2 == 'w')KeyState|=1<<0;
 				if(msg.arg2 == 's')KeyState|=1<<1;
@@ -234,73 +229,47 @@ void main_loop()
 				if(msg.arg2 == 'j')KeyState|=1<<4;
 				if(msg.arg2 == 'k')KeyState|=1<<5;
 				if(msg.arg2 == '\n')KeyState|=1<<6;
-				//printf("arg2=%c down ", msg.arg2);
-				gControl.KeyDown(KeyState);
+				if(msg.arg4 & KBS_BRK)
+					gControl.KeyUp(KeyState);
+				else
+					gControl.KeyDown(KeyState);
 				break;
-			case UM_KEYUP:
-			
-				KeyState = 0;
-				if(msg.arg2 == 'w')KeyState|=1<<0;
-				if(msg.arg2 == 's')KeyState|=1<<1;
-				if(msg.arg2 == 'a')KeyState|=1<<2;
-				if(msg.arg2 == 'd')KeyState|=1<<3;
-				if(msg.arg2 == 'j')KeyState|=1<<4;
-				if(msg.arg2 == 'k')KeyState|=1<<5;
-				if(msg.arg2 == '\n')KeyState|=1<<6;
-				gControl.KeyUp(KeyState);
-				//printf("arg2=%c up ", msg.arg2);
-				break;
-			case UM_TIMER:
-				gControl.Clock();
-				w_refresh(hwnd, 0 ,0 , 288, 256);
-				break;
-			case UM_MOUSEACT:
+			case UM_MOUSE:
 				x = msg.arg2;
 				y = msg.arg3;
 				btn = msg.arg4;
-				char buf[100];
-				sprintf(buf, "Press Ctrl to move window. (%4d,%4d) %s %s %s", x, y, 
-					btn&1?"L":" ", btn&2?"R":" ", btn&4?"M":" ");
+				sprintf(buf,
+					"Press Ctrl to move window."
+					"(%4d,%4d) %s %s %s",
+					x, y,
+					btn&1?"L":" ",
+					btn&2?"R":" ",
+					btn&4?"M":" ");
 				draw_string(canv, 0, 0, buf, 0);
-				w_refresh(hwnd, 0, 0, 600, 15);
+				w_send_wrefresh(ofd, hwnd, 0, 0, 600, 15);
 				break;
 			case UM_EXIT:
-				if(w_destroy(hwnd))
-					wcount--;
-				printf("now wcount = %d\n", wcount);
-				if(wcount == 0)
+				if(destroy_window())
 					return;
 				break;
-			default:
-				break;
+			}
 		}
 	}
 }
 
-void w_timer(HANDLE hwnd,int val)
-{
-	MSG msg;
-	msg.type = WM_WINDOW_TIMER;
-	msg.arg1 = hwnd;
-	msg.arg2 = val;
-	send( w_pid, &msg);
-}
-
 int main(int argc, char **argv)
 {
-	HANDLE hwnd;
-	
-	printf("enter window manager 's pid:\n");
-	scanf("%d", &w_pid);
-	
 	draw_init();
 	draw_set_canvas(canv, buff);
-	
-	hwnd = w_create(0, 0, 0, 288, 256, "Super Mario");
+	if(w_connect(&priv_fd, &ifd, &ofd))
+		return -1;
+	w_send_wcreate(ofd, 0, 0, 0, 288, 256, "Super Mario");
+	w_wait_reply(ifd, &hwnd, &shm_key);
+	shm_at(shm_key, buff, SHM_RW);
 	
 	printf("hwnd: %x\n",hwnd);
 	
-	w_refresh(hwnd, 0 ,0 , 288, 256);
+	w_send_wrefresh(ofd, hwnd, 0 ,0 , 288, 256);
 	
 	//将各个类连接起来
 	gGraph.Init(hwnd);
@@ -311,10 +280,11 @@ int main(int argc, char **argv)
 	gControl.SetGraph(&gGraphMan);
 	gControl.SetGame(&gGame);
 	gGame.SetSound(&gSoundMan);
-	
-	w_timer(hwnd, 1);
+
 	main_loop();
-	
+
+	w_disconnect(priv_fd, ifd, ofd);
+	shm_dt(shm_key, buff);	
 	printf("exit with exit code 0\n");
 	return 0;
 }
