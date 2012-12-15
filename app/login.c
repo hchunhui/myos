@@ -9,6 +9,7 @@ int main(int argc,char **argv)
 	int ret, status, pid;
 	int pub_fd, priv_fd;
 	int in_fd = 8, out_fd = 9;
+	char m_in, m_out;
 	if(argc == 1)
 		exit(1);
 	pub_fd = open("/dev/pipe/1", 0);
@@ -18,11 +19,13 @@ int main(int argc,char **argv)
 		;
 	write(pub_fd, " ", 1);
 
+	m_in = argv[1][0] - '1' + 'a';
+	m_out = m_in - 'a' + 'A';
+
 	/* recv fd from server via priv_fd */
-	write(priv_fd, &argv[1][0], 1);
+	write(priv_fd, &m_in, 1);
 	ioctl(priv_fd, PIPE_CMD_RECVFD, &in_fd);
-	argv[1][0] += 3;
-	write(priv_fd, &argv[1][0], 1);
+	write(priv_fd, &m_out, 1);
 	ioctl(priv_fd, PIPE_CMD_RECVFD, &out_fd);
 	write(priv_fd, "X", 1);
 	close(priv_fd);
@@ -32,6 +35,7 @@ int main(int argc,char **argv)
 	dup2(out_fd, 2);
 	close(in_fd);
 	close(out_fd);
+	printf("login: this is tty%s\n", argv[1]);
 	execl("/bin/sh.bin", "*sh*", 0);
 	return 1;
 }

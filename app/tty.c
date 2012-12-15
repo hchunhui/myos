@@ -4,8 +4,9 @@
 #include <drv/video.h>
 #include <drv/klog.h>
 #include <drv/pipe.h>
+#include "kb_state.h"
 
-#define NR_TTY 4
+#define NR_TTY 5
 #define TTY_BUF_SIZE (80*25*2)
 struct s_tty
 {
@@ -15,6 +16,7 @@ struct s_tty
 	int pi;
 	int pipe_in;
 	int pipe_out;
+	int allow_input;
 };
 
 static struct s_tty tty[NR_TTY];
@@ -97,154 +99,6 @@ void switch_tty(struct s_tty *tty)
 	      i);
 	tty_now = tty;
 }
-//scan code 2 define
-#define CODE_BRK	0xf0
-#define CODE_EX0	0xe0
-#define CODE_EX1	0xe1
-
-#define CODE_LSHIFT		0x12
-#define CODE_RSHIFT		0x59
-#define CODE_LCTRL		0x14
-#define CODE_RCTRL		0xe014
-#define CODE_LALT		0x11
-#define CODE_RALT		0xe011
-#define CODE_BACK		0x66
-#define CODE_ENTER		0x5a
-#define CODE_NUMLOCK		0x77
-#define CODE_CAPSLOCK		0x58
-#define CODE_SCROLOCK		0x7e
-#define CODE_UP			0xe075
-#define CODE_DOWN		0xe072
-#define CODE_LEFT		0xe06b
-#define CODE_RIGHT		0xe074
-#define CODE_DELETE		0xe071
-#define CODE_PAD_DEL		0x71
-#define CODE_ESC		0x76
-#define LED_NUM			1
-#define LED_CAPS		2
-#define LED_SCRO		4
-
-static int is_lshift,is_rshift,is_lctrl,is_rctrl,is_lalt,is_ralt;
-static u32 led;
-
-const char kb_table[2][256]=
-{
-	{
-	0,
-	0,0,0,0,0,0,0,0,0,0,0,0,'\t','`',0,0,
-	0,0,0,0,'q','1',0,0,0,'z','s','a','w','2',0,0,
-	'c','x','d','e','4','3',0,0,' ','v','f','t','r','5',0,0,
-	'n','b','h','g','y','6',0,0,0,'m','j','u','7','8',0,0,
-	',','k','i','o','0','9',0,0,'.','/','l',';','p','-',0,0,
-	0,'\'',0,'[','=',0,0,0,0,'\n',']',0,'\\',0,0,0,
-	0,0,0,0,0,'\b',0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0x1b,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-	},
-	{
-	0,
-	0,0,0,0,0,0,0,0,0,0,0,0,'\t','~',0,0,
-	0,0,0,0,'Q','!',0,0,0,'Z','S','A','W','@',0,0,
-	'C','X','D','E','$','#',0,0,' ','V','F','T','R','%',0,0,
-	'N','B','H','G','Y','^',0,0,0,'M','J','U','&','*',0,0,
-	'<','K','I','O',')','(',0,0,'>','?','L',':','P','_',0,0,
-	0,'"',0,'{','+',0,0,0,0,'\n','}',0,'|',0,0,0,
-	0,0,0,0,0,'\b',0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0x1b,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,
-	0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-	},
-};
-
-void kb_reboot()
-{
-	t_print("reboot\n");
-}
-
-void kb_halt()
-{
-	t_print("halt\n");
-}
-
-static void translate(unsigned short gcode, unsigned short is_brk)
-{
-	int delta;
-	char ch;
-	switch(gcode)
-	{
-	case CODE_LSHIFT:	is_lshift=!is_brk;break;
-	case CODE_RSHIFT:	is_rshift=!is_brk;break;
-	case CODE_LCTRL:	is_lctrl=!is_brk;break;
-	case CODE_RCTRL:	is_rctrl=!is_brk;break;
-	case CODE_LALT:		is_lalt=!is_brk;break;
-	case CODE_RALT:		is_ralt=!is_brk;break;
-	case CODE_NUMLOCK:	if(!is_brk)led=(led|LED_NUM)&(~(led&LED_NUM));break;
-	case CODE_CAPSLOCK:	if(!is_brk)led=(led|LED_CAPS)&(~(led&LED_CAPS));break;
-	case CODE_SCROLOCK:	if(!is_brk)led=(led|LED_SCRO)&(~(led&LED_SCRO));break;
-	case CODE_ENTER:
-	case CODE_BACK:
-	default:
-		if(is_lshift || is_rshift)
-			ch=kb_table[!(led&LED_CAPS)][gcode&0xff];
-		else
-			ch=kb_table[!!(led&LED_CAPS)][gcode&0xff];
-		if(is_brk)
-			break;
-		/* 处理控制键 */
-		if( (is_lalt || is_ralt) && (is_lctrl || is_rctrl) && (ch=='h'))
-		{
-			kb_halt();
-		}
-		if( (is_lalt || is_ralt)  && (is_lctrl || is_rctrl) && (ch=='\b'))	//reboot
-		{
-			kb_reboot();
-		}
-		if( (is_lalt || is_ralt)  && (is_lctrl || is_rctrl) && (gcode==CODE_DELETE || gcode==CODE_PAD_DEL))	//reboot
-		{
-			kb_reboot();
-		}
-		if( (is_lalt || is_ralt) )
-		{
-			switch(ch)
-			{
-			case '1':
-			case '2':
-			case '3':
-			case '4':
-				switch_tty(tty + ch - '1');
-				return;
-			}
-			switch(gcode)
-			{
-			case CODE_UP:
-				delta = -1;
-				ioctl(video_fd, VIDEO_CMD_DOWN_SCREEN, &delta);
-				break;
-			case CODE_DOWN:
-				delta = 1;
-				ioctl(video_fd, VIDEO_CMD_DOWN_SCREEN, &delta);
-				break;
-			}
-			return;
-		}
-		if(ch==0)return;	//其他未处理字符不放入缓冲区
-		put_tty(ch);
-	}
-
-}
 
 void poll_set_event(int pollfd, int fd, int type)
 {
@@ -275,9 +129,32 @@ int act_noop(int fd)
 
 int act_kbfd(int fd)
 {
+	int delta;
 	struct s_event event;
+	struct kb_state *kbs;
 	read(fd, &event, sizeof(struct s_event));
-	translate(event.code, event.value);
+
+	kbs = kb_trans(event.code, event.value);
+	if(kbs->state & KBS_BRK)
+		return 0;
+	if(kbs->state & KBS_LAL ||
+	   kbs->state & KBS_RAL)
+	{
+		if(kbs->func >= KB_F1 && kbs->func < KB_F1 + NR_TTY)
+			switch_tty(tty + kbs->func - KB_F1);
+		if(kbs->func == KB_ARU)
+		{
+			delta = -1;
+			ioctl(video_fd, VIDEO_CMD_DOWN_SCREEN, &delta);
+		}
+		if(kbs->func == KB_ARD)
+		{
+			delta = 1;
+			ioctl(video_fd, VIDEO_CMD_DOWN_SCREEN, &delta);
+		}
+	}
+	if(kbs->ch != 0 && tty_now->allow_input)
+		put_tty(kbs->ch);
 	return 0;
 }
 
@@ -312,12 +189,12 @@ int act_sendfd(int fd)
 	char buf[2];
 	buf[1] = 0;
 	read(fd, buf, 1);
-	if(buf[0] >= '1' && buf[0] <= '3') {
+	if(buf[0] >= 'a' && buf[0] < 'a'+NR_TTY) {
 		//request stdin
-		ioctl(fd, PIPE_CMD_SENDFD, tty[buf[0]-'1'].pipe_in);
-	} else if(buf[0] >= '4' && buf[0] <= '6') {
+		ioctl(fd, PIPE_CMD_SENDFD, (void *)(tty[buf[0]-'a'].pipe_in));
+	} else if(buf[0] >= 'A' && buf[0] < 'A'+NR_TTY) {
 		//request stdout
-		ioctl(fd, PIPE_CMD_SENDFD, tty[buf[0]-'4'].pipe_out);
+		ioctl(fd, PIPE_CMD_SENDFD, (void *)(tty[buf[0]-'A'].pipe_out));
 	} else {
 		poll_unset_event(poll_fd, fd);
 		act_func[fd] = act_noop;
@@ -342,6 +219,7 @@ int act_lisfd(int fd)
 	}
 	else
 		t_print("bad protocol\n");
+	return 0;
 }
 
 int main(int argc, char **argv)
@@ -353,13 +231,6 @@ int main(int argc, char **argv)
 		exit(1);
 	/* global var init */
 	tty_now = tty;
-	is_lshift=0;
-	is_rshift=0;
-	is_lctrl=0;
-	is_rctrl=0;
-	is_lalt=0;
-	is_ralt=0;
-	led=0;
 	for(i = 0; i < 64; i++)
 		act_func[i] = act_noop;
 	/* setup fd */
@@ -382,12 +253,15 @@ int main(int argc, char **argv)
 	/* setup pipe */
 	for(i = 0; i < NR_TTY; i++)
 	{
+		tty[i].allow_input = 1;
 		tty[i].pipe_in = open("/dev/pipe/0", 0);
 		tty[i].pipe_out = open("/dev/pipe/0", 0);
 		poll_set_event(poll_fd, tty[i].pipe_out, POLL_TYPE_READ);
 		act_func[tty[i].pipe_out] = act_ttyfd;
 		extra[tty[i].pipe_out] = i;
 	}
+	tty[3].allow_input = 0;
+	tty[4].allow_input = 0;
 
 	xfd = open("/dev/pipe/1", 0);
 	poll_set_event(poll_fd, xfd, POLL_TYPE_READ);
