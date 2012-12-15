@@ -1,7 +1,11 @@
 #include <libc/libc.h>
+#include <drv/pipe.h>
 #include "w/draw.h"
+#include "w/msg.h"
+#include "kb_state.h"
 
-int w_pid;
+int priv_fd;
+int ifd, ofd;
 
 int get_utime()
 {
@@ -44,110 +48,55 @@ DrawCanvas _canv;
 DrawCanvas * const canv = &_canv;
 
 int shm_key;
-
-HANDLE w_create(int attr, int x, int y, int w, int h, char *name)
+int destroy_window(WHandle hwnd)
 {
-	MSG msg;
-	msg.type = WM_WINDOW_CREATE;
-	msg.arg1 = attr;
-	msg.arg2 = (x << 16) | y;
-	msg.arg3 = (w << 16) | h;
-	msg.arg4 = (HANDLE) name;
-	msg.arg5 = strlen(name) + 1;
-	send( w_pid, &msg);
-	do {
-		recv( -1, &msg, 1);
-	} while(msg.type != UM_REPLY);
-	shm_key = msg.arg2;
-	shm_at(shm_key, buff, SHM_RW);
-	return msg.arg1;
-}
-
-void w_refresh(HANDLE hwnd, int x, int y ,int w, int h)
-{
-	MSG msg;
-	msg.type = WM_WINDOW_REFRESH;
-	msg.arg1 = hwnd;
-	msg.arg2 = 0;
-	msg.arg3 = (x << 16) | y;
-	msg.arg4 = (w << 16) | h;
-	send( w_pid, &msg);
-}
-
-int w_destroy(HANDLE hwnd)
-{
-	MSG msg;
-	msg.type = WM_WINDOW_DESTROY;
-	msg.arg1 = hwnd;
-	send( w_pid, &msg);
-	do {
-		recv( -1, &msg, 1);
-		printf("msg.type = %d\n",msg.type);
-	} while(msg.type != UM_REPLY);
-	
-	shm_dt(shm_key, buff);
-	return msg.arg1;
+	long ret;
+	w_send_wdestroy(ofd, hwnd);
+	w_wait_reply(ifd, &ret, NULL);
+	return ret;
 }
 
 void main_loop()
 {
-	MSG msg;
-	HANDLE hwnd;
+	WMsg msg;
+	WHandle hwnd;
 	int x = 0;
 	int y = 0;
 	int btn = 0;
-	int wcount = 1;
-	for(;recv( -1, &msg, 1);)
+	for(;;)
 	{
+		w_recv(ifd, &msg, sizeof(WMsg));
 		hwnd = msg.arg1;
-		
-		switch( msg.type&(~MSG_TYPE_BLOCK) )
+		switch( msg.type )
 		{
-			case UM_KEYPRESS:
-				if(msg.arg2 == 'c')
-				{
-					if(w_create(0, x, y, 200, 250, "new"))
-						wcount++;
-				}
-				if(msg.arg2 == 'q')
-				{
-					if(w_destroy(hwnd))
-						return;
-				}
+			case UM_KEY:
+				if(!(msg.arg4 & KBS_BRK))
+					if(msg.arg2 == 'q')
+						if(destroy_window(hwnd))
+							return;
 				break;
-			case UM_MOUSEACT:
+			case UM_MOUSE:
 				x = msg.arg2;
 				y = msg.arg3;
 				btn = msg.arg4;
 				char buf[100];
-				sprintf(buf, "Press Ctrl to move window. (%4d,%4d) %s %s %s", x, y, 
-					btn&1?"L":" ", btn&2?"R":" ", btn&4?"M":" ");
+				sprintf(buf,
+					"Press Ctrl to move window. "
+					"(%4d,%4d) %s %s %s",
+					x, y, 
+					btn&1?"L":" ",
+					btn&2?"R":" ",
+					btn&4?"M":" ");
 				draw_string(canv, 0, 0, buf, 0);
-				w_refresh(hwnd, 0, 0, 600, 15);
+				w_send_wrefresh(ofd, hwnd, 0, 0, 600, 15);
 				break;
 			case UM_EXIT:
-				if(w_destroy(hwnd))
-					wcount--;
-				printf("now wcount = %d\n", wcount);
-				if(wcount == 0)
+				if(destroy_window(hwnd))
 					return;
 				break;
 			default:
 				break;
 		}
-		//pause();
-		
-		/*int i=0;
-		int x,y;
-		u16 color;
-		for(i=0;i<10;i++)
-		{
-			x = rand()%130;
-			y = rand()%160;
-			color =rand();
-			buff[y*800 + x] = color;
-		}
-		w_refresh(mhwnd, buff);*/
 	}
 }
 
@@ -155,18 +104,18 @@ int main()
 {
 	int x,y;
 	double z;
-	HANDLE hwnd;
-	
-	printf("enter window manager 's pid:\n");
-	scanf("%d", &w_pid);
-	
-	draw_init();	
+	WHandle hwnd;
+
+	draw_init();
 	draw_set_canvas(canv, buff);
-	
-	hwnd = w_create(0, 0, 0, canv->y, canv->y, "abcdef");
+	if(w_connect(&priv_fd, &ifd, &ofd))
+		return -1;
+
+	w_send_wcreate(ofd, 0, 0, 0, canv->y, canv->y, "abcdef");
+	w_wait_reply(ifd, &hwnd, &shm_key);
+	shm_at(shm_key, buff, SHM_RW);
 	
 	printf("hwnd: %x\n",hwnd);
-	
 	for(x = 0; x < canv->y; x++)
 	{
 		for(y = 0; y < canv->y; y++)
@@ -179,10 +128,12 @@ int main()
 		}
 	}
 	
-	w_refresh(hwnd, 0 ,0 , canv->y, canv->y);
+	w_send_wrefresh(ofd, hwnd, 0 ,0 , canv->y, canv->y);
 	
 	main_loop();
-	
+
+	w_disconnect(priv_fd, ifd, ofd);
+	shm_dt(shm_key, buff);
 	printf("exit with exit code 0\n");
 	return 0;
 }
