@@ -145,7 +145,7 @@ static struct s_handle *path_open(char *ps)
 			return NULL;
 		continue;
 	not_found:
-		printk("path_open: error!\n");
+		/*printk("path_open: error!\n");*/
 		return NULL;
 	}
 final:
@@ -294,7 +294,7 @@ int vfs_mknod(char *name, int type)
 	h->super->opr->mknod(h, type);
 clean:	kfree(kname);
 clean1:	free_handle(h);
-	printk("vfs_mknod: %d\n", ret);
+	/*printk("vfs_mknod: %d\n", ret);*/
 	return ret;
 }
 
