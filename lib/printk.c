@@ -90,8 +90,8 @@ static char * number(char * str, int num, int base, int size, int precision
 	else while (num!=0)
 	{
 		//tmp[i++]=digits[do_div(num,base)];
-		tmp[i++]=digits[num%base];
-		num/=base;
+		tmp[i++]=digits[((unsigned int)num)%base];
+		num=((unsigned int)num)/((unsigned int)base);
 	}
 	if (i>precision) precision=i;
 	size -= precision;
