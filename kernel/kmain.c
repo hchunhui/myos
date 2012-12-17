@@ -3,6 +3,7 @@
 #include <lib/klib.h>
 #include <os/multiboot.h>
 
+void print_early_init();
 void isr_init();
 void mm_init(unsigned int size);
 void shm_init();
@@ -13,8 +14,7 @@ void time_init();
 void fpu_fault_init();
 void devfs_init();
 void timer_init();
-void drv_pre_init();
-void drv_post_init();
+void drv_init();
 void vfs_start();
 
 void kmain()
@@ -22,13 +22,12 @@ void kmain()
 	unsigned long memsize;
 	multiboot_info_t *pmbi=pmultiboot_info;
 	memsize=pmbi->mem_upper<<10;
-	
+	print_early_init();	
 	printk("mem size:%lu\n",memsize);
 
 	/* init begin */
 	kmalloc_init();
 	devfs_init();
-	drv_pre_init();
 	pic_init();
 	isr_init();
 	mm_init(memsize);
@@ -37,7 +36,7 @@ void kmain()
 	time_init();
 	timer_init();
 	vfs_start();
-	drv_post_init();
+	drv_init();
 	task_init();
 	/* init end */
 	

@@ -306,6 +306,12 @@ static long video_write(int minor, void *data, void *buf, long n, long off)
 	return 0;
 }
 
+void video_early_print(char *buf, int n)
+{
+	while(n--)
+		video_putchar(*buf++, CHAR_ATTR);
+}
+
 struct dev_desc video_dev_desc = {
 	.name = "video",
 	.init = video_init,

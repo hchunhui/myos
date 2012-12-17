@@ -1,13 +1,7 @@
 #include <lib/klib.h>
 #include <os/devfs.h>
 #include <lib/string.h>
-#include <drv/kdev.h>
 #include <lib/stdarg.h>
-
-void print_early(char *obj)
-{
-	dev_simp_write(DEV_MAJOR_VIDEO, 0, video_data, 0, obj, strlen(obj));
-}
 
 void __panic(const char *file, int line, const char *func, const char *fmt,...)
 {
@@ -25,4 +19,3 @@ void __panic(const char *file, int line, const char *func, const char *fmt,...)
 	       file, line, func, buf);
 	for(;;);
 }
-

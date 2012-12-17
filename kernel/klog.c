@@ -9,7 +9,14 @@
 static int flag;
 void *klog_data;
 
-void print_early(char *obj);
+__attribute__((weak)) void print_early_init()
+{
+}
+
+__attribute__((weak)) void print_early(char *obj)
+{
+}
+
 void (*print)(char *obj) = print_early;
 
 static void print_normal(char *obj)

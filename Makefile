@@ -1,4 +1,4 @@
-AUTOOBJS= #
+AUTOOBJS= AUTOOBJS= AUTOOBJS= #
 QEMU=qemu-system-i386
 everything: mk1 mykern.bin
 include Makefile.arch
@@ -16,13 +16,13 @@ linux:
 	rm -f arch
 	ln -s arch_linux arch
 kvm: everything
-	$(QEMU) -enable-kvm -s -hda new.img -boot c -m 128 -localtime
+	$(QEMU) -enable-kvm -s -hda new.img -boot c -m 128 -localtime -serial stdio
 emu: everything
-	$(QEMU) -no-kvm -s -hda new.img -boot c -m 128 -localtime
+	$(QEMU) -no-kvm -s -hda new.img -boot c -m 128 -localtime -serial stdio
 cemu: everything
 	$(QEMU) -no-kvm -s -hda new.img -boot c -m 128 -localtime -display curses
 demu: everything
-	$(QEMU) -no-kvm -S -s -hda new.img -boot c -m 128 -localtime &
+	$(QEMU) -no-kvm -S -s -hda new.img -boot c -m 128 -localtime -serial stdio &
 	xterm gdb
 bx: everything
 	bochs -f new.bxrc

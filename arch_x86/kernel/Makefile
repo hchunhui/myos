@@ -1,4 +1,4 @@
-AUTOOBJS= entry.o fpu.o mm.o pic_i8259.o realmode.o task_x86.o  ##auto 
+AUTOOBJS= entry.o fpu.o mm.o pic_i8259.o print_early.o realmode.o task_x86.o  ##auto 
 OBJS=$(AUTOOBJS)
 ROOT=../..
 everything: build.a
@@ -32,6 +32,8 @@ pic_i8259.o: pic_i8259.c ../../include/os/type.h \
  ../../include/os/sem.h ../../include/os/dirent.h ../../include/os/stat.h \
  ../../include/drv/cmos.h ../../arch_x86/include/os/pic_i8259.h \
  ../../arch_x86/include/os/io.h
+print_early.o: print_early.c ../../include/lib/string.h \
+ ../../include/os/type.h ../../arch_x86/include/os/io.h
 task_x86.o: task_x86.c ../../include/os/type.h \
  ../../arch_x86/include/os/arch_config.h ../../include/drv/pit_i8253.h \
  ../../include/os/devfs.h ../../include/lib/list.h ../../include/os/vfs.h \
