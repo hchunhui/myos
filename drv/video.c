@@ -234,13 +234,7 @@ static void video_putchar(unsigned char x,int attr)
 static int video_init()
 {
 	struct vbe_mode_info *mf = (void *)0x1000;
-	u16 *base = (u16 *)video_text_base_addr;
-	int len = video_text_len/2;
 	int eax, ecx;
-	for(; len; len--)
-		*base++ = (CHAR_ATTR<<8);
-	cpos = 0;
-	update_cursor();
 
 	orig_mode = video_get_mode();
 	eax = 0x4f01;
@@ -304,6 +298,16 @@ static long video_write(int minor, void *data, void *buf, long n, long off)
 	for(; n; n--, cbuf++)
 		video_putchar(*cbuf, CHAR_ATTR);
 	return 0;
+}
+
+void video_early_init()
+{
+	u16 *base = (u16 *)video_text_base_addr;
+	int len = video_text_len/2;
+	for(; len; len--)
+		*base++ = (CHAR_ATTR<<8);
+	cpos = 0;
+	update_cursor();
 }
 
 void video_early_print(char *buf, int n)

@@ -2,10 +2,12 @@
 #include <os/io.h>
 #define PORT 0x3f8
 
+void video_early_init();
 void video_early_print(char *buf, int n);
 
 void print_early_init()
 {
+	video_early_init();
 	outb_p(0x00, PORT+1);
 	outb_p(0x80, PORT+3);
 	outb_p(0x03, PORT+0);
