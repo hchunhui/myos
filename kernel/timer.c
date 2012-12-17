@@ -92,6 +92,7 @@ static int timer_close(int minor, void *data)
 	disable_irq();
 	remove(td);
 	enable_irq();
+	kfree(td);
 	dev_simp_close(DEV_MAJOR_PIPE, 0, td->pipe);
 	return 0;
 }
