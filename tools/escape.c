@@ -14,7 +14,7 @@ ptintf("%c[²ÎÊý"£¬ESC);
 
 #include <stdio.h>
 #include <stdlib.h>
-
+#include <fcntl.h>
 #define     COLOR_RED              31
 #define     COLOR_BLACK            30
 #define     COLOR_GREEN            32
@@ -48,13 +48,26 @@ void set_fg_color(int color);
 void set_bg_color(int color);
 
 #endif //__CUSOR_CTRL_H_
+
+unsigned int sleep(unsigned int sec)
+{
+	int fd;
+	unsigned int t;
+	int b;
+	t = sec * 100;
+	fd = open("/dev/timer/0", O_RDWR);
+	write(fd, &t, sizeof(t));
+	read(fd, &b, sizeof(b));
+	return 0;
+}
+
 int main()
 {
     int x=0;int y = 0;
     int color=31;
     clear_screen();   
     cusor_moveto(20,10);
-    while(1)
+    //while(1)
     {
         cusor_get_pos();
         printf("(20,10)");

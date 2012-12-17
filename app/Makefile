@@ -1,4 +1,4 @@
-AUTOOBJS= addr.o crt.o cxxrt.o g.o init.o kb_trans.o login.o pai.o sh.o snake.o task2.o tty.o  ##auto 
+AUTOOBJS= addr.o crt.o cxxrt.o g.o init.o kb_trans.o login.o pai.o sh.o snake.o task2.o tty.o wterm.o  ##auto 
 INC=-I..\/include
 AS=as -m32
 CC=gcc -m32 -march=i386
@@ -6,7 +6,7 @@ CPP=gcc -E -nostdinc -fno-leading-underscore $(INC)
 LD=ld -melf_i386 --verbose
 CFLAGS=-O2 -fno-strict-aliasing -fno-leading-underscore -fno-builtin -fno-stack-protector -nostdinc -Wall  $(INC) -c
 OBJCOPY=objcopy
-OBJS=$(AUTOOBJS) init.bin task2.bin sh.bin pai.bin addr.bin gauss.bin lc-emu.bin test.bin tty.bin login.bin snake.bin
+OBJS=$(AUTOOBJS) init.bin task2.bin sh.bin pai.bin addr.bin gauss.bin lc-emu.bin test.bin tty.bin login.bin snake.bin wterm.bin
 AR=ar
 .PHONY: all every everything clean dep
 everything: every $(OBJS)
@@ -35,6 +35,9 @@ lc-emu.bin: lc-emu.o
 gauss.bin: gauss.o g.o
 	$(LD) -N -e _start -Tapp.ld -o gauss.x crt.o g.o gauss.o ../libc/libc.a
 	$(OBJCOPY) -j .text -j .rodata -j .eh_frame_hdr -j .eh_frame -j .data -O binary gauss.x $@
+wterm.bin: wterm.o w/msg.o
+	$(LD) -N -e _start -Tapp.ld -o wterm.x crt.o $< w/msg.o ../libc/libc.a w/draw.o
+	$(OBJCOPY) -j .text -j .rodata -j .eh_frame_hdr -j .eh_frame -j .data -O binary wterm.x $@
 task2.bin: task2.o w/msg.o
 	$(LD) -N -e _start -Tapp.ld -o task2.x crt.o $< w/msg.o ../libc/libc.a w/draw.o
 	$(OBJCOPY) -j .text -j .rodata -j .eh_frame_hdr -j .eh_frame -j .data -O binary task2.x $@
@@ -99,7 +102,7 @@ sh.o: sh.c ../include/libc/libc.h ../include/os/type.h \
 snake.o: snake.c ../include/libc/libc.h ../include/os/type.h \
  ../include/os/unistd.h ../include/lib/string.h ../include/drv/video.h \
  ../include/os/dirent.h ../include/os/stat.h ../include/drv/pipe.h \
- w/draw.h w/bmp.h w/msg.h kb_state.h
+ ../include/drv/poll.h w/draw.h w/bmp.h w/msg.h kb_state.h
 task2.o: task2.c ../include/libc/libc.h ../include/os/type.h \
  ../include/os/unistd.h ../include/lib/string.h ../include/drv/video.h \
  ../include/os/dirent.h ../include/os/stat.h ../include/drv/pipe.h \
@@ -109,3 +112,7 @@ tty.o: tty.c ../include/libc/libc.h ../include/os/type.h \
  ../include/os/dirent.h ../include/os/stat.h ../include/drv/input.h \
  ../include/drv/poll.h ../include/drv/klog.h ../include/drv/pipe.h \
  kb_state.h
+wterm.o: wterm.c ../include/libc/libc.h ../include/os/type.h \
+ ../include/os/unistd.h ../include/lib/string.h ../include/drv/video.h \
+ ../include/os/dirent.h ../include/os/stat.h ../include/drv/pipe.h \
+ w/draw.h w/bmp.h w/msg.h kb_state.h

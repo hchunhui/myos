@@ -74,7 +74,7 @@ int main(int argc, char **argv)
 	char *p;
 	for(;;)
 	{
-		printf("#");
+		printf("\033[1m\033[32mmyos \033[34m#\033[0m ");
 		//scanf("%s",buf);
 		getline(buf);
 		for(p=buf;*p!='\n';p++);

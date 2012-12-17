@@ -41,8 +41,9 @@ void draw_copy(DrawCanvas *psrc, DrawCanvas *pobj, u32 x, u32 y, u32 w, u32 h);
 void draw_cursor_mask(DrawCanvas *psrc, DrawCanvas *pobj, u32 x, u32 y, u16 mask);
 void draw_window(DrawCanvas *psrc, DrawCanvas *pobj, u32 x, u32 y, u32 w, u32 h);
 
-void draw_ascii(DrawCanvas *pdc, u32 x, u32 y, u32 ascii, u16 color);
+void draw_ascii(DrawCanvas *pdc, u32 x, u32 y, u32 ascii, u16 fg, u16 bg);
 int draw_string(DrawCanvas *pdc, u32 x, u32 y, char *text, u16 color);
+int draw_string_bg(DrawCanvas *pdc, u32 x, u32 y, char *text, u16 fg, u16 bg);
 
 // 画横线函数
 void draw_x_line(DrawCanvas *pdc, u32 y, u32 x1, u32 x2, u16 color);

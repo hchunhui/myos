@@ -242,7 +242,19 @@ draw_string(DrawCanvas *pdc, u32 x, u32 y, char *text, u16 color)
 {
 	while(*text)
 	{
-		draw_ascii(pdc, x, y, *text, color);
+		draw_ascii(pdc, x, y, *text, color, 0xffff);
+		x += 8;
+		text++;
+	}
+	return x;
+}
+
+int
+draw_string_bg(DrawCanvas *pdc, u32 x, u32 y, char *text, u16 fg, u16 bg)
+{
+	while(*text)
+	{
+		draw_ascii(pdc, x, y, *text, fg, bg);
 		x += 8;
 		text++;
 	}
@@ -250,7 +262,7 @@ draw_string(DrawCanvas *pdc, u32 x, u32 y, char *text, u16 color)
 }
 
 void
-draw_ascii(DrawCanvas *pdc, u32 x, u32 y, u32 ascii, u16 color)
+draw_ascii(DrawCanvas *pdc, u32 x, u32 y, u32 ascii, u16 fg, u16 bg)
 {
 	char *c, ch;
 	int i,j;
@@ -263,10 +275,10 @@ draw_ascii(DrawCanvas *pdc, u32 x, u32 y, u32 ascii, u16 color)
 		{
 			if(ch & 1)
 				pdc->video[(y + j) * pdc->x + x + (8 - i)]
-					= color;
+					= fg;
 			else
 				pdc->video[(y + j) * pdc->x + x + (8 - i)]
-					= 0xffff;
+					= bg;
 			ch >>= 1;
 		}
 	}
