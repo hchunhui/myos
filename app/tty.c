@@ -6,7 +6,7 @@
 #include <drv/pipe.h>
 #include "kb_state.h"
 
-#define NR_TTY 5
+#define NR_TTY 6
 #define TTY_BUF_SIZE (80*25*2)
 struct s_tty
 {
@@ -22,6 +22,7 @@ struct s_tty
 static struct s_tty tty[NR_TTY];
 static struct s_tty *tty_now;
 int video_fd;
+int sefd;
 int poll_fd;
 
 extern char **environ;
@@ -158,6 +159,65 @@ int act_kbfd(int fd)
 	return 0;
 }
 
+int act_settyfd(int fd)
+{
+	int n;
+	char buf[640];
+	char *prev, *now;
+	prev = buf;
+	n = read(fd, buf, 640);
+	for(now = buf; now < buf+n; now++) {
+		if(*now == '\n') {
+			write(sefd, prev, now-prev);
+			write(sefd, "\r", 1);
+			prev = now;
+		}
+	}
+	write(sefd, prev, now-prev);
+	return 0;
+}
+
+void se_print(char *str)
+{
+	write(sefd, str, strlen(str));
+}
+
+int act_sefd(int fd)
+{
+	int i, n, m;
+	char sebuf[256], ch;
+	struct s_tty *setty = tty + 5;
+	n = read(fd, sebuf, 256);
+	for(i = 0; i < n; i++)
+	{
+		ch = sebuf[i];
+		if(ch == '\r') ch = '\n';
+		if(setty->pi >= 80*25)
+			se_print("input buffer full\n");
+		if(ch == '\b') {
+			if(setty->pi) {
+				setty->pi--;
+				goto echo;
+			}
+			else continue;
+		}
+		setty->pend[setty->pi] = ch;
+		setty->pi++;
+		if(ch == '\n') {
+			m = write(setty->pipe_in, setty->pend, setty->pi);
+			if(m < setty->pi)
+				se_print("truncation\n");
+			setty->pi = 0;
+		}
+	echo:
+		if(ch == '\n')
+			write(sefd, "\r\n", 2);
+		else
+			write(sefd, &ch, 1);
+	}
+	return 0;
+}
+
 int act_msfd(int fd)
 {
 	struct s_event event;
@@ -250,6 +310,10 @@ int main(int argc, char **argv)
 	poll_set_event(poll_fd, xfd, POLL_TYPE_READ);
 	act_func[xfd] = act_msfd;
 
+	sefd = open("/dev/serial/0", 0);
+	poll_set_event(poll_fd, sefd, POLL_TYPE_READ);
+	act_func[sefd] = act_sefd;
+
 	/* setup pipe */
 	for(i = 0; i < NR_TTY; i++)
 	{
@@ -262,6 +326,8 @@ int main(int argc, char **argv)
 	}
 	tty[3].allow_input = 0;
 	tty[4].allow_input = 0;
+	tty[5].allow_input = 0;
+	act_func[tty[5].pipe_out] = act_settyfd;
 
 	xfd = open("/dev/pipe/1", 0);
 	poll_set_event(poll_fd, xfd, POLL_TYPE_READ);

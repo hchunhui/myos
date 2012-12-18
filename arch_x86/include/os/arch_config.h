@@ -22,6 +22,8 @@
 #define IRQ_TIMER		0
 #define IRQ_KB			1
 #define IRQ_MOUSE		12
+#define IRQ_SERIAL1		4
+#define IRQ_SERIAL2		3
 
 
 /* about memory */

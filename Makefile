@@ -16,13 +16,13 @@ linux:
 	rm -f arch
 	ln -s arch_linux arch
 kvm: everything
-	$(QEMU) -enable-kvm -s -hda new.img -boot c -m 128 -localtime -serial stdio
+	$(QEMU) -enable-kvm -s -hda new.img -boot c -m 128 -localtime
 emu: everything
-	$(QEMU) -no-kvm -s -hda new.img -boot c -m 128 -localtime -serial stdio
+	$(QEMU) -no-kvm -s -hda new.img -boot c -m 128 -localtime
 cemu: everything
 	$(QEMU) -no-kvm -s -hda new.img -boot c -m 128 -localtime -display curses
 demu: everything
-	$(QEMU) -no-kvm -S -s -hda new.img -boot c -m 128 -localtime -serial stdio &
+	$(QEMU) -no-kvm -S -s -hda new.img -boot c -m 128 -localtime &
 	xterm gdb
 bx: everything
 	bochs -f new.bxrc

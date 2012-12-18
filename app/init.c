@@ -40,7 +40,7 @@ int main(int argc, char **argv)
 {
 	int ret, status;
 	int pid;
-	int tty_pid, sh_pid[3];
+	int tty_pid, sh_pid[6];
 
 	open("/dev/null/0", 0);
 	dup2(0, 1);
@@ -57,6 +57,8 @@ int main(int argc, char **argv)
 	sh_argv[1] = "3";
 	sh_pid[2] = spawn("/bin/login.bin", sh_argv);
 	pid = spawn("/bin/w.bin", w_argv);
+	sh_argv[1] = "6";
+	sh_pid[5] = spawn("/bin/login.bin", sh_argv);
 	while(1)
 	{
 		pid = waitpid(-1,&status,0);

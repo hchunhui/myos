@@ -5,10 +5,12 @@
 #include <drv/i8042.h>
 #include <drv/input.h>
 #include <drv/video.h>
+#include <drv/serial.h>
 
 void drv_init()
 {
 	dev_register(DEV_MAJOR_VIDEO, &video_dev_desc);
 	dev_register(DEV_MAJOR_INPUT, &inputsys_dev_desc);
 	dev_register(DEV_MAJOR_KB, &i8042_dev_desc);
+	dev_register(DEV_MAJOR_SERIAL, &serial_dev_desc);
 }
