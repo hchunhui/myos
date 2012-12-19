@@ -76,7 +76,7 @@ draw_fill_rect(DrawCanvas *pcanv, u32 x1, u32 y1, u32 x2, u32 y2, u16 color)
 	if(x1 > x2 || y1 > y2) return;
 	
 	pos = pcanv->video + (y1 * pcanv->x) + x1;
-	w = x2 - x1;
+	w = x2 - x1 + 1;
 	for(y = y1; y <= y2; y++)
 	{
 		for(x = 0; x < w; x++)
@@ -110,13 +110,13 @@ draw_copy(DrawCanvas *psrc, DrawCanvas *pobj, u32 x, u32 y, u32 w, u32 h)
 	if(y >= psrc->y) return;
 	if(x >= pobj->x) return;
 	if(y >= pobj->y) return;
-	if(x+w >= psrc->x)
+	if(x+w > psrc->x)
 		w = psrc->x - x;
-	if(x+w >= pobj->x)
+	if(x+w > pobj->x)
 		w = pobj->x - x;
-	if(y+h >= psrc->y)
+	if(y+h > psrc->y)
 		h = psrc->y - y;
-	if(y+h >= pobj->y)
+	if(y+h > pobj->y)
 		h = pobj->y - y;
 
 	offset1 = y*psrc->x + x;
@@ -145,15 +145,15 @@ draw_window(DrawCanvas *psrc, DrawCanvas *pobj, u32 x, u32 y, u32 w, u32 h)
 	
 	if(x >= pobj->x) return;
 	if(y >= pobj->y) return;
-	if(w >= psrc->x)
+	if(w > psrc->x)
 		w = psrc->x;
-	if(h >= psrc->y)
+	if(h > psrc->y)
 		h = psrc->y;
-	if(x+w >= pobj->x)
+	if(x+w > pobj->x)
 		w = pobj->x - x;
-	if(y+h >= psrc->y)
+	if(y+h > psrc->y)
 		h = psrc->y - y;
-	if(y+h >= pobj->y)
+	if(y+h > pobj->y)
 		h = pobj->y - y;
 
 	offset1 = 0;
@@ -187,9 +187,9 @@ draw_cursor_mask(DrawCanvas *psrc, DrawCanvas *pobj, u32 x, u32 y, u16 mask)
 	pov = pobj->video;
 	w = psrc->x;
 	h = psrc->y;
-	if(x+w >= pobj->x)
+	if(x+w > pobj->x)
 		w = pobj->x - x;
-	if(y+h >= pobj->y)
+	if(y+h > pobj->y)
 		h = pobj->y - y;
 		
 	pov += y*pobj->x + x;
@@ -274,10 +274,10 @@ draw_ascii(DrawCanvas *pdc, u32 x, u32 y, u32 ascii, u16 fg, u16 bg)
 		for( i = 0; i < 8; i++)
 		{
 			if(ch & 1)
-				pdc->video[(y + j) * pdc->x + x + (8 - i)]
+				pdc->video[(y + j) * pdc->x + x + (7 - i)]
 					= fg;
 			else
-				pdc->video[(y + j) * pdc->x + x + (8 - i)]
+				pdc->video[(y + j) * pdc->x + x + (7 - i)]
 					= bg;
 			ch >>= 1;
 		}
