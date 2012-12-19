@@ -53,7 +53,8 @@ static int kbd_int()
 	{
 	case CODE_BRK:
 		is_brk = 1;
-		gcode = 0;
+		if(!is_ex)
+			gcode = 0;
 		break;
 	case CODE_EX0:
 		is_ex = 1;
