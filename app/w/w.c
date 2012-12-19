@@ -19,6 +19,8 @@ int poll_fd;
 int video_fd;
 int my_turn;
 
+int ms_fd;
+
 u16 virtmem[800*600];
 
 DrawCanvas _real;
@@ -121,7 +123,7 @@ int act_kbfd(WInfo *pwinfo, int fd)
 	   kbs->state & KBS_RAL)
 	{
 		if(kbs->state & KBS_BRK)
-			goto next;
+			goto next1;
 		if(kbs->func == KB_F5)
 		{
 			ioctl(video_fd, VIDEO_CMD_SET_MODE, &mode);
@@ -133,6 +135,38 @@ int act_kbfd(WInfo *pwinfo, int fd)
 			ioctl(video_fd, VIDEO_CMD_RESET_MODE, 0);
 			my_turn = 0;
 		}
+	}
+next1:	if(kbs->leds & KBL_SCR)
+	{
+		struct s_event ms_ev = {
+			.ticks = event.ticks,
+			.type = 2,
+		};
+		int xdiff = 0;
+		int ydiff = 0;
+		static int lrb = 0;
+		if(!(kbs->state & KBS_BRK)) {
+			switch(kbs->func)
+			{
+			case KB_ARU: ydiff -= 5; break;
+			case KB_ARD: ydiff += 5; break;
+			case KB_ARL: xdiff -= 5; break;
+			case KB_ARR: xdiff += 5; break;
+			case KB_END: lrb |= 1; break;
+			case KB_PGDN: lrb |= 2; break;
+			default: goto next;
+			}
+		} else {
+			switch(kbs->func)
+			{
+			case KB_END: lrb &= ~1; break;
+			case KB_PGDN: lrb &= ~2; break;
+			default: goto next;
+			}
+		}
+		ms_ev.code = lrb;
+		ms_ev.value = (xdiff << 16) | (ydiff & 0xffff);
+		write(ms_fd, &ms_ev, sizeof(struct s_event));
 	}
 next:
 	if(my_turn)
@@ -478,6 +512,7 @@ int main(int argc, char **argv)
 	xfd = open("/dev/input/2", 0);
 	poll_set_event(poll_fd, xfd, POLL_TYPE_READ);
 	act_func[xfd] = act_msfd;
+	ms_fd = xfd;
 
 	xfd = open("/dev/pipe/2", 0);
 	poll_set_event(poll_fd, xfd, POLL_TYPE_READ);

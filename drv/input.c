@@ -12,6 +12,7 @@
 #include <lib/string.h>
 #include <drv/input.h>
 #include <os/asm.h>
+#include <os/errno.h>
 
 #define FLIP_MAX 32
 struct s_client
@@ -28,6 +29,8 @@ struct s_client
 
 
 struct list_head client_list[INPUT_MINOR_MAX];
+
+static struct input_dev_desc *idev_desc[INPUT_MINOR_MAX];
 
 static int
 flip_buffer(struct s_client *client)
@@ -101,6 +104,17 @@ input_read(int minor, void *data, void *buf, long n, long off)
 	return n - m;
 }
 
+static long
+input_write(int minor, void *data, void *buf, long n, long off)
+{
+	if(n != sizeof(struct s_event))
+		return -EINVAL;
+	disable_irq();
+	input_dev_event(idev_desc[minor], buf);
+	enable_irq();
+	return n;
+}
+
 static int
 input_close(int minor, void *data)
 {
@@ -172,10 +186,10 @@ struct dev_desc inputsys_dev_desc = {
 	.close = input_close,
 	.ctl = input_ctl,
 	.read = input_read,
+	.write = input_write,
 	.poll = input_poll,
 };
 
-static struct input_dev_desc *idev_desc[INPUT_MINOR_MAX];
 int input_dev_register(int minor, struct input_dev_desc *desc)
 {
 	assert(minor >= 0 && minor < INPUT_MINOR_MAX);
