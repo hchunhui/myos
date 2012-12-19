@@ -17,6 +17,7 @@ struct s_tty
 	int pipe_in;
 	int pipe_out;
 	int allow_input;
+	int allow_output;
 };
 
 static struct s_tty tty[NR_TTY];
@@ -34,7 +35,7 @@ void t_print(char *str)
 
 void write_tty(struct s_tty *tty, char *buf, int len)
 {
-	if(tty == tty_now)
+	if(tty == tty_now && tty->allow_output)
 	{
 		write(video_fd, buf, len);
 	}
@@ -89,6 +90,8 @@ void clear_video()
 void switch_tty(struct s_tty *tty)
 {
 	int i;
+	if(!tty->allow_output)
+		goto out;
 	clear_video();
 	i = tty->i;
 	if(i < TTY_BUF_SIZE/2)
@@ -98,7 +101,7 @@ void switch_tty(struct s_tty *tty)
 	write(video_fd,
 	      tty->buffer,
 	      i);
-	tty_now = tty;
+out:	tty_now = tty;
 }
 
 void poll_set_event(int pollfd, int fd, int type)
@@ -146,12 +149,14 @@ int act_kbfd(int fd)
 		if(kbs->func == KB_ARU)
 		{
 			delta = -1;
-			ioctl(video_fd, VIDEO_CMD_DOWN_SCREEN, &delta);
+			if(tty_now->allow_output)
+				ioctl(video_fd, VIDEO_CMD_DOWN_SCREEN, &delta);
 		}
 		if(kbs->func == KB_ARD)
 		{
 			delta = 1;
-			ioctl(video_fd, VIDEO_CMD_DOWN_SCREEN, &delta);
+			if(tty_now->allow_output)
+				ioctl(video_fd, VIDEO_CMD_DOWN_SCREEN, &delta);
 		}
 	}
 	if(kbs->ch != 0 && tty_now->allow_input)
@@ -318,6 +323,7 @@ int main(int argc, char **argv)
 	for(i = 0; i < NR_TTY; i++)
 	{
 		tty[i].allow_input = 1;
+		tty[i].allow_output = 1;
 		tty[i].pipe_in = open("/dev/pipe/0", 0);
 		tty[i].pipe_out = open("/dev/pipe/0", 0);
 		poll_set_event(poll_fd, tty[i].pipe_out, POLL_TYPE_READ);
@@ -326,6 +332,7 @@ int main(int argc, char **argv)
 	}
 	tty[3].allow_input = 0;
 	tty[4].allow_input = 0;
+	tty[4].allow_output = 0;
 	tty[5].allow_input = 0;
 	act_func[tty[5].pipe_out] = act_settyfd;
 
