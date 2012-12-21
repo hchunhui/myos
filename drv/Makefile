@@ -34,7 +34,7 @@ input.o: input.c ../arch_x86/include/os/arch_config.h \
  ../include/lib/stdarg.h ../include/os/isr.h \
  ../arch_x86/include/os/regs.h ../arch_x86/include/os/io.h \
  ../include/os/fork.h ../include/lib/string.h ../include/drv/input.h \
- ../include/os/asm.h
+ ../include/os/asm.h ../include/os/errno.h
 input_kbd.o: input_kbd.c ../arch_x86/include/os/arch_config.h \
  ../include/drv/pit_i8253.h ../include/os/devfs.h ../include/lib/list.h \
  ../include/os/type.h ../include/os/vfs.h ../include/os/sem.h \

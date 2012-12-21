@@ -1,4 +1,4 @@
-AUTOOBJS= klibc.o kmalloc.o printk.o string.o  ##auto 
+AUTOOBJS= klibc.o kmalloc.o printk.o  ##auto 
 OBJS=$(AUTOOBJS)
 ROOT=..
 everything: build.a
@@ -21,4 +21,3 @@ kmalloc.o: kmalloc.c ../include/os/type.h \
  ../include/lib/klib.h ../include/lib/stdarg.h ../include/lib/string.h
 printk.o: printk.c ../include/lib/string.h ../include/os/type.h \
  ../include/lib/stdarg.h ../include/lib/klib.h
-string.o: string.c ../include/lib/string.h ../include/os/type.h
