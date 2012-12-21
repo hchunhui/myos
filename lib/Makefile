@@ -1,4 +1,4 @@
-AUTOOBJS= klibc.o kmalloc.o printk.o  ##auto 
+AUTOOBJS=klibc.o kmalloc.o printk.o 
 OBJS=$(AUTOOBJS)
 ROOT=..
 everything: build.a

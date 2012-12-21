@@ -1,4 +1,4 @@
-AUTOOBJS= cmos.o drv.o i8042.o input.o input_kbd.o input_mouse.o pit_i8253.o serial.o speaker.o video.o  ##auto 
+AUTOOBJS=cmos.o drv.o i8042.o input.o input_kbd.o input_mouse.o pit_i8253.o serial.o speaker.o video.o 
 OBJS=$(AUTOOBJS)
 ROOT=..
 everything: build.a

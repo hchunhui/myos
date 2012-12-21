@@ -1,4 +1,4 @@
-AUTOOBJS= desc.o init.o multiboot.o  ##auto 
+AUTOOBJS=desc.o init.o multiboot.o 
 OBJS=$(AUTOOBJS)
 ROOT=../..
 everything: build.a

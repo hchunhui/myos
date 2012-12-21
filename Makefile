@@ -1,4 +1,4 @@
-AUTOOBJS= AUTOOBJS= AUTOOBJS= #
+AUTOOBJS=
 QEMU=qemu-system-i386
 everything: mk1 mykern.bin
 include Makefile.arch

@@ -1,4 +1,4 @@
-AUTOOBJS= devfs.o exec.o fork.o isr.o klog.o kmain.o null.o pipe.o poll.o ramfs.o sem.o shm.o syscall.o task.o time.o timer.o vfs.o waitexit.o  ##auto 
+AUTOOBJS=devfs.o exec.o fork.o isr.o klog.o kmain.o null.o pipe.o poll.o ramfs.o sem.o shm.o syscall.o task.o time.o timer.o vfs.o waitexit.o 
 OBJS=$(AUTOOBJS)
 ROOT=..
 everything: build.a

@@ -1,4 +1,4 @@
-AUTOOBJS= entry.o fpu.o mm.o pic_i8259.o print_early.o realmode.o task_x86.o  ##auto 
+AUTOOBJS=entry.o fpu.o mm.o pic_i8259.o print_early.o realmode.o task_x86.o 
 OBJS=$(AUTOOBJS)
 ROOT=../..
 everything: build.a
