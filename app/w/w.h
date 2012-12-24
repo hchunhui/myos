@@ -1,11 +1,10 @@
 #ifndef _W_H_
 #define _W_H_
+#include "wtype.h"
 #include <os/type.h>
-typedef struct s_draw_canvas DrawCanvas;
-typedef struct s_window WWnd;
 struct kb_state;
 
-typedef struct s_winfo
+struct s_winfo
 {
 	//wnd module
 	WWnd *wtable;
@@ -32,7 +31,7 @@ typedef struct s_winfo
 	// w module
 	int rx1, rx2, ry1, ry2;
 	int need_redraw;
-}WInfo;
+};
 
 #define max(x,y)	((x)>(y)?(x):(y))
 #define min(x,y)	((x)<(y)?(x):(y))

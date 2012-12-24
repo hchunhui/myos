@@ -1,11 +1,12 @@
 #ifndef _WND_H_
 #define _WND_H_
+#include "wtype.h"
 #include "w.h"
 #include "draw.h"
 #define WIN_START_ADDR	(512*1024*1024)
 #define WIN_LEN		(1024*1024)
 
-typedef struct s_window
+struct s_window
 {
 	char name[16];
 	u32 attr;
@@ -15,7 +16,7 @@ typedef struct s_window
 	struct s_window *prev, *next;
 	DrawCanvas bufcan;
 	u16 *buffer;	//有未知越界
-}WWnd;
+};
 #define WND_MAX	8
 
 #define WND_ATTR_EMPTY	0

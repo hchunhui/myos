@@ -7,6 +7,7 @@
 #define draw_color_555_to_565(color555) ( (color555>>5<<6) | (color555&31) | 32)
 #include "bmp.h"
 #include <libc/libc.h>
+#include "wtype.h"
 // from pyos, 大部分已经重写
 #ifdef __cplusplus
 extern "C" {
@@ -18,8 +19,6 @@ struct s_draw_canvas
 	int y;
 	int depth;
 };
-
-typedef struct s_draw_canvas DrawCanvas;
 
 int draw_init();
 int draw_set_canvas(DrawCanvas *pcanv, u16 *new_addr);

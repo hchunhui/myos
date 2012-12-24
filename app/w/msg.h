@@ -1,7 +1,7 @@
 #ifndef _MSG_H_
 #define _MSG_H_
-
-typedef struct s_wmsg
+#include "wtype.h"
+struct s_wmsg
 {
 	int type;
 	long arg1;
@@ -9,7 +9,7 @@ typedef struct s_wmsg
 	long arg3;
 	long arg4;
 	long arg5;
-} WMsg;
+};
 typedef long WHandle;
 
 #define WM_WCREATE		(1001)
