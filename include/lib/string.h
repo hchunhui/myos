@@ -1,8 +1,6 @@
 #ifndef _STRING_H_
 #define _STRING_H_
 #include <os/type.h>
-typedef __size_t size_t;
-#define NULL ((void *)0)
 #define EXPORT_SYMBOL(a)
 
 /* form linux-2.6.26 */
