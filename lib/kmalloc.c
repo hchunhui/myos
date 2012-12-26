@@ -65,6 +65,8 @@ void kfree(void* ptr)
 {
 	unsigned long nr=(unsigned long)ptr;
 	int i;
+	if(ptr == NULL)
+		return;
 	if(nr<kmalloc_mem_start)
 		panic("addr error! nr=%x\n", nr);
 	nr-=kmalloc_mem_start;
