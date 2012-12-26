@@ -170,9 +170,13 @@ static struct s_handle
 		for(i = len - 1; i >= 0; i--)
 			if(name[i] == '/')
 				break;
-		name[i] = 0;
-		h = new_handle(&dev_super, NULL, name, name + i + 1);
-		name[i] = '/';
+		if(i == 4) {
+			h = new_handle(&dev_super, NULL, name, "0");
+		} else {
+			name[i] = 0;
+			h = new_handle(&dev_super, NULL, name, name + i + 1);
+			name[i] = '/';
+		}
 		return h;
 	}
 	return path_open(name);
