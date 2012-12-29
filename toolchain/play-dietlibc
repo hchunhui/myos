@@ -1,0 +1,9 @@
+#!/bin/bash
+. play-head
+echo Build dietlibc...
+export PATH=$PREFIX/bin:$PATH
+cd $DIETLIBC
+make MYARCH=i386 clean
+make MYARCH=i386 CROSS=$TARGET- -j$J
+make MYARCH=i386 prefix=$PREFIX/$TARGET/ install
+
