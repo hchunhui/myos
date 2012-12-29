@@ -35,6 +35,7 @@
 #define O_SYNC		_FSYNC
 #define	O_NONBLOCK	_FNONBLOCK
 #define	O_NOCTTY	_FNOCTTY
+#define O_DIRECTORY	0200000
 /* For machines which care - */
 
 /* XXX close on exec request; must match UF_EXCLOSE in user.h */

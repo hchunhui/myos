@@ -162,7 +162,7 @@ int mknod(char *name, int type)
 	return usr_sys_call2(__NR_mknod, name, type);
 }
 
-int readdir(int fd, struct dirent *dirp, int count)
+int readdir(int fd, struct os_dirent *dirp, int count)
 {
 	return usr_sys_call3(__NR_readdir, fd, dirp, count);
 }

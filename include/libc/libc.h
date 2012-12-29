@@ -105,7 +105,7 @@ int nice(int nice);
 int ioctl(int fd, int cmd, void *arg);
 int dup2(int oldfd, int newfd);
 int mknod(char *name, int type);
-int readdir(int fd, struct dirent *dirp, int count);
+int readdir(int fd, struct os_dirent *dirp, int count);
 int fstat(int fd, struct stat *stat);
 
 

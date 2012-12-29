@@ -7,6 +7,7 @@
 #include <os/asm.h>
 #include <os/multiboot.h>
 #include <os/errno.h>
+#include <os/fcntl.h>
 
 extern struct s_fsys fsys_ramfs;
 static struct list_head supers; /* list of struct s_super */
@@ -546,7 +547,15 @@ int vfs_recvfd(struct s_fd *pfd, int newfd)
 
 asmlinkage long sys_open(char *name, int flags)
 {
-	return vfs_open(name, flags);
+	int fd;
+	if(flags & _FCREAT)
+		vfs_mknod(name, 0);
+	fd = vfs_open(name, flags);
+	if(fd < 0)
+		return fd;
+	if(flags & _FAPPEND)
+		vfs_lseek(fd, 0, 2);
+	return fd;
 }
 
 asmlinkage long sys_close(int fd)

@@ -11,7 +11,7 @@ void float_test()
 void ll(char *path)
 {
 	int fd, fd2;
-	struct dirent dbuf;
+	struct os_dirent dbuf;
 	struct stat stat;
 	int isdir;
 	char buf[256];
