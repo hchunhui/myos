@@ -1,10 +1,10 @@
 #ifndef _VFS_H_
 #define _VFS_H_
+#include <os/type.h>
 #include <lib/list.h>
 #include <os/sem.h>
 #include <os/dirent.h>
 #include <os/stat.h>
-#define PATH_MAX 256
 
 struct s_task;
 

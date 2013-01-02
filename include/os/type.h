@@ -35,6 +35,7 @@ typedef	unsigned long __ino_t;
 typedef unsigned int __mode_t;
 typedef unsigned int __nlink_t;
 
+#define PATH_MAX 256
 #ifdef __KERNEL__
 typedef __u8 u8;
 typedef __u16 u16;
