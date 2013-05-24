@@ -1,11 +1,15 @@
 J=4
 TARGET=i686-myos-elf
 PREFIX=$PWD/install
-PKG_PATH=$PWD/pkg
+PKG_PATH=$PWD/build/pkg
 PATCH_PATH=$PWD/patch
 MYOS_PATH=$PWD/..
-BINUTILS=binutils-2.23.1
-GCC=gcc-4.7.2
+MIRROR=http://mirrors.ustc.edu.cn/gnu
+BINUTILS=binutils-2.23.2
+GCC=gcc-4.7.3
+GMP=gmp-5.1.1
+MPFR=mpfr-3.1.2
+MPC=mpc-1.0.1
 DIETLIBC=dietlibc
 mkdir -p build
 cd build

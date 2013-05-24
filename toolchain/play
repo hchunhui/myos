@@ -1,6 +1,10 @@
 #!/bin/bash
+. play-head
+cd ..
+./play-download
 ./play-binutils
 ./play-gccp1
 ./play-dietlibc
 ./play-gccp2
+echo 'export PATH='$PREFIX'/bin:$PATH' > crossenv
 echo DONE

@@ -1,1 +1,1 @@
-export PATH=/home/chunhui/old/toolchain/install/bin:$PATH
+export PATH=/home/wenyi/work/myos/toolchain/install/bin:$PATH

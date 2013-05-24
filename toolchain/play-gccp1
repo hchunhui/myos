@@ -3,11 +3,17 @@
 echo Build GCC PASS 1...
 mkdir -p build-gcc
 tar xf $PKG_PATH/$GCC.tar.bz2
+tar xf $PKG_PATH/$MPFR.tar.bz2
+tar xf $PKG_PATH/$GMP.tar.bz2
+tar xf $PKG_PATH/$MPC.tar.gz
+mv $MPFR $GCC/mpfr
+mv $GMP $GCC/gmp
+mv $MPC $GCC/mpc
 cd $GCC
 patch -p1 < $PATCH_PATH/gcc.patch || exit 1
 cd ..
 cd build-gcc
-../$GCC/configure --target=$TARGET --prefix=$PREFIX --disable-nls --disable-shared --disable-multilib --disable-threads --disable-tls --disable-libgomp --with-newlib --enable-languages=c,c++ || exit 1
+../$GCC/configure --target=$TARGET --prefix=$PREFIX --disable-nls --disable-shared --disable-multilib --disable-threads --disable-tls --disable-libgomp --with-newlib --enable-languages=c,c++ --with-mpfr-include=$PWD/../$GCC/mpfr/src --with-mpfr-lib=$PWD/mpfr/src/.libs || exit 1
 make all-gcc -j$J || exit 1
 make install-gcc || exit 1
 make all-target-libgcc -j$J || exit 1
