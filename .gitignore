@@ -12,6 +12,8 @@ root
 toolchain/build
 toolchain/install
 toolchain/pkg
+toolchain/crossenv
 Makefile.arch
 arch
 kernel/Makefile
+userspace/bin

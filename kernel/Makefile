@@ -127,7 +127,7 @@ vfs.o: vfs.c ../include/os/type.h ../include/lib/klib.h \
  ../include/os/sem.h ../include/lib/list.h ../include/lib/string.h \
  ../include/os/vfs.h ../include/os/dirent.h ../include/os/stat.h \
  ../include/os/devfs.h ../include/os/asm.h ../include/os/multiboot.h \
- ../include/os/errno.h
+ ../include/os/errno.h ../include/os/fcntl.h
 waitexit.o: waitexit.c ../include/os/task.h \
  ../arch_x86/include/os/arch_task.h ../arch_x86/include/os/regs.h \
  ../include/os/type.h ../include/os/sem.h ../include/lib/list.h \

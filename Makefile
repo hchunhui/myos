@@ -1,5 +1,6 @@
 AUTOOBJS=
 QEMU=qemu-system-i386
+QEMU_LINE=-s -kernel mykern.bin -initrd initrd.tar -m 128 -localtime
 everything: mk1 mykern.bin
 include Makefile.arch
 .PHONY: all cemu emu kvm everything clean bx dep user x86 linux
@@ -16,30 +17,27 @@ linux:
 	rm -f arch
 	ln -s arch_linux arch
 kvm: everything
-	$(QEMU) -enable-kvm -s -hda new.img -boot c -m 128 -localtime
+	$(QEMU) -enable-kvm $(QEMU_LINE)
 emu: everything
-	$(QEMU) -no-kvm -s -hda new.img -boot c -m 128 -localtime
+	$(QEMU) -no-kvm $(QEMU_LINE)
 cemu: everything
-	$(QEMU) -no-kvm -s -hda new.img -boot c -m 128 -localtime -display curses
+	$(QEMU) -no-kvm $(QEMU_LINE) -display curses
 demu: everything
-	$(QEMU) -no-kvm -S -s -hda new.img -boot c -m 128 -localtime &
+	$(QEMU) -no-kvm -S $(QEMU_LINE) -localtime &
 	xterm gdb
 bx: everything
 	bochs -f new.bxrc
 user:
-	make -C libc
-	make -C app
+	make -C userspace
 mktar:
 	mkdir -p root
 	mkdir -p root/bin
 	mkdir -p root/share
 	mkdir -p root/home
-	cp app/*.bin root/bin
-	cp app/w/*.bin root/bin
-	cp app/mario/src/mario.bin root/bin
-	rm -f initrd.tar{,.gz}
+	rm -f initrd.tar
+	-cp userspace/bin/* root/bin
+	-strip root/bin/*
 	cd root;tar cvf ../initrd.tar *;cd ..
-	gzip -9 initrd.tar
 mkimg: mktar mount_img domkimg umount_img
 domkimg:
 	sudo rm -f mnt/*.bin

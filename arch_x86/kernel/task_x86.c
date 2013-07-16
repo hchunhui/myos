@@ -93,8 +93,8 @@ char *init_envp[] = {"OS=myos", 0};
 long do_execve(char *path, char **argv, char **envp);
 void init_task_exec()
 {
-	printk("do_execve /bin/init.bin\n");
-	do_execve("/bin/init.bin", init_argv, init_envp);
+	printk("do_execve /bin/init\n");
+	do_execve("/bin/init", init_argv, init_envp);
 	asm (
 		"movl %0, %%esp\n\t"
 		"jmp call_after_fork\n"
