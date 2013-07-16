@@ -21,5 +21,7 @@ make clean || die "kernel"
 make || die "kernel"
 
 echo '----STEP 3: Build Userspace----'
-make user
+make user || die "userspace"
+make mktar
 
+echo 'type "make emu" to start!'
