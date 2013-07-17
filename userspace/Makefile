@@ -14,10 +14,11 @@ O=obj
 %: | bin
 	$(CC) $(CFLAGS) -o $@ $^ -lm
 
-everything: bin/init bin/tty bin/login bin/sh bin/ls bin/cat bin/w bin/snake bin/task2 bin/wterm
+everything: bin/init bin/tty bin/login bin/sh bin/ls bin/cat bin/w bin/snake bin/task2 bin/wterm bin/mario
 all: clean everything
 clean:
 	rm -rf bin obj
+	make -C window/mario/src clean
 bin:
 	mkdir -p bin
 obj:
@@ -69,4 +70,9 @@ $(P)/wterm.o: wterm.c
 bin/snake: snake.o draw.o msg.o
 bin/task2: task2.o draw.o msg.o
 bin/wterm: wterm.o draw.o msg.o
+
+#mario
+bin/mario:
+	make -C window/mario/src/ all
+	cp window/mario/src/mario bin/mario
 
