@@ -600,6 +600,6 @@ void mm_init(unsigned int size)
 	//init pte_mem_stack
 	for(i = ADDR2NO(kernel_brk)/PDE_COUNT; i < pte_mem_stack_len; i++)
 	{
-		push_pte_mem(ADDR2NO(page_table_addr)/PDE_COUNT + i);
+		push_pte_mem(ADDR2NO(page_table_addr) + i);
 	}
 }
