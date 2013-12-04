@@ -11,6 +11,7 @@
 #include <drv/input.h>
 #include <os/vfs.h>
 #include <os/task.h>
+#include <os/timer.h>
 #define xstr(s) str(s)
 #define str(x) #x
 

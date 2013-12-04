@@ -11,6 +11,7 @@
 #include <drv/input.h>
 #include <os/task.h>
 #include <os/vfs.h>
+#include <os/timer.h>
 #define xstr(s) str(s)
 #define str(x) #x
 #define CODE_BRK	0xf0

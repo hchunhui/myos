@@ -3,7 +3,7 @@
 #include <lib/klib.h>
 #include <os/devfs.h>
 #include <os/asm.h>
-#include <os/task.h>
+#include <os/timer.h>
 
 static long startup_time;
 
