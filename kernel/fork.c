@@ -27,7 +27,6 @@ long do_fork(unsigned long pc, unsigned int flags)
 	USR_RET_REG(ptask) = 0;
 	ptask->stime = 0;
 	ptask->utime = 0;
-	ptask->signal = 0;
 
 	ptask->thread = arch_task_mkthread(pc,
 					   (unsigned long)get_user_regs(ptask));

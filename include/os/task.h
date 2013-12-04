@@ -32,8 +32,6 @@ struct s_task
 	unsigned long stack_size;
 	long stime;
 	long utime;
-	/* 信号 */
-	unsigned int signal;
 	
 	/* FPU */
 	int used_fpu;
@@ -46,11 +44,8 @@ struct s_task
 	sem_t vfork_sem;
 	struct s_thread thread;
 	/* 为进程内核态堆栈保留空间 */
-	unsigned long kernel_stack[1024-22];
+	unsigned long kernel_stack[1024-21];
 };
-
-void task_set_signal(struct s_task *ptask, unsigned int signal_mask);
-void task_remove_signal(struct s_task *ptask, unsigned int signal_mask);
 
 extern struct s_task *task;
 extern int task_running;

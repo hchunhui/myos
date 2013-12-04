@@ -35,21 +35,6 @@ int task_get_stime()
 	return current->stime;
 }
 
-void task_set_signal(struct s_task *ptask, unsigned int signal_mask)
-{
-	ptask->signal |= signal_mask;
-	if(ptask->state == TASK_STAT_BLOCK)
-	{
-		ptask->state = TASK_STAT_READY;
-		//printk("wake up pid:%d\n", ptask->pid);
-	}
-}
-
-void task_remove_signal(struct s_task *ptask, unsigned int signal_mask)
-{
-	ptask->signal &= ~signal_mask;
-}
-
 static struct s_task *choose_next(struct s_task *prev)
 {
 	int i;
