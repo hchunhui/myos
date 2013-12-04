@@ -29,7 +29,7 @@ int do_waitpid(int pid, int *status, int options)
 				return 0;
 			while(ptask->state != TASK_STAT_DIE)
 			{
-				current->state = TASK_STAT_BLOCK;
+				task_set_block(current);
 				task_sched();
 			}
 			goto recycle;
@@ -49,7 +49,7 @@ int do_waitpid(int pid, int *status, int options)
 			return 0;
 		else
 		{
-			current->state = TASK_STAT_BLOCK;
+			task_set_block(current);
 			task_sched();
 			goto redo;
 		}
@@ -70,7 +70,7 @@ int do_exit(int exit_code)
 	struct s_task *ptask, *ptask1;
 
 	mm_exit(current);
-	current->state = TASK_STAT_DIE;
+	task_set_die(current);
 	current->exit_code = exit_code;
 	fpu_exit(current);
 	vfs_exit(current);
@@ -78,8 +78,7 @@ int do_exit(int exit_code)
 	sem_up(&current->vfork_sem);
 	/* wakeup father */
 	ptask = current->father;
-	if(ptask->state == TASK_STAT_BLOCK)
-		ptask->state = TASK_STAT_READY;
+	task_set_ready(ptask);
 
 	ptask1 = task_struct_find(1);
 	assert(ptask1);

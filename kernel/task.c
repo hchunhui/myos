@@ -20,36 +20,53 @@ struct list_head ready_queue;
 
 static int pid_count = 0;
 
+void task_set_ready(struct s_task *p)
+{
+	if(p->state != TASK_STAT_READY)
+	{
+		p->state = TASK_STAT_READY;
+		list_add(&p->ready, &ready_queue);
+	}
+}
+
+void task_set_block(struct s_task *p)
+{
+	if(p->state == TASK_STAT_READY)
+		list_del(&p->ready);
+	p->state = TASK_STAT_BLOCK;
+}
+
+void task_set_die(struct s_task *p)
+{
+	if(p->state == TASK_STAT_READY)
+		list_del(&p->ready);
+	p->state = TASK_STAT_DIE;
+}
+
+#define for_each_ready_task(p) list_for_each_entry(p, &ready_queue, ready)
 static struct s_task *choose_next(struct s_task *prev)
 {
 	struct s_task *next, *p;
 	int prio;
 	int ready_count;
-
 redo:
 	prio = 0;
 	next = NULL;
 	ready_count = 0;
-	for_each_task(p)
+	for_each_ready_task(p)
 	{
-		if(p != idle_task &&
-		   p->state == TASK_STAT_READY)
+		if(p == idle_task) continue;
+		ready_count++;
+		if(prio < p->counter)
 		{
-			ready_count++;
-			if(prio < p->counter)
-			{				
-				next = p;
-				prio = p->counter;
-			}
+			next = p;
+			prio = p->counter;
 		}
 	}
-
-	if(ready_count == 0) {
-		/* 当前无非idle就绪任务 */
+	if(ready_count == 0)
 		return idle_task;
-	}
-	else if(prio == 0) {
-		/* 有就绪任务，但时间片用光 */
+	if(next == NULL) {
+		/* 时间片用光 */
 		for_each_task(p)
 		{
 			p->counter =
@@ -60,7 +77,6 @@ redo:
 	}
 	/* 有就绪任务，有时间片 */
 	assert(next);
-/*	printk("nextpid %d\n", next->pid);*/
 	return next;
 }
 
@@ -130,6 +146,7 @@ struct s_task *task_struct_dup(struct s_task *task_old)
 	pid = task_new->pid;
 	tmp = task_new->tasks;
 	memcpy(task_new, task_old, sizeof(struct s_task));
+	task_new->state = TASK_STAT_EMPTY;
 	task_new->tasks = tmp;
 	task_new->pid = pid;
 	task_new->father = task_old;
@@ -144,7 +161,6 @@ void task_init()
 	INIT_LIST_HEAD(&ready_queue);
 	/* 手工创建0号进程 */
 	idle_task = task_struct_alloc();
-	idle_task->state = TASK_STAT_READY;
 	idle_task->priority = 2;
 	idle_task->counter = 2;
 	idle_task->father = NULL;
@@ -152,6 +168,7 @@ void task_init()
 	idle_task->stack_size = normal_stack_size;
 	idle_task->level = 1;
 
+	task_set_ready(idle_task);
 	current_task = idle_task;
 	arch_task_init(idle_task);
 	mm_fork(idle_task, NULL, 0);

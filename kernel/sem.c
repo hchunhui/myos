@@ -26,7 +26,7 @@ void sem_up(sem_t *sem)
 		tq = list_entry(sem->wait.next, struct s_tq, list);
 		list_del(sem->wait.next);
 		tq->up = 1;
-		tq->task->state = TASK_STAT_READY;
+		task_set_ready(tq->task);
 		current->resched = 1;
 	}
 }
@@ -43,7 +43,7 @@ void sem_down(sem_t *sem)
 		tq->up = 0;
 		list_add_tail(&tq->list, &sem->wait);
 		while(!tq->up) {
-			current->state = TASK_STAT_BLOCK;
+			task_set_block(current);
 			task_sched();
 		}
 		//printk("i am up, pid=%d\n", current->pid);

@@ -20,7 +20,7 @@ long do_fork(unsigned long pc, unsigned int flags)
 	mm_fork(ptask, ptask_run, flags);
 	vfs_fork(ptask, ptask_run);
 	
-	ptask->state = TASK_STAT_READY;
+	task_set_ready(ptask);
 	ptask->priority = ptask_run->priority;
 	ptask->counter = ptask_run->priority;
 	/* return 0 for child */

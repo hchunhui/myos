@@ -62,6 +62,10 @@ void task_struct_free(struct s_task *ptask);
 struct s_task *task_struct_dup(struct s_task *task_old);
 struct s_task *task_struct_alloc();
 
+void task_set_ready(struct s_task *);
+void task_set_block(struct s_task *);
+void task_set_die(struct s_task *);
+
 #define for_each_task(p) list_for_each_entry(p, &tasks, tasks)
 #endif  /* __ASSEMBLY__ */
 
