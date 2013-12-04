@@ -17,3 +17,4 @@ Makefile.arch
 arch
 kernel/Makefile
 userspace/bin
+userspace/window/mario/src/mario
