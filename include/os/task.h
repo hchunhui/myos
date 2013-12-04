@@ -1,10 +1,9 @@
 #ifndef _TASK_H_
 #define _TASK_H_
-#define NR_TASK	64
-
 #ifndef __ASSEMBLY__
 #include <os/arch_task.h>
 #include <os/sem.h>
+#include <lib/list.h>
 struct s_fpu;
 struct s_vfs;
 struct s_mm;
@@ -14,6 +13,9 @@ struct s_task
 	/**/
 	volatile int resched;
 	volatile int level;
+	/* list */
+	struct list_head tasks;
+	struct list_head ready;
 	/* 状态 */
 	unsigned int state;
 	/* 时间片 */
@@ -44,10 +46,10 @@ struct s_task
 	sem_t vfork_sem;
 	struct s_thread thread;
 	/* 为进程内核态堆栈保留空间 */
-	unsigned long kernel_stack[1024-21];
+	unsigned long kernel_stack[1024-25];
 };
 
-extern struct s_task *task;
+extern struct list_head tasks;
 extern struct s_task *current_task;
 
 #define current	(current_task)
@@ -59,6 +61,8 @@ struct s_task *task_struct_find(int pid);
 void task_struct_free(struct s_task *ptask);
 struct s_task *task_struct_dup(struct s_task *task_old);
 struct s_task *task_struct_alloc();
+
+#define for_each_task(p) list_for_each_entry(p, &tasks, tasks)
 #endif  /* __ASSEMBLY__ */
 
 #define TASK_STAT_EMPTY	0

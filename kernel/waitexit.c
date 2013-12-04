@@ -11,7 +11,6 @@
 
 int do_waitpid(int pid, int *status, int options)
 {
-	int i;
 	struct s_task* ptask;
 	int retpid;
 
@@ -39,8 +38,7 @@ int do_waitpid(int pid, int *status, int options)
 	if(pid == -1)
 	{
 	redo:
-		ptask = &task[0];
-		for(i = 0; i < NR_TASK; i++, ptask++)
+		for_each_task(ptask)
 		{
 			if(current != ptask->father)
 				continue;
@@ -83,12 +81,13 @@ int do_exit(int exit_code)
 	if(ptask->state == TASK_STAT_BLOCK)
 		ptask->state = TASK_STAT_READY;
 
-	ptask = task;
 	ptask1 = task_struct_find(1);
 	assert(ptask1);
-	for(i = 0; i < NR_TASK; i++, ptask++)
+	for_each_task(ptask)
+	{
 		if(ptask->father == current)
 			ptask->father = ptask1;
+	}
 	printk("do_exit: a task die(pid=%d) exit code:%d\n", 
 	       current->pid, current->exit_code);
 	return 0;
