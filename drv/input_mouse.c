@@ -15,13 +15,6 @@
 #define xstr(s) str(s)
 #define str(x) #x
 
-#define CODE_BRK	0xf0
-#define CODE_EX0	0xe0
-#define CODE_EX1	0xe1
-int is_brk;
-int is_ex;
-int follow;
-int gcode;
 extern struct input_dev_desc mouse_desc;
 
 void mouse_thread()
