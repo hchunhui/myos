@@ -52,9 +52,6 @@ extern int task_running;
 
 #define current	(&(task[task_running]))
 
-int task_get_stime();
-int task_get_utime();
-
 int task_pid_hash(int pid);
 int task_pid_hash_create(int pid);
 void task_pid_hash_remove(int pid);

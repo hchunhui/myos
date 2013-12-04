@@ -144,3 +144,8 @@ struct dev_desc gtimer_dev_desc = {
 	.write = timer_write,
 	.poll = timer_poll,
 };
+
+asmlinkage long sys_get_ticks()
+{
+	return ticks / (HZ/USR_HZ);
+}

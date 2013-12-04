@@ -1,4 +1,4 @@
-AUTOOBJS=devfs.o exec.o fork.o isr.o klog.o kmain.o null.o pipe.o poll.o ramfs.o sem.o shm.o syscall.o task.o time.o timer.o vfs.o waitexit.o 
+AUTOOBJS=devfs.o exec.o fork.o isr.o klog.o kmain.o null.o pipe.o poll.o ramfs.o sem.o shm.o task.o time.o timer.o vfs.o waitexit.o 
 OBJS=$(AUTOOBJS)
 ROOT=..
 everything: build.a
@@ -83,35 +83,23 @@ shm.o: shm.c ../include/os/type.h ../arch_x86/include/os/arch_config.h \
  ../include/os/task.h ../arch_x86/include/os/arch_task.h \
  ../arch_x86/include/os/regs.h ../include/lib/string.h \
  ../include/os/asm.h ../include/os/shm.h
-syscall.o: syscall.c ../arch_x86/include/os/protect.h \
- ../arch_x86/include/os/hz.h ../include/os/task.h \
- ../arch_x86/include/os/arch_task.h ../arch_x86/include/os/regs.h \
- ../include/os/type.h ../include/os/sem.h ../include/lib/list.h \
- ../arch_x86/include/os/mm.h ../include/os/fork.h ../include/os/devfs.h \
- ../include/os/vfs.h ../include/os/dirent.h ../include/os/stat.h \
- ../include/lib/klib.h ../include/lib/stdarg.h ../include/lib/string.h \
- ../include/os/unistd.h ../include/os/asm.h \
- ../arch_x86/include/os/arch_config.h ../include/drv/pit_i8253.h \
- ../include/drv/cmos.h ../arch_x86/include/os/pic_i8259.h \
- ../include/os/errno.h
 task.o: task.c ../include/os/type.h ../arch_x86/include/os/arch_config.h \
  ../include/drv/pit_i8253.h ../include/os/devfs.h ../include/lib/list.h \
  ../include/os/vfs.h ../include/os/sem.h ../include/os/dirent.h \
  ../include/os/stat.h ../include/drv/cmos.h \
- ../arch_x86/include/os/pic_i8259.h ../include/os/task.h \
- ../arch_x86/include/os/arch_task.h ../arch_x86/include/os/regs.h \
- ../include/os/fork.h ../include/lib/klib.h ../include/lib/stdarg.h \
- ../arch_x86/include/os/mm.h ../include/lib/string.h \
- ../include/os/unistd.h ../include/os/asm.h ../include/os/fpu.h \
- ../include/os/isr.h
+ ../arch_x86/include/os/pic_i8259.h ../arch_x86/include/os/hz.h \
+ ../include/os/task.h ../arch_x86/include/os/arch_task.h \
+ ../arch_x86/include/os/regs.h ../include/os/fork.h ../include/lib/klib.h \
+ ../include/lib/stdarg.h ../arch_x86/include/os/mm.h \
+ ../include/lib/string.h ../include/os/unistd.h ../include/os/asm.h \
+ ../include/os/fpu.h ../include/os/isr.h ../include/os/errno.h
 time.o: time.c ../arch_x86/include/os/arch_config.h \
  ../include/drv/pit_i8253.h ../include/os/devfs.h ../include/lib/list.h \
  ../include/os/type.h ../include/os/vfs.h ../include/os/sem.h \
  ../include/os/dirent.h ../include/os/stat.h ../include/drv/cmos.h \
  ../arch_x86/include/os/pic_i8259.h ../arch_x86/include/os/hz.h \
  ../include/lib/klib.h ../include/lib/stdarg.h ../include/os/asm.h \
- ../include/os/task.h ../arch_x86/include/os/arch_task.h \
- ../arch_x86/include/os/regs.h
+ ../include/os/timer.h
 timer.o: timer.c ../include/os/type.h ../include/os/asm.h \
  ../arch_x86/include/os/arch_config.h ../include/drv/pit_i8253.h \
  ../include/os/devfs.h ../include/lib/list.h ../include/os/vfs.h \

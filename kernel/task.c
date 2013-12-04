@@ -1,5 +1,6 @@
 #include <os/type.h>
 #include <os/arch_config.h>
+#include <os/hz.h>
 #include <os/task.h>
 #include <os/fork.h>
 #include <lib/klib.h>
@@ -10,6 +11,7 @@
 #include <os/fpu.h>
 #include <os/isr.h>
 #include <os/vfs.h>
+#include <os/errno.h>
 
 struct s_task *task;
 
@@ -17,16 +19,6 @@ int task_running;
 static int pid_count = 0;
 
 static struct s_task *idle_task;
-
-int task_get_utime()
-{
-	return current->utime;
-}
-
-int task_get_stime()
-{
-	return current->stime;
-}
 
 static struct s_task *choose_next(struct s_task *prev)
 {
@@ -200,4 +192,51 @@ void task_init()
 	mm_fork(idle_task, NULL, 0);
 	fpu_init(current);
 	vfs_init(current);
+}
+
+asmlinkage long sys_get_utime()
+{
+	return (current->utime) / (HZ/USR_HZ);
+}
+
+asmlinkage long sys_get_stime()
+{
+	return (current->stime) / (HZ/USR_HZ);
+}
+
+asmlinkage long sys_pause()
+{
+	task_sched();
+	return 0;
+}
+
+asmlinkage long sys_getpid()
+{
+	return current->pid;
+}
+
+asmlinkage long sys_getppid()
+{
+	return current->father->pid;
+}
+
+asmlinkage long sys_nice(int nice)
+{
+	if(current->priority - nice > 0)
+	{
+		current->priority -= nice;
+		return 0;
+	}
+	return 1;
+}
+
+asmlinkage unsigned long sys_sbrk(int delta)
+{
+	unsigned long xbrk, obrk;
+	obrk = current->brk;
+	xbrk = obrk + delta;
+	if(xbrk < kernel_brk || xbrk >= usr_stack_top)
+		return -ENOMEM;
+	current->brk = xbrk;
+	return obrk;
 }
