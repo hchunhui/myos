@@ -46,6 +46,9 @@ int main(int argc, char **argv)
 	int pid;
 	int tty_pid, sh_pid[6];
 
+	if(getpid() != 1)
+		return 1;
+
 	open("/dev/null/0", 0);
 	dup2(0, 1);
 	dup2(0, 2);
