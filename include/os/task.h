@@ -48,17 +48,15 @@ struct s_task
 };
 
 extern struct s_task *task;
-extern int task_running;
+extern struct s_task *current_task;
 
-#define current	(&(task[task_running]))
-
-int task_pid_hash(int pid);
-int task_pid_hash_create(int pid);
-void task_pid_hash_remove(int pid);
+#define current	(current_task)
 
 void task_clock();
 void task_sched();
 
+struct s_task *task_struct_find(int pid);
+void task_struct_free(struct s_task *ptask);
 struct s_task *task_struct_dup(struct s_task *task_old);
 struct s_task *task_struct_alloc();
 #endif  /* __ASSEMBLY__ */

@@ -13,31 +13,28 @@ int do_waitpid(int pid, int *status, int options)
 {
 	int i;
 	struct s_task* ptask;
-	struct s_task* ptask_run;
 	int retpid;
 
 	if (pid < -1 || pid == 0)
 		return -EINVAL;
 
-	ptask_run = current;
 	if(pid > 0)
 	{
-		ptask = &(task[0]);
-		for(i = 0; i < NR_TASK; i++, ptask++)
-			if(ptask->pid == pid)
+		ptask = task_struct_find(pid);
+		if(ptask)
+		{
+			if(current != ptask->father)
+				return -ECHILD;
+			if(options&WNOHANG &&
+			   ptask->state != TASK_STAT_DIE)
+				return 0;
+			while(ptask->state != TASK_STAT_DIE)
 			{
-				if(ptask_run != ptask->father)
-					return -ECHILD;
-				if(options&WNOHANG &&
-				   ptask->state != TASK_STAT_DIE)
-					return 0;
-				while(ptask->state != TASK_STAT_DIE)
-				{
-					ptask_run->state = TASK_STAT_BLOCK;
-					task_sched();
-				}
-				goto recycle;
+				current->state = TASK_STAT_BLOCK;
+				task_sched();
 			}
+			goto recycle;
+		}
 	}
 	if(pid == -1)
 	{
@@ -45,7 +42,7 @@ int do_waitpid(int pid, int *status, int options)
 		ptask = &task[0];
 		for(i = 0; i < NR_TASK; i++, ptask++)
 		{
-			if(ptask_run != ptask->father)
+			if(current != ptask->father)
 				continue;
 			if(ptask->state == TASK_STAT_DIE)
 				goto recycle;
@@ -54,7 +51,7 @@ int do_waitpid(int pid, int *status, int options)
 			return 0;
 		else
 		{
-			ptask_run->state = TASK_STAT_BLOCK;
+			current->state = TASK_STAT_BLOCK;
 			task_sched();
 			goto redo;
 		}
@@ -63,9 +60,8 @@ int do_waitpid(int pid, int *status, int options)
 recycle:
 	if(status)
 		*status = ptask->exit_code;
-	task_pid_hash_remove( ptask->pid );
-	ptask->state = TASK_STAT_EMPTY;
 	retpid = ptask->pid;
+	task_struct_free(ptask);
 	printk("do_waitpid: pid:%d\n",retpid);
 	return retpid;
 }
@@ -73,29 +69,28 @@ recycle:
 int do_exit(int exit_code)
 {
 	int i;
-	struct s_task *ptask_run, *ptask;
-	
-	ptask_run = current;
-	
-	mm_exit(ptask_run);
+	struct s_task *ptask, *ptask1;
 
-	ptask_run->state = TASK_STAT_DIE;
-	ptask_run->exit_code = exit_code;
+	mm_exit(current);
+	current->state = TASK_STAT_DIE;
+	current->exit_code = exit_code;
 	fpu_exit(current);
 	vfs_exit(current);
 
-	sem_up(&ptask_run->vfork_sem);
+	sem_up(&current->vfork_sem);
 	/* wakeup father */
-	ptask = ptask_run->father;
+	ptask = current->father;
 	if(ptask->state == TASK_STAT_BLOCK)
 		ptask->state = TASK_STAT_READY;
 
 	ptask = task;
+	ptask1 = task_struct_find(1);
+	assert(ptask1);
 	for(i = 0; i < NR_TASK; i++, ptask++)
-		if(ptask->father == ptask_run)
-			ptask->father = task + task_pid_hash(1);
+		if(ptask->father == current)
+			ptask->father = ptask1;
 	printk("do_exit: a task die(pid=%d) exit code:%d\n", 
-		ptask_run->pid, ptask_run->exit_code);
+	       current->pid, current->exit_code);
 	return 0;
 }
 

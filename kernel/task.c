@@ -14,8 +14,8 @@
 #include <os/errno.h>
 
 struct s_task *task;
+struct s_task *current_task;
 
-int task_running;
 static int pid_count = 0;
 
 static struct s_task *idle_task;
@@ -23,13 +23,13 @@ static struct s_task *idle_task;
 static struct s_task *choose_next(struct s_task *prev)
 {
 	int i;
-	int next_running;
+	struct s_task *next;
 	int prio;
 	int ready_count;
 
 redo:
 	prio = 0;
-	next_running = -1;
+	next = NULL;
 	ready_count = 0;
 	for(i = 0; i < NR_TASK; i++)
 	{
@@ -39,7 +39,7 @@ redo:
 			ready_count++;
 			if(prio < task[i].counter)
 			{				
-				next_running = i;
+				next = task + i;
 				prio = task[i].counter;
 			}
 		}
@@ -62,13 +62,9 @@ redo:
 		goto redo;
 	}
 	/* 有就绪任务，有时间片 */
-	if(next_running == -1)
-		panic("next_running == -1!");
-	//printk("ne:%d  ", next_running);
-	return &task[next_running];
+	assert(next);
+	return next;
 }
-
-
 
 void task_sched()
 {
@@ -77,7 +73,7 @@ void task_sched()
 	next = choose_next(prev);
 
 	if(prev != next) {
-		task_running = next - task;
+		current_task = next;
 		switch_to(prev, next, last);
 	}
 }
@@ -99,7 +95,7 @@ void task_clock()
 #define HASH_MAGIC	NR_TASK
 int hash_table[HASH_MAGIC];
 
-int task_pid_hash(int pid)
+static int task_pid_hash(int pid)
 {
 	int hash=pid % HASH_MAGIC;
 	int i,j;
@@ -111,10 +107,10 @@ int task_pid_hash(int pid)
 		if( hash_table[j] == pid )
 			return j;
 	}
-	panic("can't find task (pid = %d)", pid);
+	return -1;
 }
 
-int task_pid_hash_create(int pid)
+static int task_pid_hash_create(int pid)
 {
 	int hash=pid % HASH_MAGIC;
 	int i,j;
@@ -135,9 +131,27 @@ int task_pid_hash_create(int pid)
 	panic("hash table is too short");
 }
 
-void task_pid_hash_remove(int pid)
+static void task_pid_hash_remove(int pid)
 {
-	hash_table[task_pid_hash(pid)] = 0;
+	int i = task_pid_hash(pid);
+	assert(i != -1);
+	hash_table[i] = 0;
+}
+
+struct s_task *task_struct_find(int pid)
+{
+	int i = task_pid_hash(pid);
+	if(i == -1)
+		return NULL;
+	else
+		return task + i;
+}
+
+void task_struct_free(struct s_task *ptask)
+{
+	assert(ptask->state == TASK_STAT_DIE);
+	task_pid_hash_remove( ptask->pid );
+	ptask->state = TASK_STAT_EMPTY;
 }
 
 struct s_task *task_struct_alloc()
@@ -187,7 +201,7 @@ void task_init()
 	idle_task->stack_size = normal_stack_size;
 	idle_task->level = 1;
 
-	task_running = 0;
+	current_task = idle_task;
 	arch_task_init(idle_task);
 	mm_fork(idle_task, NULL, 0);
 	fpu_init(current);

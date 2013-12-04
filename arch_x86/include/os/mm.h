@@ -14,7 +14,6 @@ void mm_share_page(unsigned long phy_pg, unsigned long logi_pg, int flag);
 void mm_remove_share_page(unsigned long phy_pg, unsigned long logi_pg);
 void mm_set_page_info_attr(unsigned long phy_pg, u16 flags);
 #define MM_PI_SHARE	1
-void mm_change_page(int pid);
 void mm_refresh_page();
 void mm_switch(struct s_task *prev, struct s_task *next);
 

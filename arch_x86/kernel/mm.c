@@ -530,12 +530,6 @@ void mm_set_page_info_attr(unsigned long phy_pg, u16 flags)
 	page_info[phy_pg].flags = flags;
 }
 
-void mm_change_page(int pid)
-{
-	int nr = task_pid_hash(pid);
-	change_page(task[nr].mm->pd);// page_dir_addr + nr * sizeof(struct s_pde) );
-}
-
 void mm_refresh_page()
 {
 	refresh_page();

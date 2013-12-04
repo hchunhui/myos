@@ -74,7 +74,7 @@ void idle_task_func()
 	/* adjust stack */
 	asm ("movl %0, %%esp\n\t"
 	     "movl %%esp, %%ebp\n\t"
-	     ::"g"(get_user_regs(&task[task_pid_hash(0)])));
+	     ::"g"(get_user_regs(current)));
 	
 	/* fork init */
 	do_fork((unsigned long)init_task_exec, FORK_SHARE_MM);
@@ -98,7 +98,7 @@ void init_task_exec()
 	asm (
 		"movl %0, %%esp\n\t"
 		"jmp call_after_fork\n"
-		::"g"(get_user_regs(&task[task_pid_hash(1)])));
+		::"g"(get_user_regs(current)));
 }
 
 void init_regs(struct s_regs *regs)
