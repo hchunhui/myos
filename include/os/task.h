@@ -52,7 +52,6 @@ extern int task_running;
 
 #define current	(&(task[task_running]))
 
-int task_get_ticks();
 int task_get_stime();
 int task_get_utime();
 

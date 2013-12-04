@@ -45,7 +45,6 @@ void mouse_thread()
 
 static int mouse_int()
 {
-	extern int ticks;
 	unsigned char data = inb(0x60);
 	static int last_tick;
 	static int xdiff;
@@ -55,10 +54,11 @@ static int mouse_int()
 	static int ysgn;
 	static int lrb;
 	struct s_event event;
+	int ticks = timer_get_ticks();
 	
 	//trick:在真机上数据对不上号，用ticks计时，把过早数据丢弃
 	if(!last_tick) last_tick = ticks;
-	if( ticks - last_tick > 5)
+	if(ticks - last_tick > 5)
 		count = 0;
 	switch (++count)
 	{

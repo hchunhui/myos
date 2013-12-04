@@ -36,11 +36,18 @@ static void remove(struct timer_data *data)
 	INIT_LIST_HEAD(&(data->list));
 }
 
-extern int ticks;
+static int ticks;
+
+int timer_get_ticks()
+{
+	return ticks;
+}
+
 int do_timer_int()
 {
 	int inter;
 	struct timer_data *td;
+	ticks++;
 	for(;!list_empty(&timer_list);)
 	{
 		td = list_entry(timer_list.next,
@@ -65,6 +72,7 @@ extern struct dev_desc gtimer_dev_desc;
 void timer_init()
 {
 	void *data;
+	ticks = 0;
 	INIT_LIST_HEAD(&timer_list);
 	dev_register(DEV_MAJOR_PIT, &timer_dev_desc);
 	dev_register(DEV_MAJOR_TIMER, &gtimer_dev_desc);

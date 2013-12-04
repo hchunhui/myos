@@ -25,6 +25,6 @@ void time_init()
 asmlinkage long sys_gettime()
 {
 	long time = time_get_startup_time();
-	long ticks = task_get_ticks();
+	long ticks = timer_get_ticks();
 	return time + ticks/HZ;
 }

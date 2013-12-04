@@ -18,13 +18,6 @@ static int pid_count = 0;
 
 static struct s_task *idle_task;
 
-int ticks;
-
-int task_get_ticks()
-{
-	return ticks;
-}
-
 int task_get_utime()
 {
 	return current->utime;
@@ -99,7 +92,6 @@ void task_sched()
 
 void task_clock()
 {
-	ticks++;
 	if(current->level > 1)
 		current->stime++;
 	else
@@ -191,7 +183,6 @@ struct s_task *task_struct_dup(struct s_task *task_old)
 void task_init()
 {
 	task = (void *)task_addr;
-	ticks = 0;
 	memset(task, 0, sizeof(struct s_task)*NR_TASK);
 
 	/* 手工创建0号进程 */

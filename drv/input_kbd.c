@@ -45,7 +45,6 @@ void kbd_thread()
 
 static int kbd_int()
 {
-	extern int ticks;
 	struct s_event event;
 	unsigned char code = inb(0x60);
 	
@@ -74,7 +73,7 @@ static int kbd_int()
 		follow--;
 		if(follow == 0)
 		{
-			event.ticks = ticks;
+			event.ticks = timer_get_ticks();
 			event.type = 1;
 			event.code = gcode;
 			event.value = is_brk;

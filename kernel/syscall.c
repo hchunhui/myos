@@ -9,6 +9,7 @@
 #include <os/asm.h>
 #include <os/arch_config.h>
 #include <os/errno.h>
+#include <os/timer.h>
 
 asmlinkage unsigned long sys_sbrk(int delta)
 {
@@ -23,7 +24,7 @@ asmlinkage unsigned long sys_sbrk(int delta)
 
 asmlinkage long sys_get_ticks()
 {
-	return task_get_ticks() / (HZ/USR_HZ);
+	return timer_get_ticks() / (HZ/USR_HZ);
 }
 
 asmlinkage long sys_get_utime()
