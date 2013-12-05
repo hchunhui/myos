@@ -34,9 +34,8 @@
 #define PTE_COUNT  1024
 
 #define page_table_addr		0x800000	//页表 8M~10M
-#define task_addr		0xf00000	//15~16M
 
-#define kmalloc_mem_start	0xc00000	//12~15M
+#define kmalloc_mem_start	0xc00000	//12~16M
 
 #define page_info_addr		0xa00000	//10~12M
 
