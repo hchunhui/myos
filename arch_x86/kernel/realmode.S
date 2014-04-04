@@ -51,7 +51,6 @@ realcseg:
 	movw	%ax, %fs
 	movw	%ax, %gs
 	movw	%ax, %ss
-	
 	sti
 	
 	/* real mode code is here */
@@ -61,22 +60,10 @@ realcseg:
 	.byte 0xcd		//int xx
 vec:	.byte 0
 	movl %eax,%edi
-
-/*	movw $(msg2-OFFSET),%si
-	movb $0x0e,%ah
-	cld
-	lodsb
-1:	cmpb $0,%al
-	je 2f
-	int $0x10
-	lodsb
-	jmp 1b
-2:*/
 	/* real mode code is here */
 
 	/* begin return */
 	cli
-
 	/* load the GDT register */
 	xorw	%ax, %ax
 	movw	%ax, %ds
@@ -110,8 +97,6 @@ tmp_gdt:
 tmp_gdt48:
 	.word 0x800
 	.long tmp_gdt-OFFSET
-msg2:
-	.string "Done.Now in real mode\0"
 __real_proc_end:
 
 protcseg:
@@ -167,7 +152,6 @@ real_mode_int:	//(int vec,int *eax,int *ebx)
 	pop	%ebp
 	pop	%esp
 	
-	//call	pm_reinit
 	pop	%eax
 	movl	%eax, %cr3
 	pop	%eax
