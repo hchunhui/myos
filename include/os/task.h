@@ -36,7 +36,6 @@ struct s_task
 	long utime;
 	
 	/* FPU */
-	int used_fpu;
 	struct s_fpu *fpu_info;
 
 	/* VFS */
@@ -46,7 +45,7 @@ struct s_task
 	sem_t vfork_sem;
 	struct s_thread thread;
 	/* 为进程内核态堆栈保留空间 */
-	unsigned long kernel_stack[1024-25];
+	unsigned long kernel_stack[1024-24];
 };
 
 extern struct list_head tasks;
