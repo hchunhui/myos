@@ -18,9 +18,13 @@ void print_early(char *obj)
 {
 	int n;
 	n = strlen(obj);
-//	video_early_print(obj, n);
+	video_early_print(obj, n);
 	for(;n--;) {
 		while((inb(PORT+5)&0x20) == 0);
+		if(*obj == '\n') {
+			outb('\r', PORT);
+			while((inb(PORT+5)&0x20) == 0);
+		}
 		outb(*obj++, PORT);
 	}
 }
