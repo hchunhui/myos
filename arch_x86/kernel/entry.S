@@ -50,8 +50,8 @@ I8259S=	0xa0
 	jmp  4f
 3:	cmpl $0, TASK_RESCHED(%ebx)
 	jz   4f
-	movl $0, TASK_RESCHED(%ebx)
 	cli
+	movl $0, TASK_RESCHED(%ebx)
 	call task_sched
 4:	movl %ebp,%esp
 .endm
