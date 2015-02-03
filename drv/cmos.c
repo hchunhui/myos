@@ -94,13 +94,13 @@ static long read_rtc()
 
 static int cmos_init()
 {
-	printk("cmos up\n");
+	printk("cmos: up\n");
 	return 0;
 }
 
 static int cmos_exit()
 {
-	printk("cmos down\n");
+	printk("cmos: down\n");
 	return 0;
 }
 

@@ -21,8 +21,7 @@ static void empty_8042()
 		ret = inb(0x64);
 		i--;
 	}while((ret&0x2) && i);
-	if(i == 0)
-		panic("i8042 error");
+	assert(i);
 }
 
 static void wait_8042()
@@ -33,8 +32,7 @@ static void wait_8042()
 		ret = inb(0x64);
 		i--;
 	}while( (!(ret&0x1)) && i );
-	if(i == 0)
-		panic("i8042 error");
+	assert(i);
 }
 
 static void out_8042(u8 val, u16 port)
@@ -88,11 +86,10 @@ static int i8042_init()
 {
 	u8 ret;
 	unsigned long lret;
-	printk("i8042: init\n");
-	
+
 	/* disable keyboard */
 	i8042_ctl(0, 0, I8042_CMD_SETCMD, (void *)0xad);
-	
+
 	i8042_ctl(0, 0, I8042_CMD_GETCNTL, &ret);
 	/* use scancode 2 */
 	ret &= ~(1<<6);
@@ -111,12 +108,14 @@ static int i8042_init()
 
 	input_dev_register(INPUT_MINOR_KBD, &kbd_desc);
 	input_dev_register(INPUT_MINOR_MOUSE, &mouse_desc);
+
+	printk("i8042: up\n");
 	return 0;
 }
 
 static int i8042_exit()
 {
-	printk("i8042 down\n");
+	printk("i8042: down\n");
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-AUTOOBJS=cmos.o drv.o i8042.o input.o input_kbd.o input_mouse.o pit_i8253.o serial.o speaker.o video.o 
+AUTOOBJS=cmos.o drv.o i8042.o input.o input_kbd.o input_mouse.o pit_i8253.o serial.o video.o 
 OBJS=$(AUTOOBJS)
 ROOT=..
 everything: build.a
@@ -67,9 +67,6 @@ serial.o: serial.c ../include/os/type.h \
  ../include/drv/serial.h ../include/os/isr.h \
  ../arch_x86/include/os/regs.h ../arch_x86/include/os/io.h \
  ../include/os/errno.h
-speaker.o: speaker.c ../include/drv/speaker.h ../include/lib/klib.h \
- ../include/lib/stdarg.h ../include/os/asm.h ../arch_x86/include/os/io.h \
- ../include/os/type.h
 video.o: video.c ../arch_x86/include/os/arch_config.h \
  ../include/drv/pit_i8253.h ../include/os/devfs.h ../include/lib/list.h \
  ../include/os/type.h ../include/os/vfs.h ../include/os/sem.h \

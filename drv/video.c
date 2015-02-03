@@ -209,7 +209,7 @@ static void video_putchar(unsigned char x,int attr)
 	outw( 0x0204, 0x3CE );	// select map 2 for reads
 	outw( 0x0005, 0x3CE );	// disable odd-even addressing
 	outw( 0x0006, 0x3CE );	// map starts at 0xA000:0000
-	
+
 	// modify the contents of character generator ram
 	unsigned char *vram = (unsigned char*)base;
 	int i,j;
@@ -244,16 +244,13 @@ static int video_init()
 	graph_x = mf->XResolution;
 	graph_y = mf->YResolution;
 	graph_d = mf->BitsPerPixel;
-	printk("video init:\n"
-	       "Base Addr: 0x%x\n"
-	       "X Resolution: %d\n"
-	       "Y Resolution: %d\n"
-	       "Bits Per Pixel: %d\n",
+	printk("video: "
+	       "base_addr: 0x%x "
+	       "(%dx%d, %d bits)\n",
 	       graph_base_addr,
 	       graph_x,
 	       graph_y,
 	       graph_d);
-	printk("video up\n");
 	return 0;
 }
 

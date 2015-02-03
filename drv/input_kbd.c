@@ -48,7 +48,7 @@ static int kbd_int()
 {
 	struct s_event event;
 	unsigned char code = inb(0x60);
-	
+
 	switch(code)
 	{
 	case CODE_BRK:
@@ -94,7 +94,7 @@ static int kbd_int()
 
 static int kbd_init()
 {
-	printk("kbd up\n");
+	printk("kbd: up\n");
 	irq_register(IRQ_KB, kbd_int);
 	pic_enable_irq(IRQ_KB);
 	return 0;
@@ -102,7 +102,7 @@ static int kbd_init()
 
 static int kbd_exit()
 {
-	printk("kbd down\n");
+	printk("kbd: down\n");
 	return 0;
 }
 

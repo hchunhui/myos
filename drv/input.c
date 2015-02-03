@@ -143,13 +143,13 @@ static int input_init()
 	int i;
 	for(i = 0; i < INPUT_MINOR_MAX; i++)
 		INIT_LIST_HEAD(&client_list[i]);
-	printk("input up\n");
+	printk("input: up\n");
 	return 0;
 }
 
 static int input_exit()
 {
-	printk("input down\n");
+	printk("input: down\n");
 	return 0;
 }
 
@@ -197,14 +197,13 @@ int input_dev_register(int minor, struct input_dev_desc *desc)
 		return -1;
 	idev_desc[minor] = desc;
 	idev_desc[minor]->minor = minor;
-	printk("input_dev_register: name %s  minor %d\n",
-	       desc->name,
-	       minor);
+
 	if(desc->init)
 		if(desc->init())
 		{
 			idev_desc[minor] = NULL;
-			printk("input_dev_register: init fail\n");
+			printk("input_dev_register: init fail, name: %s, minor %d\n",
+			       desc->name, minor);
 			return -1;
 		}
 	return 0;
@@ -216,7 +215,8 @@ int input_dev_unregister(int minor)
 	if(idev_desc[minor]->exit)
 		if(idev_desc[minor]->exit())
 		{
-			printk("input_dev_unregister: exit fail\n");
+			printk("input_dev_unregister: exit fail, name %s\n",
+			       idev_desc[minor]->name);
 			return -1;
 		}
 	idev_desc[minor] = NULL;

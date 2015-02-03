@@ -49,7 +49,7 @@ static int mouse_int()
 	static int lrb;
 	struct s_event event;
 	int ticks = timer_get_ticks();
-	
+
 	//trick:在真机上数据对不上号，用ticks计时，把过早数据丢弃
 	if(!last_tick) last_tick = ticks;
 	if(ticks - last_tick > 5)
@@ -83,7 +83,7 @@ static int mouse_int()
 
 static int mouse_init()
 {
-	printk("mouse up\n");
+	printk("mouse: up\n");
 	irq_register(IRQ_MOUSE, mouse_int);
 	pic_enable_irq(IRQ_MOUSE);
 	return 0;
@@ -91,7 +91,7 @@ static int mouse_init()
 
 static int mouse_exit()
 {
-	printk("mouse down\n");
+	printk("mouse: down\n");
 	return 0;
 }
 

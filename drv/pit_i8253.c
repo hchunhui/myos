@@ -14,13 +14,13 @@
 
 static int i8253_init()
 {
-	printk("i8253 init\n");
+	printk("i8253: up\n");
 	return 0;
 }
 
 static int i8253_exit()
 {
-	printk("i8253 down\n");
+	printk("i8253: down\n");
 	return 0;
 }
 

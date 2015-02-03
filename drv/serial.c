@@ -91,7 +91,7 @@ static int serial_init()
 	irq_register(IRQ_SERIAL2, do_serial1_int);
 	pic_enable_irq(IRQ_SERIAL1);
 	pic_enable_irq(IRQ_SERIAL2);
-	printk("serial up\n");
+	printk("serial: up\n");
 	return 0;
 }
 
