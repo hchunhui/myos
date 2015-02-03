@@ -2,21 +2,11 @@
 #include <lib/klib.h>
 #include <os/devfs.h>
 #include <drv/cmos.h>
-#include <time.h>
+#include <lib/user.h>
 
 static long read_rtc()
 {
-	time_t res = time(NULL);
-	struct tm *tmm = localtime(&res);
-	printk("  date: %d - %d - %d\n",
-	       tmm->tm_year + 1900,
-	       tmm->tm_mon + 1,
-	       tmm->tm_mday);
-	printk("  time: %d : %d : %d\n",
-	       tmm->tm_hour,
-	       tmm->tm_min,
-	       tmm->tm_sec);
-	return res;
+	return user_read_rtc();
 }
 
 static int cmos_init()

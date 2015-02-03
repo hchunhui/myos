@@ -1,4 +1,4 @@
-AUTOOBJS= klibc.o  ##auto 
+AUTOOBJS= klibc.o user.o  ##auto 
 OBJS=$(AUTOOBJS)
 ROOT=../..
 everything: build.a
@@ -10,3 +10,4 @@ all:clean everything
 
 ##dep
 klibc.o: klibc.c ../../include/lib/klib.h ../../include/lib/stdarg.h
+user.o: user.c ../../arch_linux/include/lib/user.h

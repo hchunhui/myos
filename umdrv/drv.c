@@ -10,6 +10,11 @@
 //some device for kernel use
 void *kb_data;
 void *video_data;
+
+void drv_init()
+{
+}
+
 void drv_pre_init()
 {
 //	dev_register(DEV_MAJOR_VIDEO, &video_dev_desc);

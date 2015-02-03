@@ -2,17 +2,11 @@
 #define _ARCH_TASK_H_
 #include <lib/klib.h>
 #include <os/regs.h>
-#include <ucontext.h>
-
-struct s_thread_link
-{
-	ucontext_t ctx;
-	struct s_thread_link *back;
-};
+#include <lib/user.h>
 
 struct s_thread
 {
-	struct s_thread_link *p;
+	struct s_context *p;
 };
 
 struct s_task;
@@ -25,13 +19,7 @@ void call_after_fork();
 
 #define switch_to(prev, next, last) \
 do { \
-	struct s_thread_link *q; \
-	q = kmalloc(sizeof(struct s_thread_link)); \
-	q->back = prev->thread.p; \
-	prev->thread.p = q; \
-	swapcontext(&prev->thread.p->ctx, &next->thread.p->ctx); \
-	prev->thread.p = q->back; \
-	kfree(q); \
+	context_switch(prev->thread.p, next->thread.p); \
 }while(0)
 
 
@@ -49,15 +37,8 @@ static inline struct s_thread arch_task_mkthread(unsigned long pc,
 						 unsigned long sp)
 {
 	struct s_thread thr;
-	struct s_thread_link *link;
-
-	link = kmalloc(sizeof(struct s_thread_link));
-	getcontext(&link->ctx);
-	link->ctx.uc_stack.ss_sp = (void *)(sp);
-	link->ctx.uc_stack.ss_size = 0;
-	makecontext(&link->ctx, (void *)pc, 0);
-	
-	thr.p = link;
+	thr.p = kmalloc(context_len());
+	context_make(thr.p, pc, sp);
 	return thr;
 }
 

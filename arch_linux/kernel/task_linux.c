@@ -8,11 +8,6 @@
 #include <os/unistd.h>
 #include <os/asm.h>
 #include <os/fork.h>
-#include <signal.h>
-#include <ucontext.h>
-#include <unistd.h>
-
-extern sigset_t old_set;
 
 long do_execve(char *path, char **argv, char **envp);
 
@@ -23,23 +18,23 @@ void arch_task_init(struct s_task *idle_task)
 
 void idle_task_func()
 {
-	sigprocmask(SIG_SETMASK, &old_set, NULL);
+	enable_irq();
 	do_fork((unsigned long)init_task_exec, 0);
+	current->thread = arch_task_mkthread(0, 0);
 	for(;;)
 	{
-		pause();
+		user_pause();
 	}
 }
-
 
 void task2()
 {
 	int a=0;
-	sigprocmask(SIG_SETMASK, &old_set, NULL);
+	enable_irq(0);
 	for(;;)
 	{
 		printk("2 %d\n", a++);
-		pause();
+		user_pause();
 	}
 }
 
@@ -49,12 +44,12 @@ void init_task_exec()
 	printk("do_exec /app1.bin\n");
 	do_fork((unsigned long)task2, 0);
 	do_execve("/app1.bin", NULL, NULL);
-	
-	sigprocmask(SIG_SETMASK, &old_set, NULL);
+
+	enable_irq();
 	for(;;)
 	{
 		printk("1 %d\n", a++);
-		pause();
+		user_pause();
 	}
 }
 

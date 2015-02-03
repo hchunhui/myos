@@ -3,7 +3,7 @@ AS=as -m32
 CC=gcc -m32
 CPP=gcc -E -fno-leading-underscore $(INC)
 LD=gcc -m32
-CFLAGS=-march=i386 -g -O2 -fno-delete-null-pointer-checks -fomit-frame-pointer -finline-functions -fno-strict-aliasing -fno-stack-protector -Wall $(INC) -c
+CFLAGS=-march=i386 -g -O2 -fno-delete-null-pointer-checks -fomit-frame-pointer -finline-functions -fno-strict-aliasing -fno-stack-protector -Wall $(INC) -D__KERNEL__ -c
 OBJCOPY=objcopy
 AR=ar
 

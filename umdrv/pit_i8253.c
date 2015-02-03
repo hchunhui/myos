@@ -1,6 +1,6 @@
 #include <lib/klib.h>
 #include <drv/pit_i8253.h>
-#include <unistd.h>
+#include <lib/user.h>
 
 #define I8253_TIMER_FREQ 1193182UL
 
@@ -31,7 +31,7 @@ static int i8253_ctl(int minor, void *data, int cmd, void *arg)
 	default:
 		printk("i8253_ctl: invaild cmd\n");
 	}
-	ualarm(1000000/freq[0], 1000000/freq[0]);
+	user_ualarm(1000000/freq[0]);
 	return 0;
 }
 
