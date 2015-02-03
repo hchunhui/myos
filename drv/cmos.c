@@ -69,14 +69,6 @@ static long read_rtc()
 	BCD_TO_BIN(year);
 
 	mon--;
-	printk("  date: %d - %d - %d\n",
-	       year,
-	       mon + 1, //mon从0开始
-	       day);
-	printk("  time: %d : %d : %d\n",
-	       hour,
-	       min,
-	       sec);
 	year -= 70;
 	if(year < 0) year += 100;
 	/* magic offsets (y+1) needed to get leapyears right.*/
@@ -89,6 +81,11 @@ static long read_rtc()
 	res += HOUR*hour;
 	res += MINUTE*min;
 	res += sec;
+
+	printk("cmos: %02d-%02d-%02d %02d:%02d:%02d (%d secs elapsed)\n",
+	       year + 1970, mon + 1, day,
+	       hour, min, sec,
+	       res);
 	return res;
 }
 
