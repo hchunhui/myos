@@ -1,23 +1,5 @@
-AUTOOBJS=klibc.o kmalloc.o printk.o 
-OBJS=$(AUTOOBJS)
-ROOT=..
-everything: build.a
-include $(ROOT)/Makefile.arch
-.PHONY: all every everything clean dep
-build.a:$(OBJS)
-	$(AR) r $@ $(OBJS)
-all:clean everything
+TOPDIR=..
+C_SRCS = klibc.c kmalloc.c printk.c
 
-##dep
-klibc.o: klibc.c ../include/lib/klib.h ../include/lib/stdarg.h \
- ../include/os/devfs.h ../include/lib/list.h ../include/os/type.h \
- ../include/os/vfs.h ../include/os/sem.h ../include/os/dirent.h \
- ../include/os/stat.h ../include/lib/string.h
-kmalloc.o: kmalloc.c ../include/os/type.h \
- ../arch_x86/include/os/arch_config.h ../include/drv/pit_i8253.h \
- ../include/os/devfs.h ../include/lib/list.h ../include/os/vfs.h \
- ../include/os/sem.h ../include/os/dirent.h ../include/os/stat.h \
- ../include/drv/cmos.h ../arch_x86/include/os/pic_i8259.h \
- ../include/lib/klib.h ../include/lib/stdarg.h ../include/lib/string.h
-printk.o: printk.c ../include/lib/string.h ../include/os/type.h \
- ../include/lib/stdarg.h ../include/lib/klib.h
+target: build.a
+include $(TOPDIR)/Makefile.arch

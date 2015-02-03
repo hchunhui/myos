@@ -1,50 +1,57 @@
-INC=-I$(ROOT)/arch_x86/include -I$(ROOT)/include
-AS=i686-myos-elf-as  #as -m32
-CC=i686-myos-elf-gcc #gcc -m32
-CPP=i686-myos-elf-gcc -E -nostdinc -fno-leading-underscore $(INC)
-LD=i686-myos-elf-ld  #ld -melf_i386
-CFLAGS=-march=i386 -g -O2  -fno-delete-null-pointer-checks -fomit-frame-pointer -finline-functions -fno-strict-aliasing -fno-leading-underscore -fno-builtin -fno-stack-protector -nostdinc -Wall $(INC) -D__KERNEL__ -c
-OBJCOPY=i686-myos-elf-objcopy
-AR=i686-myos-elf-ar
+AS = i686-myos-elf-as
+CC = i686-myos-elf-gcc
+LD = i686-myos-elf-ld
+CFLAGS = \
+	-D__KERNEL__ -march=i386 -nostdinc -g -O2 -Wall \
+	-fno-delete-null-pointer-checks -fomit-frame-pointer \
+	-finline-functions -fno-strict-aliasing -fno-builtin \
+	-fno-stack-protector \
+	-I$(TOPDIR)/arch_x86/include -I$(TOPDIR)/include \
+	$(EXTRA_CFLAGS)
 
-.PHONY: dep clean mk1 dep1 clean1
+OBJCOPY = i686-myos-elf-objcopy
+AR = i686-myos-elf-ar
+
+OBJS = $(C_SRCS:.c=.o) $(S_SRCS:.S=.o) $(EXTRA_OBJS)
+
+.PHONY: clean mk1 dep1 clean1
 
 .c.o:
-	$(CC) $(CFLAGS) \
-	-o $*.o $<
+	$(CC) $(CFLAGS) -c $< -o $@
 .S.o:
-	$(CC) $(CFLAGS) -D__ASSEMBLY__ \
-	-o $*.o $<
+	$(CC) -D__ASSEMBLY__ $(CFLAGS) -c $< -o $@
+
+.depends: $(C_SRCS) $(S_SRCS)
+	-$(CC) $(CFLAGS) -MM $(C_SRCS) > $@
+	-$(CC) -D__ASSEMBLY__ $(CFLAGS) -MM $(S_SRCS) > $@
+
 clean:
 	rm -f *.bin
 	rm -f *.o
 	rm -f *.a
 	rm -f *~
-dep:
-	sed '/^AUTOOBJS=/d;/\#\#dep/q' Makefile>tmp_make
-	for i in `ls *.c`;do $(CPP) -MM $$i >> tmp_make;done
-	for i in `ls *.S`;do $(CPP) -MM -D__ASSEMBLY__ $$i >> tmp_make;done 
-	echo -n "AUTOOBJS=" > tmp_make2
-	for i in `ls *.c *.S`;do echo -n $$i | sed 's/\.[cS]/.o /g' >> tmp_make2;done
-	echo >> tmp_make2
-	cat tmp_make2 tmp_make>Makefile
-	rm -f tmp_make tmp_make2
+	rm -f .depends
+	rm -f mykern.x mykern.bin
+
 mk1:
 	make -C lib
 	make -C drv
 	make -C kernel
 	make -C arch
-dep1:
-	make -C lib dep
-	make -C drv dep
-	make -C kernel dep
-	make -C arch dep
+
 clean1:
 	make -C lib clean
 	make -C drv clean
 	make -C kernel clean
 	make -C arch clean
-mykern.bin:arch_x86/init/build.a drv/build.a lib/build.a arch_x86/kernel/build.a kernel/build.a
-	$(LD) -N -e _start -Ttext 0x100000 -o mykern.x --start-group $^ --end-group
-	$(OBJCOPY) -j .text -j .rodata -j .eh_frame_hdr -j .eh_frame -j .data -O binary mykern.x mykern.bin
 
+mykern.x: arch_x86/init/build.a drv/build.a lib/build.a arch_x86/kernel/build.a kernel/build.a
+	$(LD) -N -e _start -Ttext 0x100000 -o $@ --start-group $^ --end-group
+
+mykern.bin: mykern.x
+	$(OBJCOPY) -j .text -j .rodata -j .eh_frame_hdr -j .eh_frame -j .data -O binary $< $@
+
+build.a: .depends $(OBJS)
+	$(AR) rcs $@ $(OBJS)
+
+-include .depends

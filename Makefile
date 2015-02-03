@@ -1,4 +1,3 @@
-AUTOOBJS=
 QEMU=qemu-system-i386
 QEMU_LINE=-s -kernel mykern.bin -initrd initrd.tar -m 128 -localtime
 everything: mk1 mykern.bin
@@ -11,11 +10,13 @@ x86:
 	ln -s Makefile.arch_x86 Makefile.arch
 	rm -f arch
 	ln -s arch_x86 arch
+	make clean
 linux:
 	rm -f Makefile.arch
 	ln -s Makefile.arch_linux Makefile.arch
 	rm -f arch
 	ln -s arch_linux arch
+	make clean
 kvm: everything
 	$(QEMU) -enable-kvm $(QEMU_LINE)
 emu: everything
@@ -50,6 +51,3 @@ mount_img:
 umount_img:
 	sudo umount mnt
 	sudo losetup -d /dev/loop0
-dep: dep1
-
-##dep

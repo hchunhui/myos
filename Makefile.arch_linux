@@ -1,45 +1,56 @@
-INC=-I$(ROOT)/arch_linux/include -I$(ROOT)/include
-AS=as -m32
-CC=gcc -m32
-CPP=gcc -E -fno-leading-underscore $(INC)
-LD=gcc -m32
-CFLAGS=-march=i386 -g -O2 -fno-delete-null-pointer-checks -fomit-frame-pointer -finline-functions -fno-strict-aliasing -fno-stack-protector -Wall $(INC) -D__KERNEL__ -c
-OBJCOPY=objcopy
-AR=ar
+AS = as -m32
+CC = gcc -m32
+LD = gcc -m32
+CFLAGS = \
+	-D__KERNEL__ -march=i386 -g -O2 -Wall \
+	-fno-delete-null-pointer-checks -fomit-frame-pointer \
+	-finline-functions -fno-strict-aliasing -fno-builtin \
+	-fno-stack-protector \
+	-I$(TOPDIR)/arch_linux/include -I$(TOPDIR)/include \
+	$(EXTRA_CFLAGS)
 
-.PHONY: dep clean mk1 dep1 clean1
+OBJCOPY = objcopy
+AR = ar
+
+OBJS = $(C_SRCS:.c=.o) $(S_SRCS:.S=.o) $(EXTRA_OBJS)
+
+.PHONY: clean mk1 dep1 clean1
 
 .c.o:
-	$(CC) $(CFLAGS) \
-	-o $*.o $<
+	$(CC) $(CFLAGS) -c $< -o $@
 .S.o:
-	$(CC) $(CFLAGS) \
-	-o $*.o $<
+	$(CC) -D__ASSEMBLY__ $(CFLAGS) -c $< -o $@
+
+.depends: $(C_SRCS) $(S_SRCS)
+	-$(CC) $(CFLAGS) -MM $(C_SRCS) > $@
+	-$(CC) -D__ASSEMBLY__ $(CFLAGS) -MM $(S_SRCS) > $@
+
 clean:
 	rm -f *.bin
 	rm -f *.o
 	rm -f *.a
 	rm -f *~
-dep:
-	sed '/\#\#auto/d;/\#\#dep/q' Makefile>tmp_make
-	for i in `ls *.c`;do `echo '$(CPP) -MM' $$i`>>tmp_make;done
-	echo AUTOOBJS=|tr "\n" " ">tmp_make2
-	ls -m *.c *.S|sed 's/\.[cS]/.o/g;s/,//g'|tr "\n" " "| \
-	sed '/$$/a\#\#auto'|tr "\n" " "|sed '/$$/a\'>>tmp_make2
-	cat tmp_make2 tmp_make>Makefile
-	rm -f tmp_make tmp_make2
+	rm -f .depends
+	rm -f mykern.x mykern.bin
+
 mk1:
 	make -C umdrv
 	make -C kernel
 	make -C arch
-dep1:
-	make -C umdrv dep
-	make -C kernel dep
-	make -C arch dep
+
 clean1:
 	make -C umdrv clean
 	make -C kernel clean
 	make -C arch clean
-mykern.bin:arch_linux/init/build.a umdrv/build.a arch_linux/kernel/build.a arch_linux/lib/build.a kernel/build.a
-	$(LD) -o mykern -Wl,--start-group $^ -Wl,--end-group
+
+mykern.x: arch_linux/init/build.a arch_linux/kernel/build.a arch_linux/lib/build.a umdrv/build.a kernel/build.a
+	$(LD) -o $@ -Wl,--start-group $^ -Wl,--end-group
+
+mykern.bin: mykern.x
+	$(OBJCOPY) -j .text -j .rodata -j .eh_frame_hdr -j .eh_frame -j .data -O binary $< $@
+
+build.a: .depends $(OBJS)
+	$(AR) rcs $@ $(OBJS)
+
+-include .depends
 
