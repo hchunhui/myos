@@ -219,6 +219,8 @@ int act_sefd(int fd)
 	echo:
 		if(ch == '\n')
 			write(sefd, "\r\n", 2);
+		else if(ch == '\b')
+			write(sefd, "\b \b", 3);
 		else
 			write(sefd, &ch, 1);
 	}
@@ -353,6 +355,8 @@ int main(int argc, char **argv)
 		t_print(environ[i]);
 		t_print("\n");
 	}
+
+	write_tty(tty + 3, "Kernel Messages:\n", 17);
 
 	/* main loop */
 	for(;;)
