@@ -134,7 +134,7 @@ int do_execve(char *path, char *argv[], char *envp[])
 		brk_addr = 0;
 		elf_hdr = (Elf32_Ehdr *)xhdr;
 		entry = elf_hdr->e_entry;
-		printk("exec: elf e_phnum=%d\n", elf_hdr->e_phnum);
+
 		for(i = 0; i < elf_hdr->e_phnum; i++) {
 			long poff = elf_hdr->e_phoff + (i*elf_hdr->e_phentsize);
 			Elf32_Phdr *prog_hdr = (Elf32_Phdr *)(xhdr + poff);

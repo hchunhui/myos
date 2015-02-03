@@ -201,7 +201,7 @@ int vfs_open(char *name, int flags)
 		return -EMFILE;
 	}
 	sfd = current->vfs->fdtab[fd];
-	
+
 	/* exec open */
 	if(h->super->opr &&
 	   h->super->opr->open)
@@ -444,7 +444,7 @@ static void vfs_import_tar(char *tardata)
 	struct s_handle *h;
 	char *p;
 	int f_len;
-	printk("import_tar!!!!\n");
+
 	tarp = 0;
 	while(1)
 	{
@@ -458,7 +458,6 @@ static void vfs_import_tar(char *tardata)
 		while (*p)
 			f_len = (f_len * 8) + (*p++ - '0'); /* octal */
 
-		printk("%s len %d\n", phdr->name, f_len);
 		/* parse name */
 		for(p = phdr->name; *p; p++)
 		{
@@ -499,14 +498,14 @@ void vfs_start()
 
 	/* import tar */
 	printk("vfs: import modules to file system\n");
-	
+
 	for (i = 0, mod = (module_t *) pmbi->mods_addr;
 	     i < pmbi->mods_count; i++, mod ++)
 	{
 		s = (char *)(mod->string);
 		l = strlen(s);
 		for(; s[l-1] == ' '; s[--l] = 0);
-		printk("module: %s xx\n", s);
+		printk("vfs: import module %s\n", s);
 		if((l > 3 && strcmp(s+l-4, ".tar") == 0) ||
 		   (l > 6 && strcmp(s+l-7, ".tar.gz") == 0))
 			vfs_import_tar((char *)mod->mod_start);

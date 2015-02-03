@@ -46,13 +46,11 @@ static int poll_write_event(struct s_poll *poll)
 
 static int poll_init()
 {
-	printk("poll up\n");
 	return 0;
 }
 
 static int poll_exit()
 {
-	printk("poll down\n");
 	return 0;
 }
 

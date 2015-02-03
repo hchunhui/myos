@@ -11,12 +11,12 @@ int dev_register(int major, struct dev_desc *desc)
 	if(dev_desc[major])
 		return -1;
 	dev_desc[major] = desc;
-	printk("dev_register: name %s  major %d\n", desc->name, major);
 	if(desc->init)
 		if(desc->init())
 		{
 			dev_desc[major] = NULL;
-			printk("dev_register: init fail\n");
+			printk("dev_register: init fail, name: %s, major: %d\n",
+			       desc->name, major);
 			return -1;
 		}
 	return 0;
@@ -30,7 +30,8 @@ int dev_unregister(int major)
 		if(dev_desc[major]->exit)
 			if(dev_desc[major]->exit())
 			{
-				printk("dev_unregister: exit fail\n");
+				printk("dev_unregister: exit fail, name %s\n",
+				       dev_desc[major]->name);
 				return -1;
 			}
 		dev_desc[major] = NULL;

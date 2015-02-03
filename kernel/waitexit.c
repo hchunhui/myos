@@ -60,7 +60,7 @@ recycle:
 		*status = ptask->exit_code;
 	retpid = ptask->pid;
 	task_struct_free(ptask);
-	printk("do_waitpid: pid:%d\n",retpid);
+	printk("do_waitpid: pid: %d\n", retpid);
 	return retpid;
 }
 
@@ -87,7 +87,7 @@ int do_exit(int exit_code)
 		if(ptask->father == current)
 			ptask->father = ptask1;
 	}
-	printk("do_exit: a task die(pid=%d) exit code:%d\n", 
+	printk("do_exit: pid: %d exit code: %d\n",
 	       current->pid, current->exit_code);
 	return 0;
 }

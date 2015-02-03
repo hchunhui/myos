@@ -19,7 +19,6 @@ void time_init()
 	dev_simp_open(DEV_MAJOR_RTC, 0, 0, &data);
 	dev_simp_ioctl(DEV_MAJOR_RTC, 0, data, RTC_CMD_READ, &startup_time);
 	dev_simp_close(DEV_MAJOR_RTC, 0, data);
-	printk("  startup_time: %ld\n",startup_time);
 }
 
 asmlinkage long sys_gettime()

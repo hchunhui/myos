@@ -3,13 +3,11 @@
 
 static int null_init()
 {
-	printk("null up\n");
 	return 0;
 }
 
 static int null_exit()
 {
-	printk("null down\n");
 	return 0;
 }
 

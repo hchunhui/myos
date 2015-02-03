@@ -20,10 +20,9 @@ void vfs_start();
 void kmain()
 {
 	unsigned long memsize;
-	multiboot_info_t *pmbi=pmultiboot_info;
-	memsize=pmbi->mem_upper<<10;
+	multiboot_info_t *pmbi = pmultiboot_info;
+	memsize = pmbi->mem_upper<<10;
 	print_early_init();	
-	printk("mem size:%lu\n",memsize);
 
 	/* init begin */
 	kmalloc_init();
@@ -46,4 +45,3 @@ void kmain()
 	/* 不可能到达这里 */
 	panic("kernel!");
 }
-

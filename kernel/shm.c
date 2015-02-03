@@ -60,7 +60,6 @@ int shm_at(int key, unsigned long base_addr, unsigned int flag)
 	
 	for(j = 0; j < shm_info[i].page_count; j++)
 	{
-		//printk("share phy(%d) to (%d)\n", shm_info[i].page_table[j], start_pg + j);
 		mm_share_page(
 			shm_info[i].page_table[j], start_pg + j, flag);
 	}
@@ -85,10 +84,8 @@ int shm_dt(int key, unsigned long base_addr)
 	if(i == -1)
 		return -EINVAL;
 	
-	printk("shm_dt, page_count = %d\n", shm_info[i].page_count);
 	for(j = 0; j < shm_info[i].page_count; j++)
 	{
-		//printk("remove share phy(%d) to (%d)\n", shm_info[i].page_table[j], start_pg + j);
 		mm_unshare_page(
 			shm_info[i].page_table[j], start_pg + j);
 	}
@@ -112,7 +109,6 @@ int shm_free(int key)
 	
 	memset(shm_info + i, 0, sizeof(struct s_shminfo));
 	shm_info[i].key = -1;
-	printk("shm_free: free shm_info.\n");
 	return 0;
 }
 
@@ -147,14 +143,11 @@ int shm_get(int key, unsigned long size)
 			MM_PI_SHARE);
 	}
 	shm_info[i].page_count = page_count;
-	
-	printk("shm_shmget: got %d pages.\n", page_count);
 	return 0;
 }
 
 asmlinkage long sys_shm_at(int key, unsigned long base_addr, unsigned int flag)
 {
-	printk("shm_at\n");
 	return shm_at(key, base_addr, flag);
 }
 

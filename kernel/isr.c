@@ -41,11 +41,9 @@ int irq_register(int irq_no, isr_func fn)
 void isr_init()
 {
 	int i;
-	printk("isr_init()\n");
+
 	for(i = 0; i < 64; i++)
-	{
 		isr_table[i] = &dummy_desc;
-	}
 }
 
 int isr_dummy(void)

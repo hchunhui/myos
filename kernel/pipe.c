@@ -23,13 +23,11 @@ struct s_pipe *ports[PORT_MAX+1];
 
 static int pipe_init()
 {
-	printk("pipe up\n");
 	return 0;
 }
 
 static int pipe_exit()
 {
-	printk("pipe down\n");
 	return 0;
 }
 
