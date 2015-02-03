@@ -131,16 +131,11 @@ int shm_get(int key, unsigned long size)
 	
 	if(find_key(key) != -1)
 		return -1;
-	
-	for(i = 0; i < SHM_INFO_LEN; i++)
-	{
-		if(shm_info[i].key == -1)
-		{
-			goto after;
-		}
-	}
-	return -1;
-after:
+
+	i = find_key(-1);
+	if(i == -1)
+		return -1;
+
 	shm_info[i].key = key;
 	shm_info[i].count = 0;
 	
