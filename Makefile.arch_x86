@@ -37,13 +37,13 @@ mk1:
 	make -C lib
 	make -C drv
 	make -C kernel
-	make -C arch
+	make -C arch_x86
 
 clean1:
 	make -C lib clean
 	make -C drv clean
 	make -C kernel clean
-	make -C arch clean
+	make -C arch_x86 clean
 
 mykern.x: arch_x86/init/build.a drv/build.a lib/build.a arch_x86/kernel/build.a kernel/build.a
 	$(LD) -N -e _start -Ttext 0x100000 -o $@ --start-group $^ --end-group

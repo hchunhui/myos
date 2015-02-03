@@ -34,16 +34,14 @@ clean:
 	rm -f mykern.x mykern.bin
 
 mk1:
-	make -C umdrv
 	make -C kernel
-	make -C arch
+	make -C arch_linux
 
 clean1:
-	make -C umdrv clean
 	make -C kernel clean
-	make -C arch clean
+	make -C arch_linux clean
 
-mykern.x: arch_linux/init/build.a arch_linux/kernel/build.a arch_linux/lib/build.a umdrv/build.a kernel/build.a
+mykern.x: arch_linux/init/build.a arch_linux/kernel/build.a arch_linux/lib/build.a arch_linux/drv/build.a kernel/build.a
 	$(LD) -o $@ -Wl,--start-group $^ -Wl,--end-group
 
 mykern.bin: mykern.x

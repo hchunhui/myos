@@ -8,14 +8,10 @@ clean: clean1
 x86:
 	rm -f Makefile.arch
 	ln -s Makefile.arch_x86 Makefile.arch
-	rm -f arch
-	ln -s arch_x86 arch
 	make clean
 linux:
 	rm -f Makefile.arch
 	ln -s Makefile.arch_linux Makefile.arch
-	rm -f arch
-	ln -s arch_linux arch
 	make clean
 kvm: everything
 	$(QEMU) -enable-kvm $(QEMU_LINE)

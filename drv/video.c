@@ -25,33 +25,33 @@ struct vbe_mode_info         /* VESA information for a specific mode */
    u8  BitsPerPixel;
    u8  NumberOfBanks;
    u8  MemoryModel;
-   u8  BankSize;      
+   u8  BankSize;
    u8  NumberOfImagePages;
-   u8  Reserved_page;   
-   u8  RedMaskSize; 
-   u8  RedMaskPos;      
-   u8  GreenMaskSize;      
-   u8  GreenMaskPos;      
-   u8  BlueMaskSize;      
-   u8  BlueMaskPos;        
-   u8  ReservedMaskSize;  
-   u8  ReservedMaskPos;    
-   u8  DirectColorModeInfo; 
+   u8  Reserved_page;
+   u8  RedMaskSize;
+   u8  RedMaskPos;
+   u8  GreenMaskSize;
+   u8  GreenMaskPos;
+   u8  BlueMaskSize;
+   u8  BlueMaskPos;
+   u8  ReservedMaskSize;
+   u8  ReservedMaskPos;
+   u8  DirectColorModeInfo;
    /* VBE 2.0 extensions */
-   u32  PhysBasePtr;      
+   u32  PhysBasePtr;
    u32  Reserved2;
-   u16  Reserved1; 
+   u16  Reserved1;
    /* VBE 3.0 extensions */
    u16 LinBytesPerScanLine;
-   u8  BnkNumberOfPages;   
-   u8  LinGreenMaskSize;  
-   u8  LinGreenFieldPos;   
-   u8  LinBlueMaskSize;   
-   u8  LinBlueFieldPos;    
-   u8  LinRsvdMaskSize;   
-   u8  LinRsvdFieldPos;   
-   u32  MaxPixelClock;    
-   u8  Reserved[190];    
+   u8  BnkNumberOfPages;
+   u8  LinGreenMaskSize;
+   u8  LinGreenFieldPos;
+   u8  LinBlueMaskSize;
+   u8  LinBlueFieldPos;
+   u8  LinRsvdMaskSize;
+   u8  LinRsvdFieldPos;
+   u32  MaxPixelClock;
+   u8  Reserved[190];
 }__attribute__((packed));
 
 //mem
