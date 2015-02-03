@@ -38,7 +38,7 @@ void mm_share_page(unsigned long phy_pg, unsigned long logi_pg, int flag)
 
 }
 
-void mm_remove_share_page(unsigned long phy_pg, unsigned long logi_pg)
+void mm_unshare_page(unsigned long phy_pg, unsigned long logi_pg)
 {
 
 }

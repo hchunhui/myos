@@ -89,7 +89,7 @@ int shm_dt(int key, unsigned long base_addr)
 	for(j = 0; j < shm_info[i].page_count; j++)
 	{
 		//printk("remove share phy(%d) to (%d)\n", shm_info[i].page_table[j], start_pg + j);
-		mm_remove_share_page(
+		mm_unshare_page(
 			shm_info[i].page_table[j], start_pg + j);
 	}
 	

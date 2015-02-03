@@ -10,7 +10,7 @@ void mm_recycle_page(unsigned long pg_no);
 void mm_fork(struct s_task *task_new, struct s_task *task_old, unsigned int flags);
 void mm_exit(struct s_task *ptask);
 void mm_share_page(unsigned long phy_pg, unsigned long logi_pg, int flag);
-void mm_remove_share_page(unsigned long phy_pg, unsigned long logi_pg);
+void mm_unshare_page(unsigned long phy_pg, unsigned long logi_pg);
 void mm_set_page_info_attr(unsigned long phy_pg, u16 flags);
 #define MM_PI_SHARE	1
 void mm_change_page(int pid);

@@ -513,14 +513,14 @@ void mm_share_page(unsigned long phy_pg, unsigned long logi_pg, int flag)
 	page_info[phy_pg].count++;
 }
 
-void mm_remove_share_page(unsigned long phy_pg, unsigned long logi_pg)
+void mm_unshare_page(unsigned long phy_pg, unsigned long logi_pg)
 {
 	unsigned long real_phy_pg;	
 	
 	real_phy_pg = mm_reset_pte(current->mm->pd, logi_pg);
 	
 	if(real_phy_pg != phy_pg)
-		panic("mm_remove_share_page: phy_pg not equal");
+		panic("mm_unshare_page: phy_pg not equal");
 	
 	mm_recycle_page(phy_pg);
 }
