@@ -147,9 +147,7 @@ static struct s_regs *gpregs;
 
 static unsigned long pop_pte_mem()		/* 返回页号 */
 {
-	if(stack_p <= 0)
-		panic("pte mem stack underflow");
-	
+	assert(stack_p > 0);
 	return pte_mem_stack[stack_p--];
 }
 
@@ -157,9 +155,7 @@ static void push_pte_mem(unsigned long pg_no)
 {
 	/* check */
 	stack_p++;
-	if(stack_p >= pte_mem_stack_len + 1)
-		panic("pte mem stack overflow");
-	
+	assert(stack_p < pte_mem_stack_len + 1);
 	pte_mem_stack[stack_p] = pg_no;
 }
 
@@ -186,11 +182,11 @@ static void mm_set_pte(pde_t *pd,
 	{
 		pte_no = pd->addr_attr[logi_pg_no/PDE_COUNT]>>PAGE_SHIFT;
 	}
-	
+
 	pte_addr = (void*)((pte_no<<12) +
 			   sizeof(unsigned long)*(logi_pg_no&0x3ff));
-	if(*pte_addr != 0)
-		panic("mm_set_pte: logic page have already assigned.");
+
+	assert(*pte_addr == 0);
 	*pte_addr = (phy_pg_no<<12) | PA_P | flag | PA_US;
 }
 
@@ -199,16 +195,13 @@ static unsigned long mm_reset_pte(pde_t *pd, unsigned long logi_pg_no)
 	unsigned long pte_no;
 	unsigned long *pte_addr;
 	unsigned long phy_pg_no;
-	
-	if(pd->addr_attr[logi_pg_no>>10] == 0)
-	{
-		panic("mm_reset_pte: no pde.");
-	}
-	
+
+	assert(pd->addr_attr[logi_pg_no>>10]);
+
 	pte_no = pd->addr_attr[logi_pg_no>>10]>>12;
 	pte_addr = (void*)((pte_no<<12) +
 			   sizeof(unsigned long)*(logi_pg_no&0x3ff));
-	
+
 	phy_pg_no = (*pte_addr) >> 12;
 	*pte_addr  = 0;
 	return phy_pg_no;
@@ -253,15 +246,14 @@ static unsigned long la2pn(unsigned long la)
 	unsigned long *ppte;
 
 	pd = current->mm->pd;
-	
+
 	pde_no = ADDR2NO(la)/PDE_COUNT;
-	if((pd->addr_attr[pde_no]&PA_P) == 0)
-		panic("mm: la2pa: no pte");
+
+	assert(pd->addr_attr[pde_no]&PA_P);
+
 	ppte = (void*)ADDR(pd->addr_attr[pde_no]);
-	
-	if(((*ppte)&PA_P) == 0)
-		panic("mm: la2pa: la not present");
-	
+
+	assert((*ppte)&PA_P);
 	return ADDR2NO(*ppte);
 }
 
@@ -273,7 +265,7 @@ int do_page_fault(struct s_regs *pregs)
 	unsigned long phy_pg_no;
 
 	asm ("movl %%cr2, %%eax; movl %%eax, %0":"=m"(cr2)::"eax");
-	
+
 	gpregs = pregs;
 	err_code = pregs->err_code;
 	/* err_code
@@ -286,7 +278,7 @@ int do_page_fault(struct s_regs *pregs)
 	{
 		mm_panic("kernel memory error", cr2);
 	}
-	
+
 	if(err_code&1)
 	{
 		if(err_code&2)
@@ -328,16 +320,14 @@ int do_page_fault(struct s_regs *pregs)
 //interfaces
 void mm_recycle_page(unsigned long pg_no)
 {
-	if(page_info[pg_no].count == 0)
-		panic("recycle a free page");
-	
+	assert(page_info[pg_no].count);
 	page_info[pg_no].count--;
 }
 
 unsigned long mm_get_free_page()		/* 不考虑特殊情况，返回页号 */
 {
 	unsigned long i;
-	
+
 	for(i = 0; i < page_info_size; i++)
 	{
 		if(page_info[i].count == 0)
@@ -347,11 +337,10 @@ unsigned long mm_get_free_page()		/* 不考虑特殊情况，返回页号 */
 			return i;
 		}
 	}
-	printk("current pid=%d, out of memory, kill\n", current->pid);
+	printk("mm: out of memory, kill %d.\n", current->pid);
 	do_exit(99);
 	current->resched = 1;
 	return -1;
-	//panic("Mem not enough");
 }
 
 void mm_fork(struct s_task *task_new, struct s_task *task_old, unsigned int flags)
@@ -363,27 +352,26 @@ void mm_fork(struct s_task *task_new, struct s_task *task_old, unsigned int flag
 	pte_t *pold_pte, *pnew_pte;
 	unsigned long old_pg;
 	unsigned long new_pg_no;
-	
+
 	/* 先暂时关闭分页机制，以便于进程间页面复制 */
 	disable_page();
-	
-	if(task_new->mm)
-		panic("mm_fork: newmm != NULL before fork");
+
+	assert(task_new->mm == NULL);
+
 	if(flags & FORK_SHARE_MM)
 	{
-		printk("mm_fork: share mm\n");
 		task_new->mm = task_old->mm;
 		task_new->mm->ref++;
 		goto out;
 	}
-	
+
 	/* 建立内核页表 */
 	newmm = kmalloc(sizeof(struct s_mm));
 	task_new->mm = newmm;
 	newpd = kmalloc(PAGE_SIZE);
 	newmm->pd = newpd;
 	newmm->ref = 1;
-	
+
 	memset(newpd, 0, PAGE_SIZE);
 	for_each_kern_pde(j)
 	{
@@ -395,15 +383,12 @@ void mm_fork(struct s_task *task_new, struct s_task *task_old, unsigned int flag
 	if(task_old == NULL)
 	{
 		change_page(task_new->mm->pd);
-		printk("mm_fork: new mm\n");
 		goto out;
 	}
-	printk("mm_fork: copy mm\n");
 	oldmm = task_old->mm;
-	if(!oldmm)
-		panic("mm_fork: oldmm == NULL");
+	assert(oldmm);
 	oldpd = oldmm->pd;
-	
+
 	/* 从用户区域开始复制 */
 	for_each_user_pde(i)
 	{
@@ -436,7 +421,6 @@ void mm_fork(struct s_task *task_new, struct s_task *task_old, unsigned int flag
 			{
 				*pnew_pte = *pold_pte;
 				page_info[old_pg].count++;
-				printk("reach share memory\n");
 			}
 			else
 			{
@@ -455,7 +439,7 @@ void mm_fork(struct s_task *task_new, struct s_task *task_old, unsigned int flag
 
 		}
 	}
-	
+
 	/* 重新打开分页 */
 out:	enable_page();
 }
@@ -466,17 +450,15 @@ void mm_exit(struct s_task *ptask)
 	struct s_mm *mm;
 	pte_t *ppte;
 	pde_t *ppde;
-	
+
 	mm = ptask->mm;
 	mm->ref--;
 	if(mm->ref)
 	{
-		printk("mm_exit: not delete mm\n");
 		goto out;
 	}
-	printk("mm_exit: delete mm\n");
 	ppde = mm->pd;
-	
+
 	for_each_user_pde(i)
 	{
 		/*present */
@@ -502,13 +484,12 @@ out:
 void mm_share_page(unsigned long phy_pg, unsigned long logi_pg, int flag)
 {
 	int mflag = 0;
-	
+
 	if(flag & SHM_W)
 		mflag = MM_RW;
-	
-	if(page_info[phy_pg].count == 0)
-		panic("mm_share_page: page_count == 0");
-	
+
+	assert(page_info[phy_pg].count);
+
 	mm_set_pte(current->mm->pd, phy_pg, logi_pg, mflag);
 	page_info[phy_pg].count++;
 }
@@ -516,12 +497,10 @@ void mm_share_page(unsigned long phy_pg, unsigned long logi_pg, int flag)
 void mm_unshare_page(unsigned long phy_pg, unsigned long logi_pg)
 {
 	unsigned long real_phy_pg;	
-	
+
 	real_phy_pg = mm_reset_pte(current->mm->pd, logi_pg);
-	
-	if(real_phy_pg != phy_pg)
-		panic("mm_unshare_page: phy_pg not equal");
-	
+	assert(real_phy_pg == phy_pg);
+
 	mm_recycle_page(phy_pg);
 }
 
@@ -547,31 +526,20 @@ void mm_init(unsigned int size)
 	if(mem_size > usr_stack_top)
 	{
 		mem_size = usr_stack_top;
-		printk("mm: only use %dK memory.\n", mem_size / 1024);
+		printk("mm_init: only use %dK memory.\n", mem_size / 1024);
 	}
-	
+
 	if(mem_size <= kernel_brk)
 	{
-		panic("Memory not enough");
+		panic("mm_init: memory not enough");
 	}
-	
+
 	stack_p = 0;
-	
+
 	memset(pte, 0, sizeof(unsigned long)*1024*1024);
 
 	isr_register(14, do_page_fault);
-	
-	//0~16M(kernel_brk) 对等映射 for kernel
-	/* for(i = 0; i < NR_TASK; i++) */
-	/* { */
-	/* 	for_each_kern_pde(j) */
-	/* 	{ */
-	/* 		pde[i].addr_attr[j] = ADDR_ATTR( */
-	/* 			PAGE_SIZE*j + page_table_addr, */
-	/* 			PA_P | PA_RW); */
-	/* 	} */
-	/* } */
-	
+
 	for_each_kern_pde(i)
 	{
 		for(j = 0; j < PTE_COUNT; j++)
@@ -590,7 +558,7 @@ void mm_init(unsigned int size)
 		page_info[i].count = 1;
 		page_info[i].flags = 0;
 	}
-	
+
 	//init pte_mem_stack
 	for(i = ADDR2NO(kernel_brk)/PDE_COUNT; i < pte_mem_stack_len; i++)
 	{
