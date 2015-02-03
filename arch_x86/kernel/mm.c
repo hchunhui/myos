@@ -523,10 +523,13 @@ void mm_init(unsigned int size)
 {
 	int i,j;
 	mem_size = size;
+
+	printk("memory: %d MB.\n", mem_size / 1024 / 1024);
 	if(mem_size > usr_stack_top)
 	{
 		mem_size = usr_stack_top;
-		printk("mm_init: only use %dK memory.\n", mem_size / 1024);
+		printk("mm_init: only use %d MB memory.\n",
+		       mem_size / 1024 / 1024);
 	}
 
 	if(mem_size <= kernel_brk)
