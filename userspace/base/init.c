@@ -35,7 +35,7 @@ int spawn(char *path, char **xargv)
 	if((ret = vfork()) == 0)
 	{
 		close(video_fd);
-		exit(execve(path, xargv, environ));
+		_exit(execve(path, xargv, environ));
 	}
 	return ret;
 }

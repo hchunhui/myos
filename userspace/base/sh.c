@@ -27,7 +27,7 @@ void spawn(char **argv)
 do_spawn:
 	close(fd);
 	if(fork() == 0)
-		exit(execve(buf, argv, environ));
+		_exit(execve(buf, argv, environ));
 	pid = wait(&status);
 	printf("pid = %d, status = %d\n", pid, status);
 }

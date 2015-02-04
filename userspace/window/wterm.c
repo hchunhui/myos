@@ -1,3 +1,4 @@
+#include <unistd.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -574,7 +575,7 @@ int main()
 		dup2(pipe_in, 0);
 		dup2(pipe_out, 1);
 		dup2(pipe_out, 2);
-		exit(execl("/bin/sh", "*sh*", NULL));
+		_exit(execl("/bin/sh", "*sh*", NULL));
 	}
 
 	w_send_wcreate(ofd, 0, 0, 0, C*FW, (R+1)*FH, "WTerm");
