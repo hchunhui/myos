@@ -159,9 +159,9 @@ copr_error:
 	enter_kernel
 
 	movb $EOI,%al
-	outb %al,$I8259M
-	nop
 	outb %al,$I8259S
+	nop
+	outb %al,$I8259M
 	
 	push %ebp
 	push $\num

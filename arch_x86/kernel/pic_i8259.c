@@ -26,6 +26,9 @@ void i8259_init()
 	/* OCW1 */
 	outb_p(0xff, I8259MMask);
 	outb_p(0xff, I8259SMask);
+	/* OCW2 */
+	outb_p(0x20, I8259S);
+	outb_p(0x20, I8259M);
 }
 
 static u8 i8259_s1, i8259_s2;
