@@ -17,7 +17,7 @@
 int priv_fd;
 int ifd, ofd;
 
-__u16 *buff = (void *)(1024*1024*1024);
+unsigned long buff = (1024*1024*1024);
 DrawCanvas _canv;
 DrawCanvas * const canv = &_canv;
 
@@ -562,7 +562,7 @@ void main_loop()
 int main()
 {
 	draw_init();
-	draw_set_canvas(canv, buff);
+	draw_set_canvas(canv, (void *)buff);
 	if(w_connect(&priv_fd, &ifd, &ofd))
 		return -1;
 

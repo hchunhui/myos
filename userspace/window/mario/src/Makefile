@@ -1,5 +1,5 @@
 AUTOOBJS= BeetleDemon.o Brick.o BrokenBrick.o Bullet.o ClipDemon.o Coin.o Control.o Flower.o FlyTortoiseDemon.o Fungus.o FungusDemon.o Game.o Graph.o GraphMan.o Ground.o ImgData.o main.o MapData.o Mario.o Object.o PipeBody.o PipeTop.o Question.o Sound.o SoundMan.o Star.o Stone.o TortoiseDemon.o  ##auto 
-CC=i686-myos-elf-g++ -fpermissive
+CC=i686-myos-elf-g++
 CPP=i686-myos-elf-g++ -E
 CFLAGS=-O3
 OBJS=$(AUTOOBJS) mario
@@ -12,7 +12,7 @@ everything: $(OBJS)
 .s.o:
 	$(CC) $(CFLAGS)	\
 	-c -o $*.o $<
-mario: ../../w/draw.o $(AUTOOBJS) ../../w/msg.o
+mario: ../../../obj/w/draw.o $(AUTOOBJS) ../../../obj/w/msg.o
 	$(CC) -o $@ $^
 
 all:clean everything
@@ -67,9 +67,6 @@ GraphMan.o: GraphMan.cpp GraphMan.h Graph.h cross.h ../../w/draw.h \
 Ground.o: Ground.cpp Ground.h Object.h ImgData.h Game.h Mario.h \
  SoundMan.h Sound.h
 ImgData.o: ImgData.cpp
-main.o: main.cpp Graph.h cross.h ../../w/draw.h ../../w/bmp.h \
- ../../w/wtype.h ../../w/msg.h ../../../libkb/kb_state.h GraphMan.h \
- Game.h Object.h Mario.h SoundMan.h Sound.h Control.h
 MapData.o: MapData.cpp
 Mario.o: Mario.cpp cross.h ../../w/draw.h ../../w/bmp.h ../../w/wtype.h \
  ../../w/msg.h ../../../libkb/kb_state.h Mario.h Object.h ImgData.h \
@@ -91,3 +88,6 @@ Stone.o: Stone.cpp Stone.h Object.h ImgData.h Game.h Mario.h SoundMan.h \
  Sound.h
 TortoiseDemon.o: TortoiseDemon.cpp TortoiseDemon.h Object.h ImgData.h \
  Game.h Mario.h SoundMan.h Sound.h
+main.o: main.cpp Graph.h cross.h ../../w/draw.h ../../w/bmp.h \
+ ../../w/wtype.h ../../w/msg.h ../../../libkb/kb_state.h GraphMan.h \
+ Game.h Object.h Mario.h SoundMan.h Sound.h Control.h

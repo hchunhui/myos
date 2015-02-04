@@ -8,10 +8,10 @@
 #include <drv/pipe.h>
 #include "msg.h"
 
-int w_send(int fd, void *q, int n)
+int w_send(int fd, const void *q, int n)
 {
 	int m;
-	char *p = q;
+	const char *p = q;
 	while(n)
 	{
 		m = write(fd, p, n);
@@ -55,7 +55,7 @@ void w_wait_reply(int fd, long *retval1, long *retval2)
 void w_send_wcreate(int ofd,
 		    int attr,
 		    int x, int y, int w, int h,
-		    char *name)
+		    const char *name)
 {
 	WMsg msg;
 	msg.type = WM_WCREATE;

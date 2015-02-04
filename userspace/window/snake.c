@@ -61,6 +61,7 @@ int tailx, taily;
 int over;
 
 void do_timer();
+void game_init();
 
 void do_paint()
 {

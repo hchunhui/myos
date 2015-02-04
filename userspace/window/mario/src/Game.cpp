@@ -698,6 +698,8 @@ int CGame::Move(CObject * Obj,int Horz,int Vert)
 						BumpMode=2;
 					else if(2==bitop.BumpMode)
 						BumpMode=1;
+					else
+						BumpMode=3;
 					bitop.Blocker->Bump(Obj,BumpMode,false);
 				}
 				BlockList.pop();

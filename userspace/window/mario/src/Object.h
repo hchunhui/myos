@@ -66,6 +66,7 @@ public:
 						2		踩踏式攻击。仅限于主角踩踏妖怪。
 						3		头顶式攻击。如主角顶到砖块、砖块顶到妖怪等。
 	*/
+	virtual ~CObject() {};
 	CObject(CGame * Game,int Tp,int X,int Y,int W,int H,int Ly);
 protected:
 	CGame * m_Game;

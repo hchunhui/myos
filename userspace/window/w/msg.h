@@ -24,14 +24,14 @@ typedef long WHandle;
 #ifdef __cplusplus
 extern "C" {
 #endif 
-int w_send(int fd, void *q, int n);
+int w_send(int fd, const void *q, int n);
 int w_recv(int fd, void *q, int n);
 
 void w_wait_reply(int fd, long *retval1, long *retval2);
 void w_send_wcreate(int ofd,
 		    int attr,
 		    int x, int y, int w, int h,
-		    char *name);
+		    const char *name);
 void w_send_wrefresh(int ofd, WHandle hwnd, int x, int y ,int w, int h);
 void w_send_wdestroy(int ofd, WHandle hwnd);
 
