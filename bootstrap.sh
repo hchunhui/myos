@@ -13,11 +13,7 @@ fi
 . toolchain/crossenv
 
 echo '----STEP 2: Build OS kernel----'
-rm -f Makefile.arch
-ln -s Makefile.arch_x86 Makefile.arch
-rm -f arch
-ln -s arch_x86 arch
-make clean || die "kernel"
+make x86 || die "kernel"
 make || die "kernel"
 
 echo '----STEP 3: Build Userspace----'
