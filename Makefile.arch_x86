@@ -22,8 +22,9 @@ OBJS = $(C_SRCS:.c=.o) $(S_SRCS:.S=.o) $(EXTRA_OBJS)
 	$(CC) -D__ASSEMBLY__ $(CFLAGS) -c $< -o $@
 
 .depends: $(C_SRCS) $(S_SRCS)
-	-$(CC) $(CFLAGS) -MM $(C_SRCS) > $@
-	-$(CC) -D__ASSEMBLY__ $(CFLAGS) -MM $(S_SRCS) > $@
+	rm -f .depends
+	-$(CC) $(CFLAGS) -MM $(C_SRCS) >> $@
+	-$(CC) -D__ASSEMBLY__ $(CFLAGS) -MM $(S_SRCS) >> $@
 
 clean:
 	rm -f *.bin
