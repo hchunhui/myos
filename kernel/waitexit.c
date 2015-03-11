@@ -66,7 +66,6 @@ recycle:
 
 int do_exit(int exit_code)
 {
-	int i;
 	struct s_task *ptask, *ptask1;
 
 	mm_exit(current);

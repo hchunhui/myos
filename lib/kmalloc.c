@@ -3,7 +3,7 @@
 #include <lib/klib.h>
 #include <lib/string.h>
 #define MAP_MAX	4096
-const static int limit[]={
+static const int limit[]={
 		4096	,	/* 1byte 1p*/
 		2048	,	/* 2byte 1p*/
 		2048	,	/* 4byte 2p*/
