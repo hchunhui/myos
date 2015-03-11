@@ -4,8 +4,7 @@ LD = i686-myos-elf-ld
 CFLAGS = \
 	-D__KERNEL__ -march=i386 -nostdinc -g -O2 -Wall \
 	-fno-delete-null-pointer-checks -fomit-frame-pointer \
-	-finline-functions -fno-strict-aliasing -fno-builtin \
-	-fno-stack-protector \
+	-finline-functions -fno-builtin -fno-stack-protector \
 	-I$(TOPDIR)/arch_x86/include -I$(TOPDIR)/include \
 	$(EXTRA_CFLAGS)
 
