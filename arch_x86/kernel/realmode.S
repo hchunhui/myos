@@ -11,8 +11,17 @@ REAL_STACK=0x7c00
 REAL_CODE=0x7d00
 OFFSET=__real_proc - REAL_CODE
 
-__real_proc:
+.data
 	.code32
+real_idt48:
+	.word 0x3ff
+	.long 0
+
+protstack:
+	.long 0
+
+
+__real_proc:
 	pushfl
 	cli
 	/* save the protected mode stack */
@@ -26,8 +35,8 @@ __real_proc:
 	/* jump to a 16 bit segment */
 	ljmp	$0x30, $(tmpcseg-OFFSET)
 
-tmpcseg:
 	.code16
+tmpcseg:
 	/* clear the PG PE bit of CR0 */
 	movw	$0x38,%ax
 	movw	%ax,%ds
@@ -99,8 +108,9 @@ tmp_gdt48:
 	.long tmp_gdt-OFFSET
 __real_proc_end:
 
-protcseg:
+.text
 	.code32
+protcseg:
 	/* reload other segment registers */
 	movw	$0x10, %ax
 	movw	%ax, %ds
@@ -114,9 +124,7 @@ protcseg:
 	popfl
 	ret
 
-	.code32
 real_mode_int:	//(int vec,int *eax,int *ebx)
-
 	call	i8259_irqsave
 	movl	%cr0, %eax
 	push	%eax
@@ -184,10 +192,4 @@ setup_real_code:
 	pop	%edi
 	pop	%esi
 	ret
-
-real_idt48:
-	.word 0x3ff
-	.long 0
-protstack:
-	.long 0
 //grub end

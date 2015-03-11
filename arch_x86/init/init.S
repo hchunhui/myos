@@ -21,5 +21,6 @@ init_kernel:
 	call kmain
 	jmp .
 
-.fill 4096,1,0
+.bss
+	.fill 4096
 init_stack:

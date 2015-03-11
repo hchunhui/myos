@@ -1,8 +1,8 @@
 #include <os/task.h>
 .text
 .globl sys_call
-.globl divide_error,single_step_exception,nmi,breakpoint_exception,overflow,
-.globl bounds_check,inval_opcode,copr_not_available,double_fault,copr_seg_overrun,inval_tss,
+.globl divide_error,single_step_exception,nmi,breakpoint_exception,overflow
+.globl bounds_check,inval_opcode,copr_not_available,double_fault,copr_seg_overrun,inval_tss
 .globl segment_not_present,stack_exception,general_protection,page_fault,untitled,copr_error,exception
 .globl hwint00,hwint01,hwint02,hwint03,hwint04,hwint05,hwint06,hwint07,hwint08,hwint09,hwint10
 .globl hwint11,hwint12,hwint13,hwint14,hwint15

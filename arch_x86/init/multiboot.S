@@ -9,6 +9,7 @@ MULTIBOOT_CHECKSUM = -(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_HEADER_FLAGS)
 .global _start, pmultiboot_info
 .extern init_kernel
 
+.text
 _start:
 	jmp multiboot_entry
 .align 4
@@ -26,9 +27,6 @@ _multiboot_header:
 	.long	_end
 	/* entry addr */
 	.long	multiboot_entry
-
-pmultiboot_info:
-	.long	0
 
 multiboot_entry:
 	/* save multiboot info */
@@ -51,7 +49,11 @@ multiboot_entry:
 	rep stosb
 	
 	ljmpl $0x8,$init_kernel
-	
+
+.data
+pmultiboot_info:
+	.long	0
+
 __gdt:
 	/* dummy */
 	.word 0,0,0,0
