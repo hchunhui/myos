@@ -25,7 +25,7 @@ I8259S=	0xa0
 .endm
 
 .macro save_no_err_code
-	push $-1
+	pushl $-1
 	save
 .endm
 
@@ -34,40 +34,13 @@ I8259S=	0xa0
 	andl $~4095, %ebx
 .endm
 .macro enter_kernel
-	movw %ss,%bx
-	movw %bx,%ds
-	movw %bx,%es
-	movl %esp,%ebp
+	movw %ss, %bx
+	movw %bx, %ds
+	movw %bx, %es
+	movl %esp, %ebp
 
 	GET_CURRENT_EBX
 	incl TASK_LEVEL(%ebx)
-.endm
-
-.macro leave_kernel
-	GET_CURRENT_EBX
-	decl TASK_LEVEL(%ebx)
-	jz   3f
-	jmp  4f
-3:	cmpl $0, TASK_RESCHED(%ebx)
-	jz   4f
-	cli
-	movl $0, TASK_RESCHED(%ebx)
-	call task_sched
-4:	movl %ebp,%esp
-.endm
-	
-.macro pre_ret
-	popl %ebx
-	popl %ecx
-	popl %edx
-	popl %esi
-	popl %edi
-	popl %ebp
-	popl %eax
-	pop  %ds
-	pop  %es
-	
-	addl $4,%esp
 .endm
 
 .macro Exception num
@@ -75,12 +48,8 @@ I8259S=	0xa0
 
 	pushl %ebp
 	pushl $\num
-	call do_isr
-	addl $8,%esp
-	
-	leave_kernel
-	pre_ret
-	iretl
+	pushl $(leave_kernel_8)
+	jmp do_isr
 .endm
 	
 //异常处理
@@ -146,12 +115,8 @@ copr_error:
 
 	pushl %ebp
 	pushl $\num
-	call do_isr
-	addl $8,%esp
-	
-	leave_kernel
-	pre_ret
-	iretl
+	pushl $(leave_kernel_8)
+	jmp do_isr
 .endm
 
 .macro hwintS num
@@ -159,18 +124,14 @@ copr_error:
 	enter_kernel
 
 	movb $EOI,%al
-	outb %al,$I8259S
+	outb %al, $I8259S
 	nop
-	outb %al,$I8259M
+	outb %al, $I8259M
 	
-	push %ebp
-	push $\num
-	call do_isr
-	addl $8,%esp
-
-	leave_kernel
-	pre_ret
-	iretl
+	pushl %ebp
+	pushl $\num
+	pushl $(leave_kernel_8)
+	jmp do_isr
 .endm
 
 hwint00:
@@ -216,20 +177,43 @@ sys_call:
 	jae  1f
 	call  *sys_call_table(,%eax,4)
 	movl %eax, 24(%esp)
-	jmp 2f
+	jmp leave_kernel
 1:	push $(bad_info)
 	push $(bad_info)
 	push $0
 	push $(bad_info)
 	call __panic
-2:	leave_kernel
-	pre_ret
-	iretl
-	
+
 call_after_fork:
 	GET_CURRENT_EBX
 	movl $0, TASK_LEVEL(%ebx)
-	pre_ret
+	jmp pre_ret
+
+
+leave_kernel_8:
+	addl $8, %esp
+leave_kernel:
+	GET_CURRENT_EBX
+	decl TASK_LEVEL(%ebx)
+	jz   3f
+	jmp  4f
+3:	cmpl $0, TASK_RESCHED(%ebx)
+	jz   4f
+	cli
+	movl $0, TASK_RESCHED(%ebx)
+	call task_sched
+4:	movl %ebp, %esp
+pre_ret:
+	popl %ebx
+	popl %ecx
+	popl %edx
+	popl %esi
+	popl %edi
+	popl %ebp
+	popl %eax
+	pop  %ds
+	pop  %es
+	addl $4, %esp
 	iretl
 
 
