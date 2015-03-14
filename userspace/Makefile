@@ -3,28 +3,34 @@ CC=i686-myos-elf-gcc
 LD=i686-myos-elf-ld
 OBJCOPY=i686-myos-elf-objcopy
 AR=i686-myos-elf-ar
+INSTALL=install
+DESTDIR ?= ../toolchain/install/i686-myos-elf
 
 CFLAGS=-O2 -iquote libkb 
 O=obj
 
-.PHONY: all clean everything
+.PHONY: all clean install everything
 
 %.o: | obj
 	$(CC) $(CFLAGS) -c -o $@ $<
 %: | bin
 	$(CC) $(CFLAGS) -o $@ $^ -lm
 
-everything: bin/init bin/tty bin/login bin/sh bin/ls bin/cat bin/w bin/snake bin/task2 bin/wterm bin/mario
+everything: bin/init bin/tty bin/login bin/sh bin/ls bin/cat bin/w bin/snake bin/task2 bin/wterm obj/libw.a
 all: clean everything
 clean:
 	rm -rf bin obj
-	make -C window/mario/src clean
 bin:
 	mkdir -p bin
 obj:
 	mkdir -p obj
 	mkdir -p obj/w
-	mkdir -p obj/mario
+
+install: everything
+	$(INSTALL) -m 644 $(O)/libw.a $(DESTDIR)/lib
+	$(INSTALL) -d $(DESTDIR)/include/w
+	$(INSTALL) -m 644 libkb/* $(DESTDIR)/include/w
+	$(INSTALL) -m 644 window/w/*.h $(DESTDIR)/include/w
 
 #kb
 $(O)/kb_trans.o: libkb/kb_trans.c
@@ -58,6 +64,8 @@ $(P)/msg.o: msg.c msg.h
 $(P)/w.o: w.c draw.h bmp.h wtype.h cursor.h w.h wnd.h msg.h kb_state.h
 $(P)/wnd.o: wnd.c draw.h bmp.h wtype.h w.h wnd.h msg.h
 bin/w: cursor.o draw.o msg.o w.o wnd.o kb_trans.o
+$(O)/libw.a: $(O)/kb_trans.o msg.o draw.o
+	$(AR) rcs $@ $^
 
 #window
 P=$(O)
@@ -70,9 +78,3 @@ $(P)/wterm.o: wterm.c
 bin/snake: snake.o draw.o msg.o
 bin/task2: task2.o draw.o msg.o
 bin/wterm: wterm.o draw.o msg.o
-
-#mario
-bin/mario:
-	make -C window/mario/src/ all
-	cp window/mario/src/mario bin/mario
-

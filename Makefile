@@ -26,6 +26,7 @@ bx: everything
 	bochs -f new.bxrc
 user:
 	make -C userspace
+	make -C userspace install
 mktar:
 	mkdir -p root
 	mkdir -p root/bin
