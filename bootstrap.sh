@@ -18,6 +18,11 @@ make || die "kernel"
 
 echo '----STEP 3: Build Userspace----'
 make user || die "userspace"
+
+echo '----STEP 4: Build ports----'
+git clone https://github.com/hchunhui/myos-ports.git userspace/ports
+cd userspace/ports && make && make mktar && cd ../..
+
 make mktar
 
 echo 'type "make emu" to start!'

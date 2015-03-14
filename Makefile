@@ -1,5 +1,5 @@
 QEMU=qemu-system-i386
-QEMU_LINE=-s -kernel mykern.bin -initrd initrd.tar -m 128 -localtime
+QEMU_LINE=-s -kernel mykern.bin -initrd initrd.tar,ports.tar -m 128 -localtime
 everything: mk1 mykern.bin
 -include Makefile.arch
 .PHONY: all cemu emu kvm everything clean bx dep user x86 linux
@@ -36,6 +36,10 @@ mktar:
 	-cp userspace/bin/* root/bin
 	-strip root/bin/*
 	cd root;tar cvf ../initrd.tar *;cd ..
+	rm -f ports.tar
+	touch ports.tar
+	-cp userspace/ports/ports.tar .
+
 mkimg: mktar mount_img domkimg umount_img
 domkimg:
 	sudo rm -f mnt/*.bin
