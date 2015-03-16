@@ -63,6 +63,7 @@ static int get_new_fd(
 		if(fdtab[i] == NULL)
 		{
 			fdtab[i] = kmalloc(sizeof(struct s_fd));
+			fdtab[i]->handle = NULL;
 			fdtab[i]->mode = 0;
 			fdtab[i]->offset = 0;
 			fdtab[i]->ref_count = 1;
