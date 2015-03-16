@@ -131,9 +131,11 @@ static struct s_handle *path_open(char *ps)
 	{
 		if((n = get_name(&ps, buf))== 0)
 			goto final;
+
 		if(opr->open(h, 0))
-			return NULL;
-		for(i = 0;;i++)
+			goto not_found;
+
+		for(i = 0; ;i++)
 		{
 			if(opr->readdir(h, i, &dbuf, 1) == 0)
 				goto not_found;
@@ -144,14 +146,13 @@ static struct s_handle *path_open(char *ps)
 		opr->close(h);
 		h->inode = (void *)dbuf.d_ino;
 		if(h->inode == NULL)
-			return NULL;
-		continue;
-	not_found:
-		/*printk("path_open: error!\n");*/
-		return NULL;
+			goto not_found;
 	}
 final:
 	return h;
+not_found:
+	free_handle(h);
+	return NULL;
 }
 
 static struct s_super dev_super;
