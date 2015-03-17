@@ -29,7 +29,7 @@ obj:
 install: everything
 	$(INSTALL) -m 644 $(O)/libw.a $(DESTDIR)/lib
 	$(INSTALL) -d $(DESTDIR)/include/w
-	$(INSTALL) -m 644 libkb/* $(DESTDIR)/include/w
+	$(INSTALL) -m 644 libkb/*.h $(DESTDIR)/include/w
 	$(INSTALL) -m 644 window/w/*.h $(DESTDIR)/include/w
 
 #kb
