@@ -71,9 +71,10 @@ void init_task_exec();
 void idle_task_func()
 {
 	/* adjust stack */
-	asm ("movl %0, %%esp\n\t"
-	     "movl %%esp, %%ebp\n\t"
-	     ::"g"(get_user_regs(current)));
+	asm volatile(
+		"movl %0, %%esp\n\t"
+		"movl %%esp, %%ebp\n\t"
+		::"g"(get_user_regs(current)));
 	
 	/* fork init */
 	do_fork((unsigned long)init_task_exec, FORK_SHARE_MM);
@@ -82,9 +83,10 @@ void idle_task_func()
 
 	/* idle loop */
 	current->level = 0;
-	asm("sti");
+
+	enable_irq();
 	for(;;)
-		asm("hlt");
+		asm volatile("hlt");
 }
 
 char *init_argv[] = {"init", 0};
@@ -94,7 +96,7 @@ void init_task_exec()
 {
 	printk("do_execve /bin/init\n");
 	do_execve("/bin/init", init_argv, init_envp);
-	asm (
+	asm volatile(
 		"movl %0, %%esp\n\t"
 		"jmp call_after_fork\n"
 		::"g"(get_user_regs(current)));

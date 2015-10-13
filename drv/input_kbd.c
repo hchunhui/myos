@@ -1,6 +1,7 @@
 /*
  *  keyboard driver
  */
+#include <os/asm.h>
 #include <os/arch_config.h>
 #include <os/type.h>
 #include <lib/klib.h>
@@ -30,7 +31,8 @@ void kbd_thread()
 	fd = vfs_open("/dev/input/"xstr(INPUT_MINOR_KBD), 0);
 	assert(fd != -1);
 	printk("kbdfd = %d\n", fd);
-	asm("sti");
+
+	enable_irq();
 	for(;;)
 	{
 		vfs_read(fd, &event, sizeof(event));

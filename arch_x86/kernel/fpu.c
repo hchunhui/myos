@@ -8,7 +8,7 @@
 #define stts()			asm volatile ("movl %%cr0, %%eax; orl $8, %%eax; movl %%eax, %%cr0":::"eax")
 #define clts()			asm volatile ("clts")
 #define fsave(mem)		asm volatile ("fnsave %0; fwait":: "m"(*(mem)))
-#define frstor(mem)		asm volatile ("frstor %0":: "m"(*(mem)))
+#define frstor(mem)		asm volatile ("frstor %0": "=m"(*(mem)))
 #define fninit()		asm volatile ("fninit")
 
 struct s_fpu

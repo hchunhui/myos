@@ -1,6 +1,7 @@
 /*
  *  mouse driver
  */
+#include <os/asm.h>
 #include <os/arch_config.h>
 #include <os/type.h>
 #include <lib/klib.h>
@@ -24,7 +25,8 @@ void mouse_thread()
 	fd = vfs_open("/dev/input/"xstr(INPUT_MINOR_MOUSE), 0);
 	assert(fd != -1);
 	printk("mousefd = %d\n", fd);
-	asm("sti");
+
+	enable_irq();
 	for(;;)
 	{
 		vfs_read(fd, &event, sizeof(event));
