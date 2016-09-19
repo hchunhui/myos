@@ -143,8 +143,6 @@ static unsigned int mem_size;
 static struct s_page_info *page_info = (void*)page_info_addr;
 static unsigned long page_info_size;
 
-static struct s_regs *gpregs;
-
 static unsigned long pop_pte_mem()		/* 返回页号 */
 {
 	assert(stack_p > 0);
@@ -207,11 +205,10 @@ static unsigned long mm_reset_pte(pde_t *pd, unsigned long logi_pg_no)
 	return phy_pg_no;
 }
 
-static void mm_panic(char *reason, unsigned long cr2)
+static void mm_panic(char *reason, unsigned long cr2, struct s_regs *pregs)
 {
 	struct s_task *ptask = current;
-	unsigned long err_code = gpregs->err_code;
-	struct s_regs *pregs;
+	unsigned long err_code = pregs->err_code;
 
 	pregs = get_user_regs(ptask);
 	print = print_early;
@@ -227,8 +224,8 @@ static void mm_panic(char *reason, unsigned long cr2)
 		err_code,
 		pregs->ip,
 		ptask->pid,
-	       (unsigned long)gpregs,
-	       gpregs->ip);
+		(unsigned long)pregs,
+		pregs->ip);
 	printk("memdump:\n");
 	unsigned long i;
 	for(i = pregs->ip-20; i < pregs->ip+20; i++)
@@ -266,7 +263,6 @@ int do_page_fault(struct s_regs *pregs)
 
 	asm ("movl %%cr2, %%eax; movl %%eax, %0":"=m"(cr2)::"eax");
 
-	gpregs = pregs;
 	err_code = pregs->err_code;
 	/* err_code
 	 * b4   b3   b2   b1   b0
@@ -276,7 +272,7 @@ int do_page_fault(struct s_regs *pregs)
 	/* check error type */
 	if(!(err_code&4) && cr2 < kernel_brk)
 	{
-		mm_panic("kernel memory error", cr2);
+		mm_panic("kernel memory error", cr2, pregs);
 	}
 
 	if(err_code&1)
@@ -287,23 +283,23 @@ int do_page_fault(struct s_regs *pregs)
 			if(page_info[la2pn(cr2)].flags & MM_PI_SHARE)
 			{
 				/* write a read-only shared page */
-				mm_panic("write a read-only shared page", cr2);
+				mm_panic("write a read-only shared page", cr2, pregs);
 			}
 			else
 			{
 				/* Copy On Write */
-				mm_panic("Copy On Write not implement!", cr2);
+				mm_panic("Copy On Write not implement!", cr2, pregs);
 			}
 		}
 		else
 		{
-			mm_panic("error when read a page", cr2);
+			mm_panic("error when read a page", cr2, pregs);
 		}
 	}
 	/* check range */
 	if(cr2 > ptask->brk && cr2 < (usr_stack_top-ptask->stack_size))
 	{
-		mm_panic("try to access illegal space", cr2);
+		mm_panic("try to access illegal space", cr2, pregs);
 	}
 
 	/* FIXME */
