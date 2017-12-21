@@ -254,12 +254,14 @@ static unsigned long la2pn(unsigned long la)
 	return ADDR2NO(*ppte);
 }
 
-int do_page_fault(struct s_regs *pregs)
+int do_page_fault(struct s_regs *pregs, void *__)
 {
 	unsigned long cr2;
 	struct s_task *ptask = current;
 	unsigned long err_code;
 	unsigned long phy_pg_no;
+
+	(void) __;
 
 	asm ("movl %%cr2, %%eax; movl %%eax, %0":"=m"(cr2)::"eax");
 
@@ -537,7 +539,7 @@ void mm_init(unsigned int size)
 
 	memset(pte, 0, sizeof(unsigned long)*1024*1024);
 
-	isr_register(14, do_page_fault);
+	isr_register(14, do_page_fault, NULL);
 
 	for_each_kern_pde(i)
 	{

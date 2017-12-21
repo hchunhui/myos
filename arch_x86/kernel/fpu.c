@@ -65,8 +65,10 @@ void fpu_switch(struct s_task *prev, struct s_task *next)
 		stts();
 }
 
-int do_fpu_fault(struct s_regs *pregs)
+int do_fpu_fault(struct s_regs *pregs, void *__)
 {
+	(void) __;
+
 	clts();
 
 	if(current != last_use) {
@@ -87,5 +89,5 @@ int do_fpu_fault(struct s_regs *pregs)
 
 void fpu_fault_init()
 {
-	isr_register(7, do_fpu_fault);
+	isr_register(7, do_fpu_fault, NULL);
 }

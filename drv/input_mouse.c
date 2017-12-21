@@ -5,6 +5,7 @@
 #include <os/arch_config.h>
 #include <os/type.h>
 #include <lib/klib.h>
+#include <lib/string.h>
 #include <os/isr.h>
 #include <os/io.h>
 #include <drv/i8042.h>
@@ -39,54 +40,61 @@ void mouse_thread()
 	}
 }
 
-static int mouse_int()
+struct mouse_int_state {
+	int last_tick;
+	int xdiff;
+	int ydiff;
+	int count;
+	int xsgn;
+	int ysgn;
+	int lrb;
+};
+
+static int mouse_int(struct s_regs *pregs, void *state)
 {
+	struct mouse_int_state *s = state;
 	unsigned char data = inb(0x60);
-	static int last_tick;
-	static int xdiff;
-	static int ydiff;
-	static int count;
-	static int xsgn;
-	static int ysgn;
-	static int lrb;
 	struct s_event event;
 	int ticks = timer_get_ticks();
 
 	//trick:在真机上数据对不上号，用ticks计时，把过早数据丢弃
-	if(!last_tick) last_tick = ticks;
-	if(ticks - last_tick > 5)
-		count = 0;
-	switch (++count)
+	if(ticks - s->last_tick > 5)
+		s->count = 0;
+	switch (++s->count)
 	{
 		case 1:
-			lrb = data & 0x7;
-			xsgn = (data & 0x10) ? (~0xff) : 0;
-			ysgn = (data & 0x20) ? (~0xff) : 0;
+			s->lrb = data & 0x7;
+			s->xsgn = (data & 0x10) ? (~0xff) : 0;
+			s->ysgn = (data & 0x20) ? (~0xff) : 0;
 			break;
 		case 2:
-			xdiff = (xsgn | data);
+			s->xdiff = (s->xsgn | data);
 			break;
 		case 3:
-			ydiff = -(ysgn | data);
-			count = 0;
+			s->ydiff = -(s->ysgn | data);
+			s->count = 0;
 			/* printk("xdiff=%d, ydiff=%d\n", */
 			/*        xdiff, */
 			/*        ydiff); */
 			event.ticks = ticks;
 			event.type = 2;
-			event.code = lrb;
-			event.value = (xdiff<<16) | (ydiff&0xffff);
+			event.code = s->lrb;
+			event.value = (s->xdiff<<16) | (s->ydiff&0xffff);
 			input_dev_event(&mouse_desc, &event);
 			break;
 	}
-	last_tick = ticks;
+	s->last_tick = ticks;
 	return 0;
 }
 
 static int mouse_init()
 {
+	struct mouse_int_state *s;
 	printk("mouse: up\n");
-	irq_register(IRQ_MOUSE, mouse_int);
+	s = kmalloc(sizeof(struct mouse_int_state));
+	memset(s, 0, sizeof(struct mouse_int_state));
+	s->last_tick = timer_get_ticks();
+	irq_register(IRQ_MOUSE, mouse_int, s);
 	pic_enable_irq(IRQ_MOUSE);
 	return 0;
 }
@@ -94,6 +102,7 @@ static int mouse_init()
 static int mouse_exit()
 {
 	printk("mouse: down\n");
+	// TODO: free mouse_int_state
 	return 0;
 }
 

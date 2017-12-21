@@ -5,6 +5,7 @@
 #include <os/arch_config.h>
 #include <os/type.h>
 #include <lib/klib.h>
+#include <lib/string.h>
 #include <os/isr.h>
 #include <os/io.h>
 #include <drv/i8042.h>
@@ -18,10 +19,6 @@
 #define CODE_BRK	0xf0
 #define CODE_EX0	0xe0
 #define CODE_EX1	0xe1
-int is_brk;
-int is_ex;
-int follow;
-int gcode;
 extern struct input_dev_desc kbd_desc;
 
 void kbd_thread()
@@ -46,48 +43,56 @@ void kbd_thread()
 	}
 }
 
-static int kbd_int()
+struct kb_int_state {
+	int is_brk;
+	int is_ex;
+	int follow;
+	int gcode;
+};
+
+static int kbd_int(struct s_regs *pregs, void *data)
 {
 	struct s_event event;
+	struct kb_int_state *s = data;
 	unsigned char code = inb(0x60);
 
 	switch(code)
 	{
 	case CODE_BRK:
-		is_brk = 1;
-		if(!is_ex)
-			gcode = 0;
+		s->is_brk = 1;
+		if(!s->is_ex)
+			s->gcode = 0;
 		break;
 	case CODE_EX0:
-		is_ex = 1;
-		follow = 1;
-		gcode = 0xe0;
+		s->is_ex = 1;
+		s->follow = 1;
+		s->gcode = 0xe0;
 		break;
 	case CODE_EX1:
-		is_ex = 2;
-		follow = 2;
-		gcode = 0;
+		s->is_ex = 2;
+		s->follow = 2;
+		s->gcode = 0;
 		break;
 	default:
-		if(!is_ex)
-			follow = 1;
-		gcode <<= 8;
-		gcode |= code;
-		follow--;
-		if(follow == 0)
+		if(!s->is_ex)
+			s->follow = 1;
+		s->gcode <<= 8;
+		s->gcode |= code;
+		s->follow--;
+		if(s->follow == 0)
 		{
 			event.ticks = timer_get_ticks();
 			event.type = 1;
-			event.code = gcode;
-			event.value = is_brk;
+			event.code = s->gcode;
+			event.value = s->is_brk;
 			input_dev_event(&kbd_desc, &event);
 			/*printk("ex=%d, brk=%d, gcode=%x\n",
 			       is_ex,
 			       is_brk,
 			       gcode);*/
-			is_ex = 0;
-			is_brk = 0;
-			gcode = 0;
+			s->is_ex = 0;
+			s->is_brk = 0;
+			s->gcode = 0;
 		}
 		break;
 	}
@@ -96,8 +101,11 @@ static int kbd_int()
 
 static int kbd_init()
 {
+	struct kb_int_state *s;
 	printk("kbd: up\n");
-	irq_register(IRQ_KB, kbd_int);
+	s = kmalloc(sizeof(struct kb_int_state));
+	memset(s, 0, sizeof(struct kb_int_state));
+	irq_register(IRQ_KB, kbd_int, s);
 	pic_enable_irq(IRQ_KB);
 	return 0;
 }
@@ -105,6 +113,7 @@ static int kbd_init()
 static int kbd_exit()
 {
 	printk("kbd: down\n");
+	// TODO: free kb_int_state
 	return 0;
 }
 

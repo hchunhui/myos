@@ -79,7 +79,7 @@ void timer_init()
 	dev_simp_open(DEV_MAJOR_PIT, 0, 0, &data);
 	dev_simp_ioctl(DEV_MAJOR_PIT, 0, data,
 		       TIMER_CMD_SETFREQ, (void *)HZ);
-	irq_register(IRQ_TIMER, do_timer_int);
+	irq_register(IRQ_TIMER, do_timer_int, NULL);
 	pic_enable_irq(IRQ_TIMER);
 }
 

@@ -8,6 +8,7 @@
 struct isr_desc
 {
 	isr_func fn;
+	void *data;
 	struct isr_desc *next;
 };
 
@@ -15,12 +16,13 @@ int isr_dummy();
 
 static struct isr_desc dummy_desc = {
 	.fn = isr_dummy,
+	.data = NULL,
 	.next = NULL
 };
 
 static struct isr_desc *isr_table[64];
 
-int isr_register(int no, isr_func fn)
+int isr_register(int no, isr_func fn, void *data)
 {
 	struct isr_desc *desc;
 	assert(no >= 0 && no < 64);
@@ -29,13 +31,14 @@ int isr_register(int no, isr_func fn)
 
 	desc->next = isr_table[no];
 	desc->fn = fn;
+	desc->data = data;
 	isr_table[no] = desc;
 	return 0;
 }
 
-int irq_register(int irq_no, isr_func fn)
+int irq_register(int irq_no, isr_func fn, void *data)
 {
-	return isr_register(IRQ_0 + irq_no, fn);
+	return isr_register(IRQ_0 + irq_no, fn, data);
 }
 
 void isr_init()
@@ -46,7 +49,7 @@ void isr_init()
 		isr_table[i] = &dummy_desc;
 }
 
-int isr_dummy(void)
+int isr_dummy()
 {
 	panic("unhandled int/exception.");
 	/* printk("vec_no: %d\n" */
@@ -72,5 +75,5 @@ asmlinkage void do_isr(int vec_no, struct s_regs *pregs)
 			break;
 		desc = desc->next;
 		}*/
-	desc->fn(pregs);
+	desc->fn(pregs, desc->data);
 }

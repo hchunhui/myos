@@ -87,8 +87,8 @@ static int serial_init()
 		serial_early_init();
 	for(i = 0; i < N; i++)
 		dev_simp_open(DEV_MAJOR_PIPE, 0, 0, &sdata[i].pin_data);
-	irq_register(IRQ_SERIAL1, do_serial1_int);
-	irq_register(IRQ_SERIAL2, do_serial1_int);
+	irq_register(IRQ_SERIAL1, do_serial1_int, NULL);
+	irq_register(IRQ_SERIAL2, do_serial1_int, NULL);
 	pic_enable_irq(IRQ_SERIAL1);
 	pic_enable_irq(IRQ_SERIAL2);
 	printk("serial: up\n");
