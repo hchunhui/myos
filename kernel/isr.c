@@ -69,11 +69,10 @@ asmlinkage void do_isr(int vec_no, struct s_regs *pregs)
 {
 	struct isr_desc *desc;
 	desc = isr_table[vec_no];
-	/*for(;desc;)
+	for(;desc;)
 	{
-		if(desc->fn(vec_no, pregs) == 0)
+		if(desc->fn(pregs, desc->data) == 0)
 			break;
 		desc = desc->next;
-		}*/
-	desc->fn(pregs, desc->data);
+	}
 }
