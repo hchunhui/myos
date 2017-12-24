@@ -21,6 +21,9 @@ static const int limit[]={
 		-1	,	/* end */
 	};
 
+static char heap[4096*(1+1+2+4+8+16+32+64+64+64+64+64+256+128)]
+__attribute__((aligned(4096)));
+
 static struct s_mem
 {
 	unsigned long start_addr;
@@ -30,15 +33,14 @@ static struct s_mem
 void kmalloc_init()
 {
 	int i;
-	unsigned long addr=kmalloc_mem_start;
+	unsigned long addr = (unsigned long) heap;
+
 	memset(mem_map,0,sizeof(mem_map));
 	for(i=0;limit[i]!=-1;i++)
 	{
 		mem_map[i].start_addr=addr;
-		//printk("%p\n",addr);
 		addr+=(1<<i)*limit[i];
 	}
-	//for(;;);
 }
 
 void* kmalloc(int size)
@@ -47,14 +49,13 @@ void* kmalloc(int size)
 	assert(size > 0 && size <= 8192);
 	for(n=-1;t>0;n++)t/=2;
 	if(size-(1<<n))n++;
-	//printk("kmalloc: ask size=%d , real size=%d   ",size, 1<<n);
+
 	for(i=0;i<limit[n];i++)
 	{
 		if(mem_map[n].map[i]==0)
 		{
 			unsigned long ret=mem_map[n].start_addr+(1<<n)*i;
 			mem_map[n].map[i]=1;
-			//printk("kmalloc: get %d, addr=%p\n",i,ret);
 			return (void*)ret;
 		}
 	}
@@ -63,13 +64,14 @@ void* kmalloc(int size)
 
 void kfree(void* ptr)
 {
-	unsigned long nr=(unsigned long)ptr;
+	unsigned long nr = (unsigned long) ptr;
+	unsigned long start = (unsigned long) heap;
 	int i;
 	if(ptr == NULL)
 		return;
-	if(nr<kmalloc_mem_start)
+	if(nr < start)
 		panic("addr error! nr=%x\n", nr);
-	nr-=kmalloc_mem_start;
+	nr -= start;
 	for(i=0;limit[i]!=-1;i++)
 	{
 		if(nr<limit[i]*(1<<i))break;
@@ -80,11 +82,9 @@ void kfree(void* ptr)
 		if(nr%(1<<i))
 			panic("addr error2!\n");
 		nr/=(1<<i);
-		//printk("kfree: real size=%d,nr=%d\n",(1<<i),nr);
 		if(!mem_map[i].map[nr])
 			panic("free a free addr!\n");
 		mem_map[i].map[nr]=0;
-		//printk("kfree: ok.\n");
 		return;
 	}
 	panic("ptr=%x not found.", ptr);

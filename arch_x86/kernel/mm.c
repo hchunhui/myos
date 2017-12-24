@@ -132,7 +132,7 @@ struct s_page_info
 } __attribute__ ((packed));
 
 /* page table */
-static pte_t *pte = (void*)page_table_addr;	/* 共1024*1024项 */
+static pte_t pte[PTE_COUNT*PDE_COUNT] __attribute__((aligned(4096)));
 static unsigned long pte_mem_stack[pte_mem_stack_len+1];
 static int stack_p;
 
@@ -140,7 +140,7 @@ static int stack_p;
 static unsigned int mem_size;
 
 /* page info */
-static struct s_page_info *page_info = (void*)page_info_addr;
+static struct s_page_info page_info[PTE_COUNT*PDE_COUNT] __attribute__((aligned(4096)));
 static unsigned long page_info_size;
 
 static unsigned long pop_pte_mem()		/* 返回页号 */
@@ -374,7 +374,7 @@ void mm_fork(struct s_task *task_new, struct s_task *task_old, unsigned int flag
 	for_each_kern_pde(j)
 	{
 		newpd->addr_attr[j] = ADDR_ATTR(
-			PAGE_SIZE*j + page_table_addr,
+			PAGE_SIZE*j + (unsigned long) pte,
 			PA_P | PA_RW);
 	}
 
@@ -563,6 +563,6 @@ void mm_init(unsigned int size)
 	//init pte_mem_stack
 	for(i = ADDR2NO(kernel_brk)/PDE_COUNT; i < pte_mem_stack_len; i++)
 	{
-		push_pte_mem(ADDR2NO(page_table_addr) + i);
+		push_pte_mem(ADDR2NO((unsigned long) pte) + i);
 	}
 }
