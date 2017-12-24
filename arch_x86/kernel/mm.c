@@ -523,12 +523,6 @@ void mm_init(unsigned int size)
 	mem_size = size;
 
 	printk("memory: %d MB.\n", mem_size / 1024 / 1024);
-	if(mem_size > usr_stack_top)
-	{
-		mem_size = usr_stack_top;
-		printk("mm_init: only use %d MB memory.\n",
-		       mem_size / 1024 / 1024);
-	}
 
 	if(mem_size <= kernel_brk)
 	{
@@ -537,7 +531,7 @@ void mm_init(unsigned int size)
 
 	stack_p = 0;
 
-	memset(pte, 0, sizeof(unsigned long)*1024*1024);
+	memset(pte, 0, sizeof(unsigned long)*PDE_COUNT*PTE_COUNT);
 
 	isr_register(14, do_page_fault, NULL);
 
@@ -552,9 +546,9 @@ void mm_init(unsigned int size)
 	}
 
 	//init page info
-	page_info_size = mem_size / PAGE_SIZE;
+	page_info_size = ADDR2NO(mem_size);
 	memset(page_info, 0, sizeof(struct s_page_info) * page_info_size);
-	for(i = 0; i < kernel_brk/PAGE_SIZE; i++)
+	for(i = 0; i < ADDR2NO(kernel_brk); i++)
 	{
 		page_info[i].count = 1;
 		page_info[i].flags = 0;
