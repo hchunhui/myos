@@ -544,8 +544,10 @@ static void virtio_probe(const struct virtio_driver *driver)
 			     VIRTIO_FEATURES_OK | VIRTIO_DRIVER_OK,
 			     iobase + VIRTIO_PCI_STATUS);
 
-			irq_register(devs[i].irq, virtio_blk_int, vd);
-			pic_enable_irq(devs[i].irq);
+			if (driver->int_handler) {
+				irq_register(devs[i].irq, driver->int_handler, vd);
+				pic_enable_irq(devs[i].irq);
+			}
 
 			if (driver->init)
 				driver->init(vd);
