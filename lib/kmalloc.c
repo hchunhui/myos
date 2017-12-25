@@ -18,10 +18,11 @@ static const int limit[]={
 		128	,	/* 2048byte 64p*/
 		256	,	/* 4096byte 256p*/
 		64	,	/* 8192byte 128p*/
+		16      ,       /* 16384byte 64p*/
 		-1	,	/* end */
 	};
 
-static char heap[4096*(1+1+2+4+8+16+32+64+64+64+64+64+256+128)]
+static char heap[4096*(1+1+2+4+8+16+32+64+64+64+64+64+256+128+64)]
 __attribute__((aligned(4096)));
 
 static struct s_mem
@@ -46,7 +47,7 @@ void kmalloc_init()
 void* kmalloc(int size)
 {
 	int i,n,t=size;
-	assert(size > 0 && size <= 8192);
+	assert(size > 0 && size <= 16384);
 	for(n=-1;t>0;n++)t/=2;
 	if(size-(1<<n))n++;
 
