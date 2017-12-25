@@ -367,8 +367,8 @@ long vfs_lseek(int fd, long offset, int whence)
 	sfd = current->vfs->fdtab[fd];
 	if(sfd == NULL)
 		return -EBADF;
-	if((ret = vfs_fstat(fd, &st)) < 0)
-		return ret;
+//	if((ret = vfs_fstat(fd, &st)) < 0)
+//		return ret;
 	switch(whence)
 	{
 	case 0:
