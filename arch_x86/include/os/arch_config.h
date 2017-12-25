@@ -40,4 +40,9 @@
 
 /* realmode */
 void real_mode_int(int vec,int *eax,int *ebx);
+
+/* barriers */
+#define barrier() asm volatile("":::"memory")
+#define mb() asm volatile("mfence":::"memory")
+
 #endif /* _ARCH_CONFIG_H_ */
