@@ -243,7 +243,8 @@ long vfs_read(int fd, void *buf, long count)
 				   sfd->offset,
 				   buf,
 				   count);
-	sfd->offset += read;
+	if (read > 0)
+		sfd->offset += read;
 	return read;
 }
 
@@ -262,7 +263,8 @@ long vfs_readdir(int fd, struct dirent *dirp, long count)
 				      sfd->offset,
 				      dirp,
 				      count);
-	sfd->offset += read;
+	if (read > 0)
+		sfd->offset += read;
 	return read;
 }
 
@@ -320,7 +322,8 @@ long vfs_write(int fd, void *buf, long count)
 				     sfd->offset,
 				     buf,
 				     count);
-	sfd->offset += write;
+	if (write > 0)
+		sfd->offset += write;
 	return write;
 }
 
