@@ -27,6 +27,9 @@ int isr_register(int no, isr_func fn, void *data)
 	struct isr_desc *desc;
 	assert(no >= 0 && no < 64);
 
+	if (isr_table[no] == &dummy_desc)
+		isr_table[no] = NULL;
+
 	desc = kmalloc(sizeof(struct isr_desc));
 
 	desc->next = isr_table[no];
@@ -51,7 +54,7 @@ void isr_init()
 
 int isr_dummy()
 {
-	panic("unhandled int/exception.");
+	printk("unhandled int/exception.\n");
 	/* printk("vec_no: %d\n" */
 	/*        "eflags: %x\n" */
 	/*        "cs: %x\n" */
