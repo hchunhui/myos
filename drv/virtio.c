@@ -246,10 +246,15 @@ void virtqueue_add_buf(struct virtqueue *vq, struct buffer_info *data, int count
 	mb();
 }
 
-void *virtqueue_get_buf(struct virtqueue *vq, int *plen)
+int virtqueue_poll(struct virtqueue *vq)
 {
 	mb();
-	if (vq->last_used_idx == vq->used->idx) {
+	return vq->last_used_idx != vq->used->idx;
+}
+
+void *virtqueue_get_buf(struct virtqueue *vq, int *plen)
+{
+	if (!virtqueue_poll(vq)) {
 		return NULL;
 	} else {
 		int uid = vq->last_used_idx & (vq->queue_size - 1);
@@ -257,7 +262,6 @@ void *virtqueue_get_buf(struct virtqueue *vq, int *plen)
 		int k;
 
 		vq->last_used_idx++;
-		vq->last_used_idx &= vq->queue_size - 1;
 
 		for (k = did;
 		     vq->desc[k].flags & VIRTIO_DESC_FLAG_NEXT;
@@ -324,15 +328,13 @@ static int virtio_blk_int(struct s_regs *pregs, void *data)
 	struct virtio_dev *vd = data;
 	sem_t *psem;
 
-	if (inb(vd->pci->iobase + VIRTIO_PCI_ISR) == 0)
+	if ((inb(vd->pci->iobase + VIRTIO_PCI_ISR) & 1) == 0)
 		return 1;
 
-	virtqueue_disable_cb(vd->vq);
 	do {
-		int l;
-		while((psem = virtqueue_get_buf(vd->vq, &l))) {
+		virtqueue_disable_cb(vd->vq);
+		while((psem = virtqueue_get_buf(vd->vq, NULL)))
 			sem_up(psem);
-		}
 	} while (!virtqueue_enable_cb(vd->vq));
 	return 1;
 }
