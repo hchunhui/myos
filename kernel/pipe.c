@@ -6,7 +6,7 @@
 #include <drv/pipe.h>
 #include <os/errno.h>
 
-#define PIPE_SIZE 1024
+#define PIPE_SIZE 4000
 struct s_pipe {
 	char buf[PIPE_SIZE];
 	int fp, ep;
@@ -172,7 +172,7 @@ static int pipe_poll(int minor, void *data, int func, struct list_head *lsem)
 	case POLL_FUNC_READABLE:
 		return pipe->count;
 	case POLL_FUNC_WRITEABLE:
-		return PIPE_SIZE -pipe->count;
+		return PIPE_SIZE -pipe->count >= 128;
 	case POLL_FUNC_REGISTER:
 		disable_irq();
 		list_add_tail(lsem, &pipe->poll_read);
