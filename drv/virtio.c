@@ -355,7 +355,7 @@ static void virtio_blk_init(struct virtio_dev *vd)
 }
 
 struct virtio_blk_data {
-	struct virtio_blk_dev *vd;
+	struct virtio_dev *vd;
 	int mode;
 	sem_t rsem, wsem;
 };
