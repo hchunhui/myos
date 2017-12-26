@@ -491,13 +491,165 @@ const struct virtio_driver virtio_blk = {
 #define VIRTIO_CTRL_MAC_ADDR        23
 #define VIRTIO_EVENT_IDX            29
 
+struct net_header
+{
+    u8 flags;
+    u8 gso_type;
+    u16 header_length;
+    u16 gso_size;
+    u16 checksum_start;
+    u16 checksum_offset;
+};
+
+struct net_result
+{
+	sem_t *psem;
+	int len;
+};
+
+#define FRAME_SIZE 1514
+
+static int virtio_net_int(struct s_regs *pregs, void *data)
+{
+	int i;
+	struct virtio_dev *vd = data;
+	struct net_result *res;
+
+	if (inb(vd->pci->iobase + VIRTIO_PCI_ISR) == 0)
+		return 1;
+	for (i = 0; i < vd->driver->nr_vqs; i++) {
+		virtqueue_disable_cb(vd->vq + i);
+		do {
+			int l;
+			while((res = virtqueue_get_buf(vd->vq + i, &l))) {
+				res->len = l;
+				sem_up(res->psem);
+			}
+		} while (!virtqueue_enable_cb(vd->vq + i));
+	}
+	return 1;
+}
+
+static void virtio_net_set_features(unsigned char *f)
+{
+    // do not use control queue
+    *f &= ~VIRTIO_CTRL_VQ;
+
+    // Disable tcp/udp packet size
+    *f &= ~VIRTIO_GUEST_TSO4;
+    *f &= ~VIRTIO_GUEST_TSO6;
+    *f &= ~VIRTIO_GUEST_UFO;
+    *f &= ~VIRTIO_EVENT_IDX;
+    *f &= ~VIRTIO_MRG_RXBUF;
+
+    *f |= VIRTIO_CSUM;
+}
+
+static void virtio_net_init(struct virtio_dev *vd)
+{
+	int i;
+	int iobase = vd->pci->iobase;
+	unsigned char mac[6];
+
+	for (i = 0; i < 6; i++)
+		mac[i] = inb(iobase + 0x14 + i);
+
+	printk("virtio_net_init: /dev/virtio/%d %02x-%02x-%02x-%02x-%02x-%02x\n",
+	       vd - vdevs,
+	       mac[0], mac[1], mac[2],
+	       mac[3], mac[4], mac[5]);
+}
+
+struct virtio_net_data {
+	int mode;
+	sem_t rsem, wsem;
+};
+
+static int virtio_net_open(int minor, int mode, void **pdata)
+{
+	struct virtio_net_data *data = kmalloc(sizeof(struct virtio_net_data));
+	data->mode = mode;
+	sem_init(&data->rsem, 0);
+	sem_init(&data->wsem, 0);
+	*pdata = data;
+	return 0;
+}
+
+static int virtio_net_close(int minor, void *data)
+{
+	kfree(data);
+	return 0;
+}
+
+static long virtio_net_read(int minor, void *pdata, void *buf, long n, long off)
+{
+	struct virtio_net_data *data = pdata;
+	struct virtio_dev *vd = vdevs + minor;
+	struct buffer_info bi[1];
+	struct net_header *h = kmalloc(sizeof(struct net_header) + n);
+	struct net_result *r = kmalloc(sizeof(struct net_result));
+	int len;
+
+	bi[0].buf = h;
+	bi[0].len = sizeof(struct net_header) + n;
+	bi[0].flags = VIRTIO_DESC_FLAG_WRITE_ONLY;
+
+	r->psem = &data->rsem;
+	r->len = 0;
+
+	virtqueue_add_buf(vd->vq, bi, 1, r);
+	virtio_kick(vd, 0);
+
+	sem_down(&data->rsem);
+
+	len = r->len - sizeof(struct net_header);
+	memcpy(buf, h + 1, len);
+	kfree(h);
+	kfree(r);
+	return len;
+}
+
+static long virtio_net_write(int minor, void *pdata, void *buf, long n, long off)
+{
+	struct virtio_net_data *data = pdata;
+	struct virtio_dev *vd = vdevs + minor;
+	struct buffer_info bi[2];
+	struct net_header *h = kmalloc(sizeof(struct net_header) + n);
+	struct net_result *r = kmalloc(sizeof(struct net_result));
+	int len;
+
+	bi[0].buf = h;
+	bi[0].len = sizeof(struct net_header) + n;
+	bi[0].flags = 0;
+
+	memset(h, 0, sizeof(struct net_header));
+	memcpy(h + 1, buf, n);
+
+	r->psem = &data->wsem;
+	r->len = 0;
+
+	virtqueue_add_buf(vd->vq + 1, bi, 1, r);
+	virtio_kick(vd, 1);
+
+	sem_down(&data->wsem);
+
+	len = r->len - sizeof(struct net_header);
+	kfree(h);
+	kfree(r);
+	return len;
+}
+
 const struct virtio_driver virtio_net = {
 	.name = "virtio_net",
 	.devid = 0x1000,
 	.nr_vqs = 2,
-	.set_features = virtio_blk_set_features,
-	.int_handler = virtio_blk_int,
-	.init = virtio_blk_init,
+	.set_features = virtio_net_set_features,
+	.int_handler = virtio_net_int,
+	.init = virtio_net_init,
+	.open = virtio_net_open,
+	.close = virtio_net_close,
+	.read = virtio_net_read,
+	.write = virtio_net_write,
 };
 
 // virtio
