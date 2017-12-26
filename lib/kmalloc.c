@@ -15,14 +15,14 @@ static const int limit[]={
 		1024	,	/* 256byte 64p*/
 		512	,	/* 512byte 64p*/
 		256	,	/* 1024byte 64p*/
-		128	,	/* 2048byte 64p*/
+		128*3	,	/* 2048byte 64*3p*/
 		256	,	/* 4096byte 256p*/
 		64	,	/* 8192byte 128p*/
 		16      ,       /* 16384byte 64p*/
 		-1	,	/* end */
 	};
 
-static char heap[4096*(1+1+2+4+8+16+32+64+64+64+64+64+256+128+64)]
+static char heap[4096*(1+1+2+4+8+16+32+64+64+64+64+64*3+256+128+64)]
 __attribute__((aligned(4096)));
 
 static struct s_mem
