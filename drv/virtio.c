@@ -140,7 +140,7 @@ struct virtqueue {
 	struct vring_avail *avail;
 	struct vring_used *used;
 	__u16 last_used_idx;
-	void **cookies;
+	void **buffers;
 };
 
 struct buffer_info {
@@ -201,13 +201,13 @@ void virtqueue_init(struct virtqueue *vq, int queue_size)
 	vq->desc = buf;
 	vq->avail = buf + size_desc;
 	vq->used = buf + PAGE_SIZE * pg1;
-	vq->cookies = kmalloc(sizeof(void *) * queue_size);
+	vq->buffers = kmalloc(sizeof(void *) * queue_size);
 }
 
 void virtqueue_deinit(struct virtqueue *vq)
 {
 	kfree(vq->desc);
-	kfree(vq->cookies);
+	kfree(vq->buffers);
 }
 
 static int find_desc_slot(struct vring_desc *desc, int queue_size)
@@ -219,7 +219,7 @@ static int find_desc_slot(struct vring_desc *desc, int queue_size)
 	panic("find_desc_slot");
 }
 
-void virtqueue_add_buf(struct virtqueue *vq, struct buffer_info *data, int count, void *cookie)
+void virtqueue_add_buf(struct virtqueue *vq, struct buffer_info *data, int count, void *buffer)
 {
 	int i;
 	int did, aid;
@@ -230,7 +230,7 @@ void virtqueue_add_buf(struct virtqueue *vq, struct buffer_info *data, int count
 	did = find_desc_slot(vq->desc, vq->queue_size);
 	aid = vq->avail->idx & (vq->queue_size - 1);
 	vq->avail->ring[aid] = did;
-	vq->cookies[did] = cookie;
+	vq->buffers[did] = buffer;
 	for (i = 0; i < count; i++) {
 		vq->desc[did].addr = (u64) (unsigned long) data[i].buf;
 		vq->desc[did].len = data[i].len;
@@ -268,7 +268,7 @@ void *virtqueue_get_buf(struct virtqueue *vq, int *plen)
 
 		if (plen)
 			*plen = vq->used->ring[uid].len;
-		return vq->cookies[did];
+		return vq->buffers[did];
 	}
 }
 
