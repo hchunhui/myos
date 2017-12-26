@@ -7,6 +7,7 @@
 #include <os/io.h>
 #include <drv/virtio.h>
 #include <os/isr.h>
+#include <os/asm.h>
 #include <os/sem.h>
 
 // pci
@@ -81,6 +82,7 @@ static void pci_scan()
 
 // http://wiki.osdev.org/Virtio
 // http://www.dumais.io/index.php?article=aca38a9a2b065b24dfa1dee728062a12
+// https://ozlabs.org/~rusty/virtio-spec/virtio-0.9.5.pdf
 
 // vq
 #define VIRTIO_PCI_HOST_FEATURES  0
@@ -506,32 +508,34 @@ struct net_header
     u16 checksum_offset;
 };
 
-struct net_result
-{
-	sem_t *psem;
-	int len;
+struct virtio_net_priv {
+	unsigned char mac[6];
+	sem_t semq;
 };
 
 #define FRAME_SIZE 1514
 
 static int virtio_net_int(struct s_regs *pregs, void *data)
 {
-	int i;
 	struct virtio_dev *vd = data;
-	struct net_result *res;
+	struct virtio_net_priv *priv = vd->priv;
 
-	if (inb(vd->pci->iobase + VIRTIO_PCI_ISR) == 0)
+	if ((inb(vd->pci->iobase + VIRTIO_PCI_ISR) & 1) == 0)
 		return 1;
-	for (i = 0; i < vd->driver->nr_vqs; i++) {
-		virtqueue_disable_cb(vd->vq + i);
-		do {
-			int l;
-			while((res = virtqueue_get_buf(vd->vq + i, &l))) {
-				res->len = l;
-				sem_up(res->psem);
-			}
-		} while (!virtqueue_enable_cb(vd->vq + i));
+
+	// recv queue
+	if (virtqueue_poll(vd->vq) && priv->semq.val < 0) {
+		virtqueue_disable_cb(vd->vq);
+		sem_up(&priv->semq);
 	}
+
+	// send queue
+	do {
+		sem_t *psem;
+		virtqueue_disable_cb(vd->vq + 1);
+		while((psem = virtqueue_get_buf(vd->vq + 1, NULL)))
+			sem_up(psem);
+	} while (!virtqueue_enable_cb(vd->vq + 1));
 	return 1;
 }
 
@@ -553,29 +557,48 @@ static void virtio_net_set_features(unsigned char *f)
 static void virtio_net_init(struct virtio_dev *vd)
 {
 	int i;
-	int iobase = vd->pci->iobase;
-	unsigned char mac[6];
+	unsigned int iobase = vd->pci->iobase;
+	struct virtio_net_priv *priv = kmalloc(sizeof(struct virtio_net_priv));
+
+	vd->priv = priv;
 
 	for (i = 0; i < 6; i++)
-		mac[i] = inb(iobase + 0x14 + i);
+		priv->mac[i] = inb(iobase + 0x14 + i);
 
 	printk("virtio_net_init: /dev/virtio/%d %02x-%02x-%02x-%02x-%02x-%02x\n",
 	       vd - vdevs,
-	       mac[0], mac[1], mac[2],
-	       mac[3], mac[4], mac[5]);
+	       priv->mac[0], priv->mac[1], priv->mac[2],
+	       priv->mac[3], priv->mac[4], priv->mac[5]);
+
+	// init recv buffers
+	sem_init(&priv->semq, 0);
+	for (i = 0; i < vd->vq->queue_size; i++) {
+		struct buffer_info bi[1];
+		struct net_header *h = kmalloc(sizeof(struct net_header) + FRAME_SIZE);
+
+		bi[0].buf = h;
+		bi[0].len = sizeof(struct net_header) + FRAME_SIZE;
+		bi[0].flags = VIRTIO_DESC_FLAG_WRITE_ONLY;
+
+		virtqueue_add_buf(vd->vq, bi, 1, h);
+	}
+	virtio_kick(vd, 0);
 }
 
 struct virtio_net_data {
+	struct virtio_dev *vd;
 	int mode;
-	sem_t rsem, wsem;
+	sem_t wsem;
+	struct list_head poll_read;
 };
 
 static int virtio_net_open(int minor, int mode, void **pdata)
 {
 	struct virtio_net_data *data = kmalloc(sizeof(struct virtio_net_data));
+	data->vd = vdevs + minor;
 	data->mode = mode;
-	sem_init(&data->rsem, 0);
 	sem_init(&data->wsem, 0);
+	INIT_LIST_HEAD(&data->poll_read);
 	*pdata = data;
 	return 0;
 }
@@ -589,39 +612,53 @@ static int virtio_net_close(int minor, void *data)
 static long virtio_net_read(int minor, void *pdata, void *buf, long n, long off)
 {
 	struct virtio_net_data *data = pdata;
-	struct virtio_dev *vd = vdevs + minor;
-	struct buffer_info bi[1];
-	struct net_header *h = kmalloc(sizeof(struct net_header) + n);
-	struct net_result *r = kmalloc(sizeof(struct net_result));
+	struct virtio_dev *vd = data->vd;
+	struct virtio_net_priv *priv = vd->priv;
+
+	// wait for data
+	virtqueue_disable_cb(vd->vq);
+	if(!virtqueue_poll(vd->vq)) {
+		if(virtqueue_enable_cb(vd->vq))
+			sem_down(&priv->semq);
+		else
+			virtqueue_disable_cb(vd->vq);
+	}
+	assert(vd->vq->used->flags);
+
+	// dequeue
 	int len;
+	void *bufx = virtqueue_get_buf(vd->vq, &len);
 
-	bi[0].buf = h;
-	bi[0].len = sizeof(struct net_header) + n;
+	assert(bufx);
+	len -= sizeof(struct net_header);
+
+	if (len > n)
+		len = n;
+
+	// copy data
+	memcpy(buf, bufx + sizeof(struct net_header), len);
+
+	// add buf
+	struct buffer_info bi[1];
+	bi[0].buf = bufx;
+	bi[0].len = sizeof(struct net_header) + FRAME_SIZE;
 	bi[0].flags = VIRTIO_DESC_FLAG_WRITE_ONLY;
-
-	r->psem = &data->rsem;
-	r->len = 0;
-
-	virtqueue_add_buf(vd->vq, bi, 1, r);
+	virtqueue_add_buf(vd->vq, bi, 1, bufx);
 	virtio_kick(vd, 0);
 
-	sem_down(&data->rsem);
+	// enable interrupt
+	if(!virtqueue_poll(vd->vq))
+		virtqueue_enable_cb(vd->vq);
 
-	len = r->len - sizeof(struct net_header);
-	memcpy(buf, h + 1, len);
-	kfree(h);
-	kfree(r);
 	return len;
 }
 
 static long virtio_net_write(int minor, void *pdata, void *buf, long n, long off)
 {
 	struct virtio_net_data *data = pdata;
-	struct virtio_dev *vd = vdevs + minor;
+	struct virtio_dev *vd = data->vd;
 	struct buffer_info bi[2];
 	struct net_header *h = kmalloc(sizeof(struct net_header) + n);
-	struct net_result *r = kmalloc(sizeof(struct net_result));
-	int len;
 
 	bi[0].buf = h;
 	bi[0].len = sizeof(struct net_header) + n;
@@ -630,18 +667,37 @@ static long virtio_net_write(int minor, void *pdata, void *buf, long n, long off
 	memset(h, 0, sizeof(struct net_header));
 	memcpy(h + 1, buf, n);
 
-	r->psem = &data->wsem;
-	r->len = 0;
-
-	virtqueue_add_buf(vd->vq + 1, bi, 1, r);
+	virtqueue_add_buf(vd->vq + 1, bi, 1, &data->wsem);
 	virtio_kick(vd, 1);
 
 	sem_down(&data->wsem);
 
-	len = r->len - sizeof(struct net_header);
 	kfree(h);
-	kfree(r);
-	return len;
+	return n;
+}
+
+static int virtio_net_poll(int minor, void *pdata, int func, struct list_head *lsem)
+{
+	struct virtio_net_data *data = pdata;
+	struct virtio_dev *vd = data->vd;
+	switch(func)
+	{
+	case POLL_FUNC_READABLE:
+		return virtqueue_poll(vd->vq);
+	case POLL_FUNC_WRITEABLE:
+		return 1;
+	case POLL_FUNC_REGISTER:
+		disable_irq();
+		list_add_tail(lsem, &data->poll_read);
+		enable_irq();
+		return 0;
+	case POLL_FUNC_UNREGISTER:
+		disable_irq();
+		list_del(lsem);
+		enable_irq();
+		return 0;
+	}
+	return -1;
 }
 
 const struct virtio_driver virtio_net = {
@@ -655,6 +711,7 @@ const struct virtio_driver virtio_net = {
 	.close = virtio_net_close,
 	.read = virtio_net_read,
 	.write = virtio_net_write,
+	.poll = virtio_net_poll,
 };
 
 // virtio
