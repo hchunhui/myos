@@ -170,6 +170,7 @@ struct virtio_dev {
 	struct pci_dev *pci;
 	struct virtqueue vq[16];
 	const struct virtio_driver *driver;
+	void *priv;
 };
 
 static struct virtio_dev vdevs[128];
@@ -352,6 +353,7 @@ static void virtio_blk_init(struct virtio_dev *vd)
 }
 
 struct virtio_blk_data {
+	struct virtio_blk_dev *vd;
 	int mode;
 	sem_t rsem, wsem;
 };
@@ -359,6 +361,7 @@ struct virtio_blk_data {
 static int virtio_blk_open(int minor, int mode, void **pdata)
 {
 	struct virtio_blk_data *data = kmalloc(sizeof(struct virtio_blk_data));
+	data->vd = vdevs + minor;
 	data->mode = mode;
 	sem_init(&data->rsem, 0);
 	sem_init(&data->wsem, 0);
@@ -375,7 +378,7 @@ static int virtio_blk_close(int minor, void *data)
 static long virtio_blk_read(int minor, void *pdata, void *buf, long n, long off)
 {
 	struct virtio_blk_data *data = pdata;
-	struct virtio_dev *vd = vdevs + minor;
+	struct virtio_dev *vd = data->vd;
 
 	if (off % 512 || n != 512)
 		return -1;
@@ -416,7 +419,7 @@ static long virtio_blk_read(int minor, void *pdata, void *buf, long n, long off)
 static long virtio_blk_write(int minor, void *pdata, void *buf, long n, long off)
 {
 	struct virtio_blk_data *data = pdata;
-	struct virtio_dev *vd = vdevs + minor;
+	struct virtio_dev *vd = data->vd;
 
 	if (off % 512 || n != 512)
 		return -1;
