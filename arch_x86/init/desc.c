@@ -138,23 +138,23 @@ void make_gdt_desc()
 void make_idt_desc()
 {
 	//exception
-	set_idt_desc( 0, DA_386IGate, divide_error,          PRIVILEGE_KNL);
-	set_idt_desc( 1, DA_386IGate, single_step_exception, PRIVILEGE_KNL);
-	set_idt_desc( 2, DA_386IGate, nmi,                   PRIVILEGE_KNL);
-	set_idt_desc( 3, DA_386IGate, breakpoint_exception,  PRIVILEGE_USER);
-	set_idt_desc( 4, DA_386IGate, overflow,              PRIVILEGE_USER);
-	set_idt_desc( 5, DA_386IGate, bounds_check,          PRIVILEGE_USER);
-	set_idt_desc( 6, DA_386IGate, inval_opcode,          PRIVILEGE_KNL);
-	set_idt_desc( 7, DA_386IGate, copr_not_available,    PRIVILEGE_KNL);
-	set_idt_desc( 8, DA_386IGate, double_fault,          PRIVILEGE_KNL);
-	set_idt_desc( 9, DA_386IGate, copr_seg_overrun,      PRIVILEGE_KNL);
-	set_idt_desc(10, DA_386IGate, inval_tss,             PRIVILEGE_KNL);
-	set_idt_desc(11, DA_386IGate, segment_not_present,   PRIVILEGE_KNL);
-	set_idt_desc(12, DA_386IGate, stack_exception,       PRIVILEGE_KNL);
-	set_idt_desc(13, DA_386IGate, general_protection,    PRIVILEGE_KNL);
-	set_idt_desc(14, DA_386IGate, page_fault,            PRIVILEGE_KNL);
-	set_idt_desc(15, DA_386IGate, untitled,              PRIVILEGE_KNL);
-	set_idt_desc(16, DA_386IGate, copr_error,            PRIVILEGE_KNL);
+	set_idt_desc( 0, DA_386TGate, divide_error,          PRIVILEGE_KNL);
+	set_idt_desc( 1, DA_386TGate, single_step_exception, PRIVILEGE_KNL);
+	set_idt_desc( 2, DA_386TGate, nmi,                   PRIVILEGE_KNL);
+	set_idt_desc( 3, DA_386TGate, breakpoint_exception,  PRIVILEGE_USER);
+	set_idt_desc( 4, DA_386TGate, overflow,              PRIVILEGE_USER);
+	set_idt_desc( 5, DA_386TGate, bounds_check,          PRIVILEGE_USER);
+	set_idt_desc( 6, DA_386TGate, inval_opcode,          PRIVILEGE_KNL);
+	set_idt_desc( 7, DA_386TGate, copr_not_available,    PRIVILEGE_KNL);
+	set_idt_desc( 8, DA_386TGate, double_fault,          PRIVILEGE_KNL);
+	set_idt_desc( 9, DA_386TGate, copr_seg_overrun,      PRIVILEGE_KNL);
+	set_idt_desc(10, DA_386TGate, inval_tss,             PRIVILEGE_KNL);
+	set_idt_desc(11, DA_386TGate, segment_not_present,   PRIVILEGE_KNL);
+	set_idt_desc(12, DA_386TGate, stack_exception,       PRIVILEGE_KNL);
+	set_idt_desc(13, DA_386TGate, general_protection,    PRIVILEGE_KNL);
+	set_idt_desc(14, DA_386TGate, page_fault,            PRIVILEGE_KNL);
+	set_idt_desc(15, DA_386TGate, untitled,              PRIVILEGE_KNL);
+	set_idt_desc(16, DA_386TGate, copr_error,            PRIVILEGE_KNL);
 	//hwint
 	set_idt_desc(IRQ_0    , DA_386IGate, hwint00, PRIVILEGE_KNL);
 	set_idt_desc(IRQ_0 + 1, DA_386IGate, hwint01, PRIVILEGE_KNL);
@@ -173,7 +173,7 @@ void make_idt_desc()
 	set_idt_desc(IRQ_8 + 6, DA_386IGate, hwint14, PRIVILEGE_KNL);
 	set_idt_desc(IRQ_8 + 7, DA_386IGate, hwint15, PRIVILEGE_KNL);
 	//sys_call
-	set_idt_desc(SYSCALL, DA_386IGate, sys_call, PRIVILEGE_USER);
+	set_idt_desc(SYSCALL, DA_386TGate, sys_call, PRIVILEGE_USER);
 
 	//idt_48
 	idt_48[0] = 256*sizeof(struct s_gate)-1;
