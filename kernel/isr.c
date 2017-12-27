@@ -71,6 +71,9 @@ int isr_dummy()
 asmlinkage void do_isr(int vec_no, struct s_regs *pregs)
 {
 	struct isr_desc *desc;
+
+	pic_disable_irq(vec_no);
+	pic_send_eoi(vec_no);
 	desc = isr_table[vec_no];
 	for(;desc;)
 	{
@@ -78,4 +81,5 @@ asmlinkage void do_isr(int vec_no, struct s_regs *pregs)
 			break;
 		desc = desc->next;
 	}
+	pic_enable_irq(vec_no);
 }

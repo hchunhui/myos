@@ -339,7 +339,7 @@ static int virtio_blk_int(struct s_regs *pregs, void *data)
 		while((psem = virtqueue_get_buf(vd->vq, NULL)))
 			sem_up(psem);
 	} while (!virtqueue_enable_cb(vd->vq));
-	return 1;
+	return 0;
 }
 
 static void virtio_blk_set_features(unsigned char *f)
@@ -536,7 +536,7 @@ static int virtio_net_int(struct s_regs *pregs, void *data)
 		while((psem = virtqueue_get_buf(vd->vq + 1, NULL)))
 			sem_up(psem);
 	} while (!virtqueue_enable_cb(vd->vq + 1));
-	return 1;
+	return 0;
 }
 
 static void virtio_net_set_features(unsigned char *f)

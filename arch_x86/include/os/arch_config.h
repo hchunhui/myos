@@ -15,6 +15,8 @@
 #include <os/pic_i8259.h>
 #define pic_init i8259_init
 #define pic_enable_irq i8259_enable_irq
+#define pic_disable_irq i8259_disable_irq
+#define pic_send_eoi i8259_send_eoi
 
 #define IRQ_0           0x20
 #define IRQ_8           0x28

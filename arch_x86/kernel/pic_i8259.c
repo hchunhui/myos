@@ -5,6 +5,7 @@
 #define I8259MMask       0x21
 #define I8259S           0xA0
 #define I8259SMask       0xA1
+#define EOI              0x20
 
 void i8259_init()
 {
@@ -29,6 +30,8 @@ void i8259_init()
 	/* OCW2 */
 	outb_p(0x20, I8259S);
 	outb_p(0x20, I8259M);
+
+	i8259_enable_irq(2);
 }
 
 static u8 i8259_s1, i8259_s2;
@@ -46,13 +49,28 @@ void i8259_irqrestore()
 
 void i8259_enable_irq(int irq)
 {
-	if(irq<8)
-	{
+	if(irq<8) {
 		outb(inb(I8259MMask)&(~(1<<irq)), I8259MMask);
-	}
-	else
-	{
-		outb(inb(I8259MMask)&(~(1<<2)), I8259MMask);
+	} else {
 		outb(inb(I8259SMask)&(~(1<<(irq-8))), I8259SMask);
+	}
+}
+
+void i8259_disable_irq(int irq)
+{
+	if(irq < 8) {
+		outb(inb(I8259MMask)|(1<<irq), I8259MMask);
+	} else {
+		outb(inb(I8259SMask)|(1<<(irq-8)), I8259SMask);
+	}
+}
+
+void i8259_send_eoi(int irq)
+{
+	if(irq < 8) {
+		outb(EOI, I8259M);
+	} else {
+		outb(EOI, I8259S);
+		outb(EOI, I8259M);
 	}
 }

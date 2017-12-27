@@ -8,10 +8,6 @@
 .globl hwint11,hwint12,hwint13,hwint14,hwint15
 .globl call_after_fork, sys_call_table
 
-EOI=	0x20
-I8259M=	0x20
-I8259S=	0xa0
-
 .macro save
 	push  %es
 	push  %ds
@@ -106,28 +102,10 @@ copr_error:
 	Exception 16
 
 //硬件中断处理
-.macro hwintM num
+.macro hwint num
 	save_no_err_code
 	enter_kernel
 
-	movb $EOI,%al
-	outb %al, $I8259M
-
-	pushl %ebp
-	pushl $\num
-	pushl $(leave_kernel_8)
-	jmp do_isr
-.endm
-
-.macro hwintS num
-	save_no_err_code
-	enter_kernel
-
-	movb $EOI,%al
-	outb %al, $I8259S
-	nop
-	outb %al, $I8259M
-	
 	pushl %ebp
 	pushl $\num
 	pushl $(leave_kernel_8)
@@ -135,37 +113,37 @@ copr_error:
 .endm
 
 hwint00:
-	hwintM 32
+	hwint 32
 hwint01:
-	hwintM 33
+	hwint 33
 hwint02:
-	hwintM 34
+	hwint 34
 hwint03:
-	hwintM 35
+	hwint 35
 hwint04:
-	hwintM 36
+	hwint 36
 hwint05:
-	hwintM 37
+	hwint 37
 hwint06:
-	hwintM 38
+	hwint 38
 hwint07:
-	hwintM 39
+	hwint 39
 hwint08:
-	hwintS 40
+	hwint 40
 hwint09:
-	hwintS 41
+	hwint 41
 hwint10:
-	hwintS 42
+	hwint 42
 hwint11:
-	hwintS 43
+	hwint 43
 hwint12:
-	hwintS 44
+	hwint 44
 hwint13:
-	hwintS 45
+	hwint 45
 hwint14:
-	hwintS 46
+	hwint 46
 hwint15:
-	hwintS 47
+	hwint 47
 
 #define NR_SYSCALLS 40
 bad_info:
