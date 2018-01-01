@@ -700,6 +700,21 @@ static int virtio_net_poll(int minor, void *pdata, int func, struct list_head *l
 	return -1;
 }
 
+static int virtio_net_ctl(int minor, void *pdata, int cmd, void *arg)
+{
+	struct virtio_net_data *data = pdata;
+	struct virtio_dev *vd = data->vd;
+	struct virtio_net_priv *priv = vd->priv;
+
+	switch(cmd)
+	{
+	case 0:
+		memcpy(arg, priv->mac, 6);
+		return 0;
+	}
+	return -1;
+}
+
 const struct virtio_driver virtio_net = {
 	.name = "virtio_net",
 	.devid = 0x1000,
@@ -712,6 +727,7 @@ const struct virtio_driver virtio_net = {
 	.read = virtio_net_read,
 	.write = virtio_net_write,
 	.poll = virtio_net_poll,
+	.ctl = virtio_net_ctl,
 };
 
 // virtio
