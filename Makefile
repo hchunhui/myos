@@ -1,5 +1,5 @@
 QEMU=qemu-system-i386
-QEMU_LINE=-s -kernel mykern.bin -initrd initrd.tar,ports.tar -m 128 -localtime
+QEMU_LINE=-s -kernel mykern.bin -initrd initrd.tar,ports.tar -m 128 -localtime #-drive file=a.img,if=virtio -net nic,model=virtio -net tap
 everything: mk1 mykern.bin
 -include Makefile.arch
 .PHONY: all cemu emu kvm everything clean bx dep user x86 linux
