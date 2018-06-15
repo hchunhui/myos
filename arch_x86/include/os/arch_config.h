@@ -32,12 +32,11 @@
 #define PAGE_SHIFT 12
 #define PAGE_SIZE  (1 << PAGE_SHIFT)
 #define PAGE_MASK  (~(PAGE_SIZE - 1))
-#define PDE_COUNT  1024
 #define PTE_COUNT  1024
 
 #define kernel_brk		0x1000000
 #define usr_stack_top		0x80000000
-#define	max_usr_pde		(usr_stack_top/PAGE_SIZE/PDE_COUNT)
+#define	max_usr_pde		(usr_stack_top/PAGE_SIZE/PTE_COUNT)
 #define normal_stack_size	0x1000000	//16M
 
 /* realmode */

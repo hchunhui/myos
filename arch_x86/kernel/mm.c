@@ -12,8 +12,8 @@
 /* 386 PDE && PTE */
 struct s_pde
 {
-	unsigned long addr_attr[PDE_COUNT];
-}__attribute__((packed));
+	unsigned long addr_attr[0];
+};
 
 struct s_mm
 {
@@ -95,10 +95,11 @@ struct s_mm
 #define ATTR(addr_attr) ((addr_attr) & (~PAGE_MASK))
 #define NO2ADDR(no) ((no)<<PAGE_SHIFT)
 #define ADDR2NO(addr) ((addr)>>PAGE_SHIFT)
-#define for_each_user_pde(i) for(i = ADDR2NO(kernel_brk)/PDE_COUNT; i < max_usr_pde; i++)
-#define for_each_kern_pde(i) for(i = 0; i < ADDR2NO(kernel_brk)/PDE_COUNT; i++)
+#define for_each_user_pde(i) for(i = ADDR2NO(kernel_brk)/PTE_COUNT; i < max_usr_pde; i++)
+#define for_each_kern_pde(i) for(i = 0; i < ADDR2NO(kernel_brk)/PTE_COUNT; i++)
 
-#define pte_mem_stack_len	PDE_COUNT
+#define MAX_MEM_SIZE		0x40000000
+#define pte_mem_stack_len	(ADDR2NO(MAX_MEM_SIZE)/PTE_COUNT)
 
 /* asm */
 #define change_page(pde_addr)	\
@@ -132,7 +133,7 @@ struct s_page_info
 } __attribute__ ((packed));
 
 /* page table */
-static pte_t pte[PTE_COUNT*PDE_COUNT] __attribute__((aligned(4096)));
+static pte_t pte[PTE_COUNT*pte_mem_stack_len] __attribute__((aligned(4096)));
 static unsigned long pte_mem_stack[pte_mem_stack_len+1];
 static int stack_p;
 
@@ -140,7 +141,7 @@ static int stack_p;
 static unsigned int mem_size;
 
 /* page info */
-static struct s_page_info page_info[PTE_COUNT*PDE_COUNT] __attribute__((aligned(4096)));
+static struct s_page_info page_info[PTE_COUNT*pte_mem_stack_len] __attribute__((aligned(4096)));
 static unsigned long page_info_size;
 
 static unsigned long pop_pte_mem()		/* 返回页号 */
@@ -167,25 +168,25 @@ static void mm_set_pte(pde_t *pd,
 	pte_t *pte_addr;
 	unsigned int flag = (_flag == MM_RW ? PA_RW : 0);
 
-	if(pd->addr_attr[logi_pg_no/PDE_COUNT] == 0)
+	if(pd->addr_attr[logi_pg_no/PTE_COUNT] == 0)
 	{
 		pte_no = pop_pte_mem();
 		memset((unsigned long*)(pte_no<<PAGE_SHIFT),
 		       0,
 		       PTE_COUNT * sizeof(pte_t));
-		pd->addr_attr[logi_pg_no/PDE_COUNT] =
+		pd->addr_attr[logi_pg_no/PTE_COUNT] =
 			(pte_no<<PAGE_SHIFT) | PA_P | flag | PA_US;
 	}
 	else
 	{
-		pte_no = pd->addr_attr[logi_pg_no/PDE_COUNT]>>PAGE_SHIFT;
+		pte_no = ADDR2NO(pd->addr_attr[logi_pg_no/PTE_COUNT]);
 	}
 
-	pte_addr = (void*)((pte_no<<12) +
-			   sizeof(unsigned long)*(logi_pg_no&0x3ff));
+	pte_addr = (void*)(NO2ADDR(pte_no) +
+			   sizeof(unsigned long)*(logi_pg_no%PTE_COUNT));
 
 	assert(*pte_addr == 0);
-	*pte_addr = (phy_pg_no<<12) | PA_P | flag | PA_US;
+	*pte_addr = ADDR_ATTR(NO2ADDR(phy_pg_no), PA_P | flag | PA_US);
 }
 
 static unsigned long mm_reset_pte(pde_t *pd, unsigned long logi_pg_no)
@@ -194,13 +195,13 @@ static unsigned long mm_reset_pte(pde_t *pd, unsigned long logi_pg_no)
 	unsigned long *pte_addr;
 	unsigned long phy_pg_no;
 
-	assert(pd->addr_attr[logi_pg_no>>10]);
+	assert(pd->addr_attr[logi_pg_no/PTE_COUNT]);
 
-	pte_no = pd->addr_attr[logi_pg_no>>10]>>12;
-	pte_addr = (void*)((pte_no<<12) +
-			   sizeof(unsigned long)*(logi_pg_no&0x3ff));
+	pte_no = ADDR2NO(pd->addr_attr[logi_pg_no/PTE_COUNT]);
+	pte_addr = (void*)(NO2ADDR(pte_no) +
+			   sizeof(unsigned long)*(logi_pg_no%PTE_COUNT));
 
-	phy_pg_no = (*pte_addr) >> 12;
+	phy_pg_no = ADDR2NO(*pte_addr);
 	*pte_addr  = 0;
 	return phy_pg_no;
 }
@@ -244,7 +245,7 @@ static unsigned long la2pn(unsigned long la)
 
 	pd = current->mm->pd;
 
-	pde_no = ADDR2NO(la)/PDE_COUNT;
+	pde_no = ADDR2NO(la)/PTE_COUNT;
 
 	assert(pd->addr_attr[pde_no]&PA_P);
 
@@ -531,7 +532,7 @@ void mm_init(unsigned int size)
 
 	stack_p = 0;
 
-	memset(pte, 0, sizeof(unsigned long)*PDE_COUNT*PTE_COUNT);
+	memset(pte, 0, sizeof(unsigned long)*pte_mem_stack_len*PTE_COUNT);
 
 	isr_register(14, do_page_fault, NULL);
 
@@ -539,13 +540,16 @@ void mm_init(unsigned int size)
 	{
 		for(j = 0; j < PTE_COUNT; j++)
 		{
-			pte[i*1024 + j] = ADDR_ATTR(
-				PAGE_SIZE*(PTE_COUNT*i + j),
+			pte[i*PTE_COUNT + j] = ADDR_ATTR(
+				NO2ADDR(i*PTE_COUNT + j),
 				PA_P | PA_RW);
 		}
 	}
 
 	//init page info
+	if (mem_size > MAX_MEM_SIZE)
+		mem_size = MAX_MEM_SIZE;
+
 	page_info_size = ADDR2NO(mem_size);
 	memset(page_info, 0, sizeof(struct s_page_info) * page_info_size);
 	for(i = 0; i < ADDR2NO(kernel_brk); i++)
@@ -555,7 +559,7 @@ void mm_init(unsigned int size)
 	}
 
 	//init pte_mem_stack
-	for(i = ADDR2NO(kernel_brk)/PDE_COUNT; i < pte_mem_stack_len; i++)
+	for(i = ADDR2NO(kernel_brk)/PTE_COUNT; i < pte_mem_stack_len; i++)
 	{
 		push_pte_mem(ADDR2NO((unsigned long) pte) + i);
 	}
