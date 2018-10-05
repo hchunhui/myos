@@ -91,8 +91,10 @@ static int i8042_init()
 	i8042_ctl(0, 0, I8042_CMD_SETCMD, (void *)0xad);
 
 	i8042_ctl(0, 0, I8042_CMD_GETCNTL, &ret);
+#ifdef SCANCODE2
 	/* use scancode 2 */
 	ret &= ~(1<<6);
+#endif
 	/* enable mouse&keyboard int */
 	ret |= (1<<1) | 1;
 	lret = ret;

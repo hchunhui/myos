@@ -76,6 +76,10 @@ static int kbd_int(struct s_regs *pregs, void *data)
 	default:
 		if(!s->is_ex)
 			s->follow = 1;
+#ifndef SCANCODE2
+		s->is_brk = !!(code & 0x80);
+		code = code & 0x7f;
+#endif
 		s->gcode <<= 8;
 		s->gcode |= code;
 		s->follow--;
