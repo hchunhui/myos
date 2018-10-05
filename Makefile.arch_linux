@@ -1,8 +1,8 @@
-AS = as -m32
-CC = gcc -m32
-LD = gcc -m32
+AS = as
+CC = gcc
+LD = gcc
 CFLAGS = \
-	-D__KERNEL__ -march=i386 -g -O2 -Wall \
+	-D__KERNEL__ -DARCH_LINUX -g -O2 -Wall \
 	-fno-delete-null-pointer-checks -fomit-frame-pointer \
 	-finline-functions -fno-strict-aliasing -fno-builtin \
 	-fno-stack-protector \

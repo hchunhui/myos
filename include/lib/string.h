@@ -1,8 +1,10 @@
+#ifdef ARCH_LINUX
+#include <string.h>
+#else
 #ifndef _STRING_H_
 #define _STRING_H_
 #include <os/type.h>
 #define EXPORT_SYMBOL(a)
-
 /* form linux-2.6.26 */
 /*
  *  linux/lib/string.c
@@ -538,4 +540,5 @@ EXPORT_SYMBOL(memchr);
 /* 	return s; */
 /* } */
 
+#endif
 #endif

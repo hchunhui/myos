@@ -19,6 +19,14 @@ void pic_enable_irq(int irq)
 {
 }
 
+void pic_disable_irq(int irq)
+{
+}
+
+void pic_send_eoi(int irq)
+{
+}
+
 void pic_init()
 {
 	struct sigaction act;

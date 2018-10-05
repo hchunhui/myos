@@ -1,3 +1,6 @@
+#ifdef ARCH_LINUX
+#include <stdarg.h>
+#else
 #ifndef _STDARG_H
 #define _STDARG_H
 typedef char *va_list;
@@ -23,6 +26,5 @@ void va_end (va_list);		/* Defined in gnulib */
 #define va_arg(AP, TYPE)						\
  (AP += __va_rounded_size (TYPE),					\
   *((TYPE *) (AP - __va_rounded_size (TYPE))))
-
 #endif /* _STDARG_H */
-
+#endif
