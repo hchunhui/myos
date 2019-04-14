@@ -1,4 +1,4 @@
-.depends
+.depends*
 *.o
 *.a
 *~

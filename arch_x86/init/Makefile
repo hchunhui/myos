@@ -1,6 +1,6 @@
-TOPDIR=../..
-C_SRCS = desc.c
-S_SRCS = init.S multiboot.S
+TOPDIR = ../..
+CSRCS = desc.c
+SSRCS = init.S multiboot.S
+LIB = build.a
 
-target: build.a
-include $(TOPDIR)/Makefile.arch
+include $(TOPDIR)/Makefile.arch_x86

@@ -1,18 +1,27 @@
-QEMU=qemu-system-i386
-QEMU_LINE=-s -kernel mykern.bin -initrd initrd.tar,ports.tar -m 128 -localtime #-drive file=a.img,if=virtio -net nic,model=virtio -net tap
-everything: mk1 mykern.bin
+TOPDIR = .
+EXTRA_CLEAN = mykern.x mykern.bin
+SUBDIRS = ${TOP_SUBDIRS}
+PROG = mykern.x
+OBJS = ${TOP_OBJS}
+
+.PHONY: everything
+everything: all
+	${MAKE} mykern.bin
+
 -include Makefile.arch
-.PHONY: all cemu emu kvm everything clean bx dep user x86 linux
-all:clean everything
-clean: clean1
+
+.PHONY: cemu emu kvm bx dep user x86 linux
+QEMU=qemu-system-i386
+QEMU_LINE=-s -kernel mykern.bin -initrd initrd.tar,ports.tar -m 128 #-drive file=a.img,if=virtio -net nic,model=virtio -net tap
+
 x86:
 	rm -f Makefile.arch
 	ln -s Makefile.arch_x86 Makefile.arch
-	make clean
+	${MAKE} clean
 linux:
 	rm -f Makefile.arch
 	ln -s Makefile.arch_linux Makefile.arch
-	make clean
+	${MAKE} clean
 kvm: everything
 	$(QEMU) -enable-kvm $(QEMU_LINE)
 emu: everything
@@ -25,8 +34,8 @@ demu: everything
 bx: everything
 	bochs -f new.bxrc
 user:
-	make -C userspace
-	make -C userspace install
+	${MAKE} -C userspace
+	${MAKE} -C userspace install
 mktar:
 	mkdir -p root
 	mkdir -p root/bin

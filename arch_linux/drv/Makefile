@@ -1,5 +1,5 @@
-TOPDIR=../..
-C_SRCS = cmos.c drv.c pit_i8253.c
+TOPDIR = ../..
+CSRCS = cmos.c drv.c pit_i8253.c
+LIB = build.a
 
-target: build.a
-include $(TOPDIR)/Makefile.arch
+include $(TOPDIR)/Makefile.arch_linux

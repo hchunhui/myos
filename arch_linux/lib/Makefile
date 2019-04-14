@@ -1,6 +1,6 @@
-TOPDIR=../..
-C_SRCS = klibc.c user.c
+TOPDIR = ../..
+CSRCS = klibc.c user.c
+LIB = build.a
 
-target: build.a
-include $(TOPDIR)/Makefile.arch
+include $(TOPDIR)/Makefile.arch_linux
 

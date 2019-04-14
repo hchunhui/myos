@@ -1,5 +1,5 @@
-TOPDIR=../..
-C_SRCS = init.c
+TOPDIR = ../..
+CSRCS = init.c
+LIB = build.a
 
-target: build.a
 include $(TOPDIR)/Makefile.arch

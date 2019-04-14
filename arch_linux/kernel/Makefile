@@ -1,5 +1,5 @@
-TOPDIR=../..
-C_SRCS = entry.c fpu.c mm.c pic.c task_linux.c
+TOPDIR = ../..
+CSRCS = entry.c fpu.c mm.c pic.c task_linux.c
+LIB = build.a
 
-target: build.a
-include $(TOPDIR)/Makefile.arch
+include $(TOPDIR)/Makefile.arch_linux

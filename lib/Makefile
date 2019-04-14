@@ -1,5 +1,5 @@
-TOPDIR=..
-C_SRCS = klibc.c kmalloc.c printk.c
+TOPDIR = ..
+CSRCS = klibc.c kmalloc.c printk.c
+LIB = build.a
 
-target: build.a
 include $(TOPDIR)/Makefile.arch

@@ -1,8 +1,4 @@
-everything:
-	make -C init
-	make -C kernel
-clean:
-	make -C init clean
-	make -C kernel clean
-all: clean everything
-.PHONY:all everything clean dep
+TOPDIR = ..
+SUBDIRS = init kernel
+
+include ${TOPDIR}/Makefile.arch_x86

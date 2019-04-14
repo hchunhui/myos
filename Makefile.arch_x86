@@ -1,57 +1,30 @@
-AS = i686-myos-elf-as
+TOP_SUBDIRS = lib drv kernel arch_x86
+
+include ${TOPDIR}/make/comm.mk
+include ${TOPDIR}/make/c.mk
+include ${TOPDIR}/make/s.mk
+
 CC = i686-myos-elf-gcc
+AS = i686-myos-elf-gcc
 LD = i686-myos-elf-ld
+AR = i686-myos-elf-ar
+OBJCOPY = i686-myos-elf-objcopy
+
 CFLAGS = \
 	-D__KERNEL__ -march=i386 -nostdinc -g -O2 -Wall \
 	-fno-delete-null-pointer-checks -fomit-frame-pointer \
 	-finline-functions -fno-builtin -fno-stack-protector \
-	-I$(TOPDIR)/arch_x86/include -I$(TOPDIR)/include \
-	$(EXTRA_CFLAGS)
+	-I${TOPDIR}/arch_x86/include -I${TOPDIR}/include
 
-OBJCOPY = i686-myos-elf-objcopy
-AR = i686-myos-elf-ar
+LDFLAGS = -N -e _start -Ttext 0x100000
 
-OBJS = $(C_SRCS:.c=.o) $(S_SRCS:.S=.o) $(EXTRA_OBJS)
-
-.PHONY: clean mk1 dep1 clean1
-
-.c.o:
-	$(CC) $(CFLAGS) -c $< -o $@
-.S.o:
-	$(CC) -D__ASSEMBLY__ $(CFLAGS) -c $< -o $@
-
-.depends: $(C_SRCS) $(S_SRCS)
-	rm -f .depends
-	-$(CC) $(CFLAGS) -MM $(C_SRCS) >> $@
-	-$(CC) -D__ASSEMBLY__ $(CFLAGS) -MM $(S_SRCS) >> $@
-
-clean:
-	rm -f *.bin
-	rm -f *.o
-	rm -f *.a
-	rm -f *~
-	rm -f .depends
-	rm -f mykern.x mykern.bin
-
-mk1:
-	make -C lib
-	make -C drv
-	make -C kernel
-	make -C arch_x86
-
-clean1:
-	make -C lib clean
-	make -C drv clean
-	make -C kernel clean
-	make -C arch_x86 clean
-
-mykern.x: arch_x86/init/build.a drv/build.a lib/build.a arch_x86/kernel/build.a kernel/build.a
-	$(LD) -N -e _start -Ttext 0x100000 -o $@ --start-group $^ --end-group
+TOP_OBJS = \
+	arch_x86/init/build.a \
+	drv/build.a \
+	lib/build.a \
+	arch_x86/kernel/build.a \
+	kernel/build.a
 
 mykern.bin: mykern.x
-	$(OBJCOPY) -j .text -j .rodata -j .eh_frame_hdr -j .eh_frame -j .data -O binary $< $@
-
-build.a: .depends $(OBJS)
-	$(AR) rcs $@ $(OBJS)
-
--include .depends
+	@${TOPDIR}/make/scripts/out.sh OBJCOPY "mykern.x" "$@"
+	${Q}${OBJCOPY} -O binary mykern.x $@
