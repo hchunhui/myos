@@ -21,13 +21,13 @@ ${LIB}: ${CXXOBJS}
 	@${TOPDIR}/make/scripts/out.sh CXX "$<" "$@"
 	${Q}${CXX} ${CFLAGS} ${CXXFLAGS} -c $< -o $@
 
-.depends_cxx: ${CXXSRCS}
-	@${TOPDIR}/make/scripts/out.sh DEP "${CXXSRCS}" "$@"
-	${Q}${CXX} ${CFLAGS} ${CXXFLAGS} -MM ${CXXSRCS} 2> /dev/null > $@ || exit 0
+.depends_cxx.${SELF}: ${CXXSRCS}
+	@${TOPDIR}/make/scripts/out.sh DEP "$^$>" "$@"
+	${Q}${CXX} ${CFLAGS} ${CXXFLAGS} -MM $^$> 2> /dev/null > $@ || exit 0
 
 clean_cxx:
-	${Q}rm -f ${CXXOBJS} .depends_cxx
+	${Q}rm -f ${CXXOBJS} .depends_cxx.${SELF}
 clean: clean_cxx
 
-dep: .depends_cxx
--include .depends_cxx
+dep: .depends_cxx.${SELF}
+-include .depends_cxx.${SELF}

@@ -12,16 +12,16 @@ ${PROG}: ${COBJS}
 	@${TOPDIR}/make/scripts/out.sh CC "$<" "$@"
 	${Q}${CC} ${CFLAGS} -c $< -o $@
 
-.depends_c: ${CSRCS}
-	@${TOPDIR}/make/scripts/out.sh DEP "${CSRCS}" "$@"
-	${Q}${CC} ${CFLAGS} -MM ${CSRCS} 2> /dev/null > $@ || exit 0
+.depends_c.${SELF}: ${CSRCS}
+	@${TOPDIR}/make/scripts/out.sh DEP "$^$>" "$@"
+	${Q}${CC} ${CFLAGS} -MM $^$> 2> /dev/null > $@ || exit 0
 
 clean_c:
-	${Q}rm -f ${COBJS} .depends_c
+	${Q}rm -f ${COBJS} .depends_c.${SELF}
 clean: clean_c
 
 check-syntax:
 	${CC} ${CFLAGS} -Wall -Wextra -fsyntax-only ${CHK_SOURCES}
 
-dep: .depends_c
--include .depends_c
+dep: .depends_c.${SELF}
+-include .depends_c.${SELF}
