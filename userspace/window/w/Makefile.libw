@@ -1,0 +1,5 @@
+TOPDIR = ../../..
+CSRCS = msg.c draw.c
+LIB = libw.a
+
+include ${TOPDIR}/userspace/user.mk

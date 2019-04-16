@@ -1,0 +1,5 @@
+TOPDIR = ../..
+CSRCS = init.c
+PROG = ${BINDIR}/init
+
+include ${TOPDIR}/userspace/user.mk

@@ -1,0 +1,5 @@
+TOPDIR = ../..
+CSRCS = tty.c
+PROG = ${BINDIR}/tty
+
+include ${TOPDIR}/userspace/user.mk

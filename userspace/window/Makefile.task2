@@ -1,0 +1,7 @@
+TOPDIR = ../..
+CSRCS = task2.c
+OBJS += w/libw.a
+LDFLAGS = -lm
+PROG = ${BINDIR}/task2
+
+include ${TOPDIR}/userspace/user.mk

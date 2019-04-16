@@ -1,0 +1,6 @@
+TOPDIR = ../..
+CSRCS = wterm.c
+OBJS += w/libw.a
+PROG = ${BINDIR}/wterm
+
+include ${TOPDIR}/userspace/user.mk

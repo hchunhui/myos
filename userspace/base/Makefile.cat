@@ -1,0 +1,5 @@
+TOPDIR = ../..
+CSRCS = cat.c
+PROG = ${BINDIR}/cat
+
+include ${TOPDIR}/userspace/user.mk

@@ -1,0 +1,6 @@
+TOPDIR = ../..
+CSRCS = snake.c
+OBJS += w/libw.a
+PROG = ${BINDIR}/snake
+
+include ${TOPDIR}/userspace/user.mk
