@@ -32,7 +32,7 @@
  * strlen - Find the length of a string
  * @s: The string to be sized
  */
-extern inline size_t strlen(const char *s)
+static inline size_t strlen(const char *s)
 {
 	const char *sc;
 
@@ -50,7 +50,7 @@ EXPORT_SYMBOL(strlen);
  * @src: Where to copy the string from
  */
 #undef strcpy
-extern inline char *strcpy(char *dest, const char *src)
+static inline char *strcpy(char *dest, const char *src)
 {
 	char *tmp = dest;
 
@@ -75,7 +75,7 @@ EXPORT_SYMBOL(strcpy);
  * count, the remainder of @dest will be padded with %NUL.
  *
  */
-extern inline char *strncpy(char *dest, const char *src, size_t count)
+static inline char *strncpy(char *dest, const char *src, size_t count)
 {
 	char *tmp = dest;
 
@@ -97,7 +97,7 @@ EXPORT_SYMBOL(strncpy);
  * @src: The string to append to it
  */
 #undef strcat
-extern inline char *strcat(char *dest, const char *src)
+static inline char *strcat(char *dest, const char *src)
 {
 	char *tmp = dest;
 
@@ -120,7 +120,7 @@ EXPORT_SYMBOL(strcat);
  * Note that in contrast to strncpy(), strncat() ensures the result is
  * terminated.
  */
-extern inline char *strncat(char *dest, const char *src, size_t count)
+static inline char *strncat(char *dest, const char *src, size_t count)
 {
 	char *tmp = dest;
 
@@ -146,7 +146,7 @@ EXPORT_SYMBOL(strncat);
  * @ct: Another string
  */
 #undef strcmp
-extern inline int strcmp(const char *cs, const char *ct)
+static inline int strcmp(const char *cs, const char *ct)
 {
 	signed char __res;
 
@@ -166,7 +166,7 @@ EXPORT_SYMBOL(strcmp);
  * @ct: Another string
  * @count: The maximum number of bytes to compare
  */
-extern inline int strncmp(const char *cs, const char *ct, size_t count)
+static inline int strncmp(const char *cs, const char *ct, size_t count)
 {
 	signed char __res = 0;
 
@@ -186,7 +186,7 @@ EXPORT_SYMBOL(strncmp);
  * @s: The string to be searched
  * @c: The character to search for
  */
-extern inline char *strchr(const char *s, int c)
+static inline char *strchr(const char *s, int c)
 {
 	for (; *s != (char)c; ++s)
 		if (*s == '\0')
@@ -202,7 +202,7 @@ EXPORT_SYMBOL(strchr);
  * @s: The string to be searched
  * @c: The character to search for
  */
-extern inline char *strrchr(const char *s, int c)
+static inline char *strrchr(const char *s, int c)
 {
        const char *p = s + strlen(s);
        do {
@@ -221,7 +221,7 @@ EXPORT_SYMBOL(strrchr);
  * @count: The number of characters to be searched
  * @c: The character to search for
  */
-extern inline char *strnchr(const char *s, size_t count, int c)
+static inline char *strnchr(const char *s, size_t count, int c)
 {
 	for (; count-- && *s != '\0'; ++s)
 		if (*s == (char)c)
@@ -237,7 +237,7 @@ EXPORT_SYMBOL(strnchr);
  * @s: The string to be sized
  * @count: The maximum number of bytes to search
  */
-extern inline size_t strnlen(const char *s, size_t count)
+static inline size_t strnlen(const char *s, size_t count)
 {
 	const char *sc;
 
@@ -254,7 +254,7 @@ EXPORT_SYMBOL(strnlen);
  * @s: The string to be searched
  * @accept: The string to search for
  */
-extern inline size_t strspn(const char *s, const char *accept)
+static inline size_t strspn(const char *s, const char *accept)
 {
 	const char *p;
 	const char *a;
@@ -281,7 +281,7 @@ EXPORT_SYMBOL(strspn);
  * @s: The string to be searched
  * @reject: The string to avoid
  */
-extern inline size_t strcspn(const char *s, const char *reject)
+static inline size_t strcspn(const char *s, const char *reject)
 {
 	const char *p;
 	const char *r;
@@ -305,7 +305,7 @@ EXPORT_SYMBOL(strcspn);
  * @cs: The string to be searched
  * @ct: The characters to search for
  */
-extern inline char *strpbrk(const char *cs, const char *ct)
+static inline char *strpbrk(const char *cs, const char *ct)
 {
 	const char *sc1, *sc2;
 
@@ -332,7 +332,7 @@ EXPORT_SYMBOL(strpbrk);
  * of that name. In fact, it was stolen from glibc2 and de-fancy-fied.
  * Same semantics, slimmer shape. ;)
  */
-extern inline char *strsep(char **s, const char *ct)
+static inline char *strsep(char **s, const char *ct)
 {
 	char *sbegin = *s;
 	char *end;
@@ -358,7 +358,7 @@ EXPORT_SYMBOL(strsep);
  *
  * Do not use memset() to access IO space, use memset_io() instead.
  */
-extern inline void *memset(void *s, int c, size_t count)
+static inline void *memset(void *s, int c, size_t count)
 {
 	char *xs = s;
 
@@ -379,7 +379,7 @@ EXPORT_SYMBOL(memset);
  * You should not use this function to access IO space, use memcpy_toio()
  * or memcpy_fromio() instead.
  */
-extern inline void *memcpy(void *dest, const void *src, size_t count)
+static inline void *memcpy(void *dest, const void *src, size_t count)
 {
 	char *tmp = dest;
 	const char *s = src;
@@ -400,7 +400,7 @@ EXPORT_SYMBOL(memcpy);
  *
  * Unlike memcpy(), memmove() copes with overlapping areas.
  */
-extern inline void *memmove(void *dest, const void *src, size_t count)
+static inline void *memmove(void *dest, const void *src, size_t count)
 {
 	char *tmp;
 	const char *s;
@@ -431,7 +431,7 @@ EXPORT_SYMBOL(memmove);
  * @count: The size of the area.
  */
 #undef memcmp
-extern inline int memcmp(const void *cs, const void *ct, size_t count)
+static inline int memcmp(const void *cs, const void *ct, size_t count)
 {
 	const unsigned char *su1, *su2;
 	int res = 0;
@@ -454,7 +454,7 @@ EXPORT_SYMBOL(memcmp);
  * returns the address of the first occurrence of @c, or 1 byte past
  * the area if @c is not found
  */
-extern inline void *memscan(void *addr, int c, size_t size)
+static inline void *memscan(void *addr, int c, size_t size)
 {
 	unsigned char *p = addr;
 
@@ -475,7 +475,7 @@ EXPORT_SYMBOL(memscan);
  * @s1: The string to be searched
  * @s2: The string to search for
  */
-extern inline char *strstr(const char *s1, const char *s2)
+static inline char *strstr(const char *s1, const char *s2)
 {
 	int l1, l2;
 
@@ -504,7 +504,7 @@ EXPORT_SYMBOL(strstr);
  * returns the address of the first occurrence of @c, or %NULL
  * if @c is not found
  */
-extern inline void *memchr(const void *s, int c, size_t n)
+static inline void *memchr(const void *s, int c, size_t n)
 {
 	const unsigned char *p = s;
 	while (n-- != 0) {
@@ -517,7 +517,7 @@ extern inline void *memchr(const void *s, int c, size_t n)
 EXPORT_SYMBOL(memchr);
 #endif
 
-/* extern inline void * memset(void * s,char c,int count) */
+/* static inline void * memset(void * s,char c,int count) */
 /* { */
 /* 	int len; */
 /* 	int cc; */

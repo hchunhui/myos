@@ -15,7 +15,7 @@ mkdir -p pkg
 cd pkg
 echo '----Download package----'
 xget $BINUTILS.tar.bz2 $MIRROR/binutils || die 'binutils'
-xget $GCC.tar.bz2 $MIRROR/gcc/$GCC || die 'gcc'
+xget $GCC.tar.xz $MIRROR/gcc/$GCC || die 'gcc'
 xget $GMP.tar.bz2 $MIRROR/gmp || die 'gmp'
 xget $MPFR.tar.bz2 $MIRROR/mpfr || die 'mpfr'
 xget $MPC.tar.gz $MIRROR/mpc || die 'mpc'

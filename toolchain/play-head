@@ -5,11 +5,11 @@ PKG_PATH=$PWD/build/pkg
 PATCH_PATH=$PWD/patch
 MYOS_PATH=$PWD/..
 MIRROR=http://mirrors.ustc.edu.cn/gnu
-BINUTILS=binutils-2.23.1
-GCC=gcc-4.7.3
-GMP=gmp-5.1.1
-MPFR=mpfr-3.1.2
-MPC=mpc-1.0.1
+BINUTILS=binutils-2.31.1
+GCC=gcc-6.5.0
+GMP=gmp-6.1.2
+MPFR=mpfr-4.0.2
+MPC=mpc-1.1.0
 DIETLIBC=dietlibc
 mkdir -p build
 cd build
