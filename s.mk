@@ -16,13 +16,13 @@ ${PROG}: ${SOBJS}
 	@${TOPDIR}/make/scripts/out.sh AS "$<" "$@"
 	${Q}${AS} -D__ASSEMBLY__ ${CFLAGS} ${SFLAGS} -c $< -o $@
 
-.depends_s: ${SSRCS}
-	@${TOPDIR}/make/scripts/out.sh DEP "${SSRCS}" "$@"
-	${Q}${AS} -D__ASSEMBLY__ ${CFLAGS} ${SFLAGS} -MM ${SSRCS} 2> /dev/null > $@ || exit 0
+.depends_s.${SELF}: ${SSRCS}
+	@${TOPDIR}/make/scripts/out.sh DEP "$^$>" "$@"
+	${Q}${AS} -D__ASSEMBLY__ ${CFLAGS} ${SFLAGS} -MM $^$> 2> /dev/null > $@ || exit 0
 
 clean_s:
-	${Q}rm -f ${SOBJS} .depends_s
+	${Q}rm -f ${SOBJS} .depends_s.${SELF}
 clean: clean_s
 
-dep: .depends_s
--include .depends_s
+dep: .depends_s.${SELF}
+-include .depends_s.${SELF}
