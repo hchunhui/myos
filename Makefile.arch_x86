@@ -1,5 +1,12 @@
 TOP_SUBDIRS = lib drv kernel arch_x86
 
+TOP_OBJS = \
+	arch_x86/init/build.a \
+	drv/build.a \
+	lib/build.a \
+	arch_x86/kernel/build.a \
+	kernel/build.a
+
 include ${TOPDIR}/make/comm.mk
 include ${TOPDIR}/make/c.mk
 include ${TOPDIR}/make/s.mk
@@ -17,13 +24,6 @@ CFLAGS = \
 	-I${TOPDIR}/arch_x86/include -I${TOPDIR}/include
 
 LDFLAGS = -N -e _start -Ttext 0x100000
-
-TOP_OBJS = \
-	arch_x86/init/build.a \
-	drv/build.a \
-	lib/build.a \
-	arch_x86/kernel/build.a \
-	kernel/build.a
 
 mykern.bin: mykern.x
 	@${TOPDIR}/make/scripts/out.sh OBJCOPY "mykern.x" "$@"

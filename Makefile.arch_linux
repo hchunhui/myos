@@ -1,5 +1,12 @@
 TOP_SUBDIRS = kernel arch_linux
 
+TOP_OBJS = \
+	arch_linux/init/build.a \
+	arch_linux/kernel/build.a \
+	arch_linux/lib/build.a \
+	arch_linux/drv/build.a \
+	kernel/build.a
+
 include ${TOPDIR}/make/comm.mk
 include ${TOPDIR}/make/c.mk
 include ${TOPDIR}/make/s.mk
@@ -10,13 +17,6 @@ CFLAGS = \
 	-finline-functions -fno-strict-aliasing -fno-builtin \
 	-fno-stack-protector \
 	-I${TOPDIR}/arch_linux/include -I${TOPDIR}/include
-
-TOP_OBJS = \
-	arch_linux/init/build.a \
-	arch_linux/kernel/build.a \
-	arch_linux/lib/build.a \
-	arch_linux/drv/build.a \
-	kernel/build.a
 
 mykern.bin: mykern.x
 	touch $@
