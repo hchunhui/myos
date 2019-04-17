@@ -11,7 +11,7 @@ mv $GMP $GCC/gmp
 mv $MPC $GCC/mpc
 cd $GCC
 patch -p1 < $PATCH_PATH/gcc.patch || exit 1
-patch -p1 < $PATCH_PATH/gcc6.patch || exit 1
+#patch -p1 < $PATCH_PATH/gcc6.patch || exit 1
 cd ..
 cd build-gcc
 ../$GCC/configure --target=$TARGET --prefix=$PREFIX --disable-nls --disable-shared --disable-multilib --disable-threads --disable-tls --disable-libgomp --with-newlib --enable-languages=c,c++ --with-mpfr-include=$PWD/../$GCC/mpfr/src --with-mpfr-lib=$PWD/mpfr/src/.libs || exit 1
