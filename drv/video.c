@@ -128,12 +128,6 @@ static int video_reset_mode()
 	return video_set_mode(orig_mode);
 }
 
-static void video_set_start_addr(u32 sa)
-{
-	start_addr = sa;
-	update_start_addr();
-}
-
 static void video_down_screen(int delta)
 {
 	start_addr += 80*delta;

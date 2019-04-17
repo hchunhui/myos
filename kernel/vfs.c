@@ -29,23 +29,6 @@ static struct s_handle *new_handle(
 	return h;
 }
 
-static struct s_handle *new_handle0()
-{
-	struct s_handle *h;
-	h = kmalloc(sizeof(struct s_handle));
-	memset(h, 0, sizeof(struct s_handle));
-	return h;
-}
-
-static struct s_handle *dup_handle(
-	struct s_handle *s)
-{
-	struct s_handle *h;
-	h = kmalloc(sizeof(struct s_handle));
-	memcpy(h, s, sizeof(struct s_handle));
-	return h;
-}
-
 static void free_handle(
 	struct s_handle *h)
 {
