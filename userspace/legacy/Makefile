@@ -18,7 +18,7 @@ every: cxxrt.o
 	$(CC) $(CFLAGS) \
 	-c -g -o $@ $<
 %.o: %.cpp
-	$(CC) $(CXXFLAGS) \
+	$(CXX) $(CXXFLAGS) \
 	-c -g -o $@ $<
 %.o: %.s
 	$(CC) $(CFLAGS)	\

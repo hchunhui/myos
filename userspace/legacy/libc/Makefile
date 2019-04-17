@@ -1,4 +1,4 @@
-AUTOOBJS=ctype.o libc.o libc_init.o malloc.o printf.o scanf.o string.o 
+AUTOOBJS=ctype.o libc.o libc_init.o malloc.o printf.o scanf.o 
 INC=-I../../../include -I..
 AS=as -m32
 CC=gcc -m32
@@ -55,9 +55,5 @@ printf.o: printf.c ../../../include/os/type.h \
  ../../../include/os/dirent.h ../../../include/os/stat.h
 scanf.o: scanf.c ../../../include/os/type.h ../../../include/os/unistd.h \
  ../libc/libc.h ../../../include/lib/string.h \
- ../../../include/drv/video.h ../../../include/os/dirent.h \
- ../../../include/os/stat.h
-string.o: string.c ../libc/libc.h ../../../include/os/type.h \
- ../../../include/os/unistd.h ../../../include/lib/string.h \
  ../../../include/drv/video.h ../../../include/os/dirent.h \
  ../../../include/os/stat.h
