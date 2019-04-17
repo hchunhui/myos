@@ -3,6 +3,7 @@
 #include <string.h>
 #include <dirent.h>
 #include <fcntl.h>
+#include <sys/wait.h>
 
 extern char **environ;
 const char *prompt;

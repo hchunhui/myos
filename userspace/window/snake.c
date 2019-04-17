@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <sys/ioctl.h>
+#include <unistd.h>
 #include <os/unistd.h>
 #include <drv/pipe.h>
 #include <drv/poll.h>

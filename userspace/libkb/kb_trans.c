@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include "kb_state.h"
 
 #ifdef SCANCODE2
