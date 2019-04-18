@@ -306,13 +306,18 @@ int do_page_fault(struct s_regs *pregs, void *__)
 	}
 
 	/* FIXME */
-	if(cr2 > usr_stack_top)
-		phy_pg_no = ADDR2NO(cr2);
-	else
+	if(cr2 > usr_stack_top) {
+		mm_set_pte(ptask->mm->pd, ADDR2NO(cr2), ADDR2NO(cr2), MM_RW);
+		refresh_page();
+	} else {
 		phy_pg_no = mm_get_free_page();
-	if(phy_pg_no != -1)
+		if(phy_pg_no == -1)
+			mm_panic("no memory", cr2, pregs);
+
 		mm_set_pte(ptask->mm->pd, phy_pg_no, ADDR2NO(cr2), MM_RW);
-	refresh_page();
+		refresh_page();
+		memset((void *) ADDR(cr2), 0, PAGE_SIZE);
+	}
 	return 0;
 }
 
