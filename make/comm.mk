@@ -7,14 +7,14 @@ SELF ?= Makefile
 .SUFFIXES:
 
 all: dep
-	${MAKE} -f ${SELF} sub_all
-	${MAKE} -f ${SELF} _all
+	${Q}${MAKE} -f ${SELF} sub_all
+	${Q}${MAKE} -f ${SELF} _all
 
 clean:
 	${Q}rm -rf ${EXTRA_CLEAN}
 
 topdir:
-	${MAKE} -C ${TOPDIR}
+	${Q}${MAKE} -C ${TOPDIR}
 
 
 # Sub rules
@@ -27,11 +27,11 @@ clean: ${SUBDIRS:=.clean}
 dep: ${SUBDIRS:=.dep}
 
 ${SUBDIRS:=.all}:
-	${MAKE} -C ${@:.all=}
+	${Q}${MAKE} -C ${@:.all=}
 ${SUBDIRS:=.clean}:
-	${MAKE} -C ${@:.clean=} clean
+	${Q}${MAKE} -C ${@:.clean=} clean
 ${SUBDIRS:=.dep}:
-	${MAKE} -C ${@:.dep=} dep
+	${Q}${MAKE} -C ${@:.dep=} dep
 
 
 .PHONY: ${SUBMAKES:=.all} ${SUBMAKES:=.clean} ${SUBMAKES:=.dep}
@@ -43,11 +43,11 @@ clean: ${SUBMAKES:=.clean}
 dep: ${SUBMAKES:=.dep}
 
 ${SUBMAKES:=.all}:
-	${MAKE} -f ${@:.all=} SELF=${@:.all=}
+	${Q}${MAKE} -f ${@:.all=} SELF=${@:.all=}
 ${SUBMAKES:=.clean}:
-	${MAKE} -f ${@:.clean=} SELF=${@:.clean=} clean
+	${Q}${MAKE} -f ${@:.clean=} SELF=${@:.clean=} clean
 ${SUBMAKES:=.dep}:
-	${MAKE} -f ${@:.dep=} SELF=${@:.dep=} dep
+	${Q}${MAKE} -f ${@:.dep=} SELF=${@:.dep=} dep
 
 
 # Link rules
