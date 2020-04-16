@@ -49,7 +49,7 @@ ${MLCLIB}: ${MLOBJS}
 	@${TOPDIR}/make/scripts/out.sh OPT "$<" "$@"
 	${Q}${MLOPT} ${MLFLAGS} -g -c $< -o $@
 
-.depends_ml.${SELF}: ${MLSRCS}
+.depends_ml.${SELF}: ${MLSRCS} ${SELF}
 	@${TOPDIR}/make/scripts/out.sh DEP "$^$>" "$@"
 	${Q}${MLDEP} $^$> > $@
 

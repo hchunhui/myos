@@ -9,6 +9,8 @@ ARGS=""
 while [ "$1" != "" ] ; do
 	case "$1" in
 	-save-temps|-m32|-m64) N="$1" ;;
+	-shared) N="$1" ;;
+	-static-lib*) N="$1" ;;
 	-r) N="$1" ;;
 	-[Wg]*) N="$1" ;;
 	-[olv]|-[Ofd]*|-nostdlib) N="$1" ;;

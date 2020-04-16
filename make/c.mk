@@ -12,7 +12,7 @@ ${PROG}: ${COBJS}
 	@${TOPDIR}/make/scripts/out.sh CC "$<" "$@"
 	${Q}${CC} ${CFLAGS} -c $< -o $@
 
-.depends_c.${SELF}: ${CSRCS}
+.depends_c.${SELF}: ${CSRCS} ${SELF}
 	@${TOPDIR}/make/scripts/out.sh DEP "$^$>" "$@"
 	${Q}${CC} ${CFLAGS} -MM $^$> 2> /dev/null > $@ || exit 0
 
