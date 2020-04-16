@@ -21,7 +21,7 @@ ${LIB}: ${CXXOBJS}
 	@${TOPDIR}/make/scripts/out.sh CXX "$<" "$@"
 	${Q}${CXX} ${CFLAGS} ${CXXFLAGS} -c $< -o $@
 
-.depends_cxx.${SELF}: ${CXXSRCS}
+.depends_cxx.${SELF}: ${CXXSRCS} ${SELF}
 	@${TOPDIR}/make/scripts/out.sh DEP "$^$>" "$@"
 	${Q}${CXX} ${CFLAGS} ${CXXFLAGS} -MM $^$> 2> /dev/null > $@ || exit 0
 

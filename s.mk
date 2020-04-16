@@ -16,7 +16,7 @@ ${PROG}: ${SOBJS}
 	@${TOPDIR}/make/scripts/out.sh AS "$<" "$@"
 	${Q}${AS} -D__ASSEMBLY__ ${CFLAGS} ${SFLAGS} -c $< -o $@
 
-.depends_s.${SELF}: ${SSRCS}
+.depends_s.${SELF}: ${SSRCS} ${SELF}
 	@${TOPDIR}/make/scripts/out.sh DEP "$^$>" "$@"
 	${Q}${AS} -D__ASSEMBLY__ ${CFLAGS} ${SFLAGS} -MM $^$> 2> /dev/null > $@ || exit 0
 
